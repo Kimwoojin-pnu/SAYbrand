@@ -45,6 +45,11 @@ app.include_router(webhooks.router)
 app.include_router(competitor_keywords.router)
 
 
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+
 @app.get("/saybrand-logo.png")
 async def saybrand_logo():
     return FileResponse("saybrand-logo.png", media_type="image/png")
