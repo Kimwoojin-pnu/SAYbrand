@@ -17,8 +17,80 @@ from backend.models.schemas import (
     ThreatBase,
     ThreatListResponse,
 )
+from backend.db.seed import _THREATS as _SEED_THREATS
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
+
+
+# ── 비로그인 UI 미리보기용 정적 Mock 응답 ──────────────────────────────────────
+
+def _mock_stats() -> StatsResponse:
+    return StatsResponse(total=16, critical=2, high=3, medium=5, low=6, active=10, reviewing=2, resolved=4)
+
+
+def _mock_risk() -> RiskScoreResponse:
+    return RiskScoreResponse(
+        overall=61.5,
+        module_a=ModuleScore(module="A", score=72.0, threat_count=5),
+        module_b=ModuleScore(module="B", score=58.0, threat_count=7),
+        module_c=ModuleScore(module="C", score=49.0, threat_count=4),
+        level="HIGH",
+    )
+
+
+def _mock_threats_list(page: int, page_size: int) -> ThreatListResponse:
+    now = datetime.now(timezone.utc)
+    all_items = []
+    for i, t in enumerate(_SEED_THREATS):
+        detected = now - timedelta(minutes=t["minutes_ago"])
+        all_items.append(ThreatBase(
+            id=9000 + i,
+            module=t["module"], threat_type=t["threat_type"],
+            severity=t["severity"], platform=t["platform"],
+            source_account=t["source_account"], source_url=t["source_url"],
+            content_preview=t["content_preview"],
+            confidence=t["confidence"], risk_score=t["risk_score"],
+            ai_analysis=t.get("ai_analysis"),
+            ai_response_suggestion=t.get("ai_response_suggestion"),
+            bot_probability=t.get("bot_probability"),
+            is_organized=t.get("is_organized"),
+            status=t["status"],
+            detected_at=detected, updated_at=detected,
+            engagements_per_hour=0.0,
+        ))
+    start = (page - 1) * page_size
+    return ThreatListResponse(items=all_items[start:start + page_size], total=len(all_items), page=page, page_size=page_size)
+
+
+def _mock_alerts() -> list[dict]:
+    now = datetime.now(timezone.utc)
+    msgs = [
+        ("critical", "사칭 계정 탐지: @saybrand_official_kr (인스타그램)", 8),
+        ("critical", "CEO 사칭 계정 확산 경보 — 봇 확률 83%", 22),
+        ("high", "허위 원료 정보 유튜브 영상 조회수 48만 돌파", 45),
+        ("high", "고객 데이터 유출 허위 주장 스토리 8,200회 공유", 90),
+        ("high", "CFO 관련 루머 X(트위터) 빠른 확산 감지", 130),
+    ]
+    return [
+        {"id": i + 1, "threat_id": 9001 + i, "severity": sev, "message": msg,
+         "channel": "dashboard", "sent_at": now - timedelta(minutes=mins)}
+        for i, (sev, msg, mins) in enumerate(msgs)
+    ]
+
+
+def _mock_trend() -> dict:
+    labels = [f"{i}일전" for i in range(6, 0, -1)] + ["오늘"]
+    return {"labels": labels, "module_a": [1, 2, 1, 3, 2, 1, 2], "module_b": [2, 1, 3, 2, 3, 4, 2], "module_c": [1, 0, 1, 2, 1, 1, 1]}
+
+
+def _mock_platform_stats() -> list[dict]:
+    return [
+        {"platform": "instagram", "count": 5, "pct": 31},
+        {"platform": "x", "count": 4, "pct": 25},
+        {"platform": "youtube", "count": 3, "pct": 19},
+        {"platform": "tiktok", "count": 1, "pct": 6},
+        {"platform": "naver", "count": 3, "pct": 19},
+    ]
 
 
 def _apply_org_filter(query, org: Organization | None):
@@ -29,9 +101,15 @@ def _apply_org_filter(query, org: Organization | None):
 
 @router.get("/stats", response_model=StatsResponse)
 async def get_stats(
+    request: Request,
     org: Organization | None = Depends(optional_current_org),
     db: AsyncSession = Depends(get_db),
 ):
+    if not request.session.get("user_id"):
+        return _mock_stats()
+    if org is None:
+        return StatsResponse(total=0, critical=0, high=0, medium=0, low=0, active=0, reviewing=0, resolved=0)
+
     sev_result = await db.execute(
         _apply_org_filter(
             select(Threat.severity, func.count(Threat.id)).group_by(Threat.severity),
@@ -66,9 +144,21 @@ async def get_stats(
 
 @router.get("/risk-score", response_model=RiskScoreResponse)
 async def get_risk_score(
+    request: Request,
     org: Organization | None = Depends(optional_current_org),
     db: AsyncSession = Depends(get_db),
 ):
+    if not request.session.get("user_id"):
+        return _mock_risk()
+    if org is None:
+        return RiskScoreResponse(
+            overall=0.0,
+            module_a=ModuleScore(module="A", score=0.0, threat_count=0),
+            module_b=ModuleScore(module="B", score=0.0, threat_count=0),
+            module_c=ModuleScore(module="C", score=0.0, threat_count=0),
+            level="LOW",
+        )
+
     result = await db.execute(
         _apply_org_filter(
             select(Threat.module, func.avg(Threat.risk_score), func.count(Threat.id))
@@ -104,6 +194,7 @@ async def get_risk_score(
 
 @router.get("/threats", response_model=ThreatListResponse)
 async def get_threats(
+    request: Request,
     severity: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
@@ -111,6 +202,11 @@ async def get_threats(
     org: Organization | None = Depends(optional_current_org),
     db: AsyncSession = Depends(get_db),
 ):
+    if not request.session.get("user_id"):
+        return _mock_threats_list(page, page_size)
+    if org is None:
+        return ThreatListResponse(items=[], total=0, page=page, page_size=page_size)
+
     base = _apply_org_filter(select(Threat), org)
     count_base = _apply_org_filter(select(func.count(Threat.id)), org)
 
@@ -134,9 +230,12 @@ async def get_threats(
 
 @router.get("/alerts", response_model=list[AlertResponse])
 async def get_alerts(
+    request: Request,
     limit: int = Query(10, ge=1, le=50),
     db: AsyncSession = Depends(get_db),
 ):
+    if not request.session.get("user_id"):
+        return _mock_alerts()
     result = await db.execute(select(Alert).order_by(Alert.sent_at.desc()).limit(limit))
     return result.scalars().all()
 
@@ -186,10 +285,17 @@ _CATEGORY_TO_THREAT_TYPE: dict[str, str] = {
 
 @router.get("/trend")
 async def get_trend(
+    request: Request,
     org: Organization | None = Depends(optional_current_org),
     db: AsyncSession = Depends(get_db),
 ):
     """최근 7일 모듈별 위협 건수 반환."""
+    if not request.session.get("user_id"):
+        return _mock_trend()
+    if org is None:
+        labels = [f"{i}일전" for i in range(6, 0, -1)] + ["오늘"]
+        return {"labels": labels, "module_a": [0]*7, "module_b": [0]*7, "module_c": [0]*7}
+
     now = datetime.now(timezone.utc)
     labels = []
     module_a, module_b, module_c = [], [], []
@@ -215,10 +321,16 @@ async def get_trend(
 
 @router.get("/platform-stats")
 async def get_platform_stats(
+    request: Request,
     org: Organization | None = Depends(optional_current_org),
     db: AsyncSession = Depends(get_db),
 ):
     """플랫폼별 위협 건수 반환."""
+    if not request.session.get("user_id"):
+        return _mock_platform_stats()
+    if org is None:
+        return [{"platform": p, "count": 0, "pct": 0} for p in ["instagram", "x", "youtube", "tiktok", "naver"]]
+
     base_q = select(Threat.platform, func.count(Threat.id)).group_by(Threat.platform)
     if org is not None:
         base_q = base_q.where(Threat.org_id == org.id)
@@ -329,10 +441,18 @@ async def post_scan_local(
 
 @router.get("/sentiment-trend")
 async def get_sentiment_trend(
+    request: Request,
     org: Organization | None = Depends(optional_current_org),
     db: AsyncSession = Depends(get_db),
 ):
     """최근 7일 일별 감성 분포 (negative/positive/neutral 건수)."""
+    if not request.session.get("user_id"):
+        labels = [f"{i}일전" for i in range(6, 0, -1)] + ["오늘"]
+        return {"labels": labels, "negative": [3,2,4,3,5,4,3], "positive": [2,3,2,4,3,2,3], "neutral": [1,1,1,2,1,1,2]}
+    if org is None:
+        labels = [f"{i}일전" for i in range(6, 0, -1)] + ["오늘"]
+        return {"labels": labels, "negative": [0]*7, "positive": [0]*7, "neutral": [0]*7}
+
     now = datetime.now(timezone.utc)
     labels, negative, positive, neutral = [], [], [], []
 
@@ -409,11 +529,20 @@ async def get_hashtag_trends(
 
 @router.get("/top-influencers")
 async def get_top_influencers(
+    request: Request,
     limit: int = Query(10, ge=1, le=50),
     org: Organization | None = Depends(optional_current_org),
     db: AsyncSession = Depends(get_db),
 ):
     """위협 발생 계정 중 반복 등장 Top N."""
+    if not request.session.get("user_id"):
+        return [
+            {"account": "@saybrand_official_kr", "platform": "instagram", "mention_count": 3},
+            {"account": "@SAYbrand_Ofcl", "platform": "x", "mention_count": 2},
+        ]
+    if org is None:
+        return []
+
     base_q = (
         select(Threat.source_account, Threat.platform, func.count(Threat.id).label("mention_count"))
         .where(Threat.source_account != "")

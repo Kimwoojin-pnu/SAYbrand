@@ -63,6 +63,7 @@ class BaseCollector(ABC):
         self,
         keyword: str,
         limit: int = 25,
+        days_back: int = 7,
     ) -> list[dict]:
         """
         키워드로 콘텐츠를 검색한다.

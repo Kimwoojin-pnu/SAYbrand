@@ -332,14 +332,17 @@ async def run_scan(
     for kw in keywords[:10]:  # 최대 10개 키워드로 제한
         for collector in collectors:
             try:
-                results = await collector.search(kw, limit=25)
+                results = await collector.search(kw, limit=25, days_back=7)
                 posts.extend(results)
             except Exception as e:
                 logger.warning("수집 실패 (%s / %s): %s", collector.__class__.__name__, kw, e)
 
     scanned = len(posts)
+    # API 키 없을 때 수집기가 반환하는 mock 포스트는 DB에 저장하지 않는다
+    real_posts = [p for p in posts if not p.get("is_mock")]
+    mock_count = scanned - len(real_posts)
+    posts = real_posts
     threats_created = 0
-    mock_count = 0
 
     pid = profile.profile_id if profile else None
 
@@ -348,8 +351,6 @@ async def run_scan(
             threat = await run_pipeline(post, user_id, db, pid)
             if threat:
                 threats_created += 1
-                if post.get("is_mock"):
-                    mock_count += 1
         except Exception as e:
             logger.warning("파이프라인 실패 (계속 진행): %s", e)
 
@@ -360,5 +361,5 @@ async def run_scan(
         "scanned": scanned,
         "new_threats": threats_created,
         "mock_count": mock_count,
-        "is_mock": mock_count > 0 and threats_created == mock_count,
+        "is_mock": mock_count > 0 and len(posts) == 0,
     }

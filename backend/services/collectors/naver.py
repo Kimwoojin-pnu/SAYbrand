@@ -75,7 +75,7 @@ def _mock_posts(keyword: str) -> list[dict]:
 
 
 class NaverCollector(BaseCollector):
-    async def search(self, keyword: str, limit: int = 25) -> list[dict]:
+    async def search(self, keyword: str, limit: int = 25, days_back: int = 7) -> list[dict]:
         if not settings.naver_client_id or not settings.naver_client_secret:
             logger.info("Naver API 키 없음 — Mock 반환")
             return _mock_posts(keyword)
@@ -125,5 +125,10 @@ class NaverCollector(BaseCollector):
                         ))
                 except Exception as e:
                     logger.warning("Naver %s 수집 실패: %s", source, e)
+
+        # days_back 기준으로 날짜 필터링 (Naver API는 날짜 파라미터 미지원)
+        from datetime import timedelta
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
+        posts = [p for p in posts if p["published_at"].replace(tzinfo=timezone.utc) >= cutoff]
 
         return posts[:limit]

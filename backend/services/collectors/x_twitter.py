@@ -54,13 +54,16 @@ def _mock_posts(keyword: str) -> list[dict]:
 
 
 class XTwitterCollector(BaseCollector):
-    async def search(self, keyword: str, limit: int = 10) -> list[dict]:
+    async def search(self, keyword: str, limit: int = 10, days_back: int = 7) -> list[dict]:
         if not settings.x_bearer_token:
             logger.info("X Bearer Token 없음 — Mock 반환")
             return _mock_posts(keyword)
 
         # 최대 10건 (Free tier 제한)
         max_results = max(10, min(limit, 100))
+
+        from datetime import timedelta
+        start_time = (datetime.now(timezone.utc) - timedelta(days=days_back)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
         try:
             async with httpx.AsyncClient(timeout=15) as client:
@@ -70,6 +73,7 @@ class XTwitterCollector(BaseCollector):
                     params={
                         "query": f"{keyword} lang:ko -is:retweet",
                         "max_results": max_results,
+                        "start_time": start_time,
                         "tweet.fields": "created_at,public_metrics,author_id",
                         "user.fields": "username,name,public_metrics,created_at",
                         "expansions": "author_id",

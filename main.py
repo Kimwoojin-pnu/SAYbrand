@@ -6,7 +6,6 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from backend.config import settings
 from backend.db.database import engine, Base
-from backend.db.seed import seed_mock_data
 from backend.middleware.rate_limiter import rate_limit_middleware
 from backend.routers import dashboard
 from backend.routers import auth, billing, orgs, profile, keywords, reports, assistant, webhooks, competitor_keywords
@@ -16,7 +15,6 @@ from backend.routers import auth, billing, orgs, profile, keywords, reports, ass
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    await seed_mock_data()
     # 90일 초과 데이터 자동 삭제 (개인정보보호법)
     try:
         from backend.db.database import AsyncSessionLocal

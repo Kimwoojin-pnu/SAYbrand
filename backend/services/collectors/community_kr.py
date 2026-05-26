@@ -95,6 +95,7 @@ class KoreanCommunityCollector(BaseCollector):
         self,
         keyword: str,
         limit: int = 20,
+        days_back: int = 7,
         sites: list[str] | None = None,
     ) -> list[dict]:
         """

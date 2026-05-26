@@ -51,18 +51,21 @@ def _mock_posts(keyword: str) -> list[dict]:
 
 
 class YouTubeCollector(BaseCollector):
-    async def search(self, keyword: str, limit: int = 10) -> list[dict]:
+    async def search(self, keyword: str, limit: int = 10, days_back: int = 7) -> list[dict]:
         if not settings.youtube_api_key:
             logger.info("YouTube API 키 없음 — Mock 반환")
             return _mock_posts(keyword)
 
         try:
-            return await self._search_real(keyword, limit)
+            return await self._search_real(keyword, limit, days_back)
         except Exception as e:
             logger.warning("YouTube 수집 실패: %s — Mock 반환", e)
             return _mock_posts(keyword)
 
-    async def _search_real(self, keyword: str, limit: int) -> list[dict]:
+    async def _search_real(self, keyword: str, limit: int, days_back: int = 7) -> list[dict]:
+        from datetime import timedelta
+        published_after = (datetime.now(timezone.utc) - timedelta(days=days_back)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
         async with httpx.AsyncClient(timeout=15) as client:
             # 영상 검색
             resp = await client.get(
@@ -74,6 +77,7 @@ class YouTubeCollector(BaseCollector):
                     "order": "date",
                     "maxResults": min(limit, 50),
                     "relevanceLanguage": "ko",
+                    "publishedAfter": published_after,
                     "key": settings.youtube_api_key,
                 },
             )
