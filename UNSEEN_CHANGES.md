@@ -9,6 +9,37 @@
 <!-- 새 항목은 위에서부터 추가 (최신순) -->
 
 ---
+## [#42] 2026-05-26
+**분류:** 실제 동작 검증 (API 키 연동 end-to-end 테스트)
+**파일:**
+- `PROGRESS.md` (naver 수집기 검증완료 표기)
+**변경 내용 없음 — 검증 결과만 기록**
+
+### 테스트 결과
+
+| Step | 결과 | 비고 |
+|------|------|------|
+| Step 1: 서버 기동 | ✅ | `uvicorn main:app` 에러 없이 기동, `/api/dashboard/stats` 200 OK |
+| Step 2: Naver 실수집 | ✅ 실제 25건 | NAVER_CLIENT_ID 키로 실제 블로그/카페/뉴스 수집 확인 |
+| Step 3: Gemini L2 분석 | 🟡 MOCK | 무료 티어 할당량 초과 (429 ResourceExhausted), 코드 정상·API 한도 문제 |
+| Step 4: 파이프라인 E2E | ✅ scanned:25, threats:3, is_mock:False | Naver 실데이터 기반 3건 위협 분류·DB 저장 |
+| Step 5: 대시보드 | ✅ 실제 데이터 표시 | 시드 15건 + 실수집 3건 = 18건, Naver 위협 정상 표시 |
+
+### 확인된 실제 동작 범위
+- **Naver 수집기**: ✅ 실제 API 호출·콘텐츠 수집 동작
+- **L1 필터**: ✅ 25건 중 3건 위협 분류 (키워드 매칭 정상)
+- **DB 저장**: ✅ 파이프라인 결과 SQLite 저장 확인
+- **이상 감지 API**: ✅ `detect_anomaly` 직접 실행 — is_anomaly:True, ratio:33.4 (방금 3건 급증)
+- **anomaly 엔드포인트**: ✅ `/api/dashboard/anomaly` 라우팅 정상 (인증 미제공 시 401 반환 확인)
+
+### 미동작 (키/외부 설정 필요)
+- **Gemini L2**: 🟡 무료 티어 할당량 초과 → Mock 폴백 (GEMINI_API_KEY 유료 플랜 필요)
+- **Claude L3**: ❌ ANTHROPIC_API_KEY 미입력 → Mock 폴백
+- **google.generativeai 패키지**: ⚠️ deprecated (0.8.6), `google-genai`로 마이그레이션 필요
+**Claude.ai 확인 필요:** NO
+---
+
+---
 ## [#41] 2026-05-26
 **분류:** 통합 (미연결 서비스 파이프라인 연결)
 **파일:**

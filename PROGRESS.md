@@ -28,7 +28,7 @@
 |------|------|------|
 | `collectors/base.py` | ✅ | RawPost, make_post(is_mock=), BaseCollector |
 | `collectors/compliance.py` | ✅ | robots.txt 체크, PII 마스킹, RateLimiter (2초) |
-| `collectors/naver.py` | ✅ 키 있을때 / 🟡 없을때 | NAVER_CLIENT_ID 입력 시 실제 수집, remove_pii 적용 |
+| `collectors/naver.py` | ✅ 키 있을때 / 🟡 없을때 | NAVER_CLIENT_ID 입력 시 실제 수집 **검증완료** (2026-05-26: 삼성 키워드 25건 수집·3건 위협 분류) |
 | `collectors/x_twitter.py` | ✅ 키 있을때 / 🟡 없을때 | X_BEARER_TOKEN 입력 시 실제 수집, remove_pii 적용 |
 | `collectors/youtube.py` | ✅ 키 있을때 / 🟡 없을때 | YOUTUBE_API_KEY 입력 시 실제 수집, remove_pii 적용 |
 | `collectors/community_kr.py` | 🟡 | 에펨/더쿠/클리앙/루리웹/인스티즈/나무위키, robots.txt 자동 차단 |
