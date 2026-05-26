@@ -93,9 +93,11 @@ def _mock_platform_stats() -> list[dict]:
     ]
 
 
-def _apply_org_filter(query, org: Organization | None):
+def _apply_org_filter(query, org: Organization | None, user_id: int | None = None):
     if org is not None:
         return query.where(Threat.org_id == org.id)
+    if user_id:
+        return query.where(Threat.user_id == user_id)
     return query
 
 
@@ -105,15 +107,14 @@ async def get_stats(
     org: Organization | None = Depends(optional_current_org),
     db: AsyncSession = Depends(get_db),
 ):
-    if not request.session.get("user_id"):
+    user_id = request.session.get("user_id")
+    if not user_id:
         return _mock_stats()
-    if org is None:
-        return StatsResponse(total=0, critical=0, high=0, medium=0, low=0, active=0, reviewing=0, resolved=0)
 
     sev_result = await db.execute(
         _apply_org_filter(
             select(Threat.severity, func.count(Threat.id)).group_by(Threat.severity),
-            org,
+            org, user_id,
         )
     )
     sev = {row[0]: row[1] for row in sev_result}
@@ -121,13 +122,13 @@ async def get_stats(
     status_result = await db.execute(
         _apply_org_filter(
             select(Threat.status, func.count(Threat.id)).group_by(Threat.status),
-            org,
+            org, user_id,
         )
     )
     sta = {row[0]: row[1] for row in status_result}
 
     total = await db.execute(
-        _apply_org_filter(select(func.count(Threat.id)), org)
+        _apply_org_filter(select(func.count(Threat.id)), org, user_id)
     )
 
     return StatsResponse(
@@ -148,22 +149,15 @@ async def get_risk_score(
     org: Organization | None = Depends(optional_current_org),
     db: AsyncSession = Depends(get_db),
 ):
-    if not request.session.get("user_id"):
+    user_id = request.session.get("user_id")
+    if not user_id:
         return _mock_risk()
-    if org is None:
-        return RiskScoreResponse(
-            overall=0.0,
-            module_a=ModuleScore(module="A", score=0.0, threat_count=0),
-            module_b=ModuleScore(module="B", score=0.0, threat_count=0),
-            module_c=ModuleScore(module="C", score=0.0, threat_count=0),
-            level="LOW",
-        )
 
     result = await db.execute(
         _apply_org_filter(
             select(Threat.module, func.avg(Threat.risk_score), func.count(Threat.id))
             .group_by(Threat.module),
-            org,
+            org, user_id,
         )
     )
     module_data = {row[0]: {"avg": float(row[1] or 0), "count": row[2]} for row in result}
@@ -202,13 +196,12 @@ async def get_threats(
     org: Organization | None = Depends(optional_current_org),
     db: AsyncSession = Depends(get_db),
 ):
-    if not request.session.get("user_id"):
+    user_id = request.session.get("user_id")
+    if not user_id:
         return _mock_threats_list(page, page_size)
-    if org is None:
-        return ThreatListResponse(items=[], total=0, page=page, page_size=page_size)
 
-    base = _apply_org_filter(select(Threat), org)
-    count_base = _apply_org_filter(select(func.count(Threat.id)), org)
+    base = _apply_org_filter(select(Threat), org, user_id)
+    count_base = _apply_org_filter(select(func.count(Threat.id)), org, user_id)
 
     if severity:
         base = base.where(Threat.severity == severity)
@@ -290,11 +283,9 @@ async def get_trend(
     db: AsyncSession = Depends(get_db),
 ):
     """최근 7일 모듈별 위협 건수 반환."""
-    if not request.session.get("user_id"):
+    user_id = request.session.get("user_id")
+    if not user_id:
         return _mock_trend()
-    if org is None:
-        labels = [f"{i}일전" for i in range(6, 0, -1)] + ["오늘"]
-        return {"labels": labels, "module_a": [0]*7, "module_b": [0]*7, "module_c": [0]*7}
 
     now = datetime.now(timezone.utc)
     labels = []
@@ -313,6 +304,8 @@ async def get_trend(
             )
             if org is not None:
                 base_q = base_q.where(Threat.org_id == org.id)
+            elif user_id:
+                base_q = base_q.where(Threat.user_id == user_id)
             cnt = (await db.execute(base_q)).scalar() or 0
             lst.append(cnt)
 
@@ -326,14 +319,15 @@ async def get_platform_stats(
     db: AsyncSession = Depends(get_db),
 ):
     """플랫폼별 위협 건수 반환."""
-    if not request.session.get("user_id"):
+    user_id = request.session.get("user_id")
+    if not user_id:
         return _mock_platform_stats()
-    if org is None:
-        return [{"platform": p, "count": 0, "pct": 0} for p in ["instagram", "x", "youtube", "tiktok", "naver"]]
 
     base_q = select(Threat.platform, func.count(Threat.id)).group_by(Threat.platform)
     if org is not None:
         base_q = base_q.where(Threat.org_id == org.id)
+    elif user_id:
+        base_q = base_q.where(Threat.user_id == user_id)
     result = await db.execute(base_q)
     data = {row[0]: row[1] for row in result}
     total = sum(data.values()) or 1
@@ -403,7 +397,7 @@ async def post_scan(
     if not keywords:
         raise HTTPException(status_code=400, detail="등록된 키워드가 없습니다. 먼저 키워드를 추가해 주세요.")
 
-    result = await run_scan(uid, keywords, body.platforms, db)
+    result = await run_scan(uid, keywords, body.platforms, db, org_id=org.id if org else None)
     return result
 
 
@@ -412,6 +406,7 @@ async def post_scan_local(
     body: ScanRequest,
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
+    org: Organization | None = Depends(optional_current_org),
     _: None = Depends(require_non_viewer),
 ):
     """
@@ -435,7 +430,7 @@ async def post_scan_local(
     if not keywords:
         raise HTTPException(status_code=400, detail="등록된 키워드가 없습니다. 먼저 키워드를 추가해 주세요.")
 
-    result = await run_scan(uid, keywords, body.platforms, db)
+    result = await run_scan(uid, keywords, body.platforms, db, org_id=org.id if org else None)
     return result
 
 
@@ -446,12 +441,10 @@ async def get_sentiment_trend(
     db: AsyncSession = Depends(get_db),
 ):
     """최근 7일 일별 감성 분포 (negative/positive/neutral 건수)."""
-    if not request.session.get("user_id"):
+    user_id = request.session.get("user_id")
+    if not user_id:
         labels = [f"{i}일전" for i in range(6, 0, -1)] + ["오늘"]
         return {"labels": labels, "negative": [3,2,4,3,5,4,3], "positive": [2,3,2,4,3,2,3], "neutral": [1,1,1,2,1,1,2]}
-    if org is None:
-        labels = [f"{i}일전" for i in range(6, 0, -1)] + ["오늘"]
-        return {"labels": labels, "negative": [0]*7, "positive": [0]*7, "neutral": [0]*7}
 
     now = datetime.now(timezone.utc)
     labels, negative, positive, neutral = [], [], [], []
@@ -469,6 +462,8 @@ async def get_sentiment_trend(
             )
             if org is not None:
                 q = q.where(Threat.org_id == org.id)
+            elif user_id:
+                q = q.where(Threat.user_id == user_id)
             cnt = (await db.execute(q)).scalar() or 0
             lst.append(cnt)
 
@@ -535,13 +530,12 @@ async def get_top_influencers(
     db: AsyncSession = Depends(get_db),
 ):
     """위협 발생 계정 중 반복 등장 Top N."""
-    if not request.session.get("user_id"):
+    user_id = request.session.get("user_id")
+    if not user_id:
         return [
             {"account": "@saybrand_official_kr", "platform": "instagram", "mention_count": 3},
             {"account": "@SAYbrand_Ofcl", "platform": "x", "mention_count": 2},
         ]
-    if org is None:
-        return []
 
     base_q = (
         select(Threat.source_account, Threat.platform, func.count(Threat.id).label("mention_count"))
@@ -552,6 +546,8 @@ async def get_top_influencers(
     )
     if org is not None:
         base_q = base_q.where(Threat.org_id == org.id)
+    else:
+        base_q = base_q.where(Threat.user_id == user_id)
     result = await db.execute(base_q)
     return [
         {"account": row[0], "platform": row[1], "mention_count": row[2]}

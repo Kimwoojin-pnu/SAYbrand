@@ -49,6 +49,7 @@ async def run_pipeline(
     user_id: int,
     db: AsyncSession,
     profile_id: int | None = None,
+    org_id: int | None = None,
 ) -> Threat | None:
     """
     단일 포스트를 L1→L2→L3 파이프라인으로 분석하고 DB에 저장한다.
@@ -197,6 +198,7 @@ async def run_pipeline(
 
     threat = Threat(
         user_id=user_id,
+        org_id=org_id,
         module=module,
         threat_type=threat_type,
         severity=final_severity,
@@ -294,6 +296,7 @@ async def run_scan(
     platforms: str,
     db: AsyncSession,
     profile_id: int | None = None,
+    org_id: int | None = None,
 ) -> dict:
     """
     키워드 목록으로 플랫폼 수집 후 파이프라인 실행.
@@ -348,7 +351,7 @@ async def run_scan(
 
     for post in posts:
         try:
-            threat = await run_pipeline(post, user_id, db, pid)
+            threat = await run_pipeline(post, user_id, db, pid, org_id=org_id)
             if threat:
                 threats_created += 1
         except Exception as e:

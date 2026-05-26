@@ -1,11 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from authlib.integrations.starlette_client import OAuth
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.config import settings
 from backend.db.database import get_db
-from backend.models.orm import CustomerProfile, User
+from backend.models.orm import (
+    Alert, CustomerAlias, CustomerExecutive, CustomerProfile,
+    CustomerSocialAccount, CompetitorKeyword, CompetitorMention,
+    HashtagTrend, InviteCode, Keyword, Organization, OrganizationMember,
+    OutboundWebhook, Threat, UsageLog, User,
+)
 from backend.models.schemas import UserOut
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -108,3 +113,60 @@ async def me(request: Request, db: AsyncSession = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+
+@router.delete("/account")
+async def delete_account(request: Request, db: AsyncSession = Depends(get_db)):
+    """계정 및 모든 관련 데이터 영구 삭제."""
+    user_id = request.session.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="로그인이 필요합니다")
+
+    # 1. 위협에 연결된 알림 먼저 삭제
+    threat_ids = (
+        await db.execute(select(Threat.id).where(Threat.user_id == user_id))
+    ).scalars().all()
+    if threat_ids:
+        await db.execute(delete(Alert).where(Alert.threat_id.in_(threat_ids)))
+
+    # 2. 위협
+    await db.execute(delete(Threat).where(Threat.user_id == user_id))
+
+    # 3. 키워드
+    await db.execute(delete(Keyword).where(Keyword.user_id == user_id))
+
+    # 4. 프로파일 하위 항목 → 프로파일
+    profile_ids = (
+        await db.execute(select(CustomerProfile.id).where(CustomerProfile.user_id == user_id))
+    ).scalars().all()
+    if profile_ids:
+        await db.execute(delete(CustomerAlias).where(CustomerAlias.profile_id.in_(profile_ids)))
+        await db.execute(delete(CustomerSocialAccount).where(CustomerSocialAccount.profile_id.in_(profile_ids)))
+        await db.execute(delete(CustomerExecutive).where(CustomerExecutive.profile_id.in_(profile_ids)))
+    await db.execute(delete(CustomerProfile).where(CustomerProfile.user_id == user_id))
+
+    # 5. 기타 사용자 데이터
+    await db.execute(delete(CompetitorKeyword).where(CompetitorKeyword.user_id == user_id))
+    await db.execute(delete(CompetitorMention).where(CompetitorMention.user_id == user_id))
+    await db.execute(delete(HashtagTrend).where(HashtagTrend.user_id == user_id))
+    await db.execute(delete(OutboundWebhook).where(OutboundWebhook.user_id == user_id))
+    await db.execute(delete(UsageLog).where(UsageLog.user_id == user_id))
+
+    # 6. 조직 처리 — 소유 조직은 초대코드·멤버·조직 순으로 삭제
+    owned_org_ids = (
+        await db.execute(select(Organization.id).where(Organization.owner_user_id == user_id))
+    ).scalars().all()
+    if owned_org_ids:
+        await db.execute(delete(InviteCode).where(InviteCode.org_id.in_(owned_org_ids)))
+        await db.execute(delete(OrganizationMember).where(OrganizationMember.org_id.in_(owned_org_ids)))
+        await db.execute(delete(Organization).where(Organization.id.in_(owned_org_ids)))
+
+    # 7. 다른 조직에서 멤버 제거
+    await db.execute(delete(OrganizationMember).where(OrganizationMember.user_id == user_id))
+
+    # 8. 유저 삭제
+    await db.execute(delete(User).where(User.id == user_id))
+    await db.commit()
+
+    request.session.clear()
+    return {"ok": True}

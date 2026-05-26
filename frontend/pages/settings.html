@@ -390,6 +390,39 @@
         </div>
       </div>
 
+      <!-- ── 플랜 및 결제 섹션 ──────────────────────────────────────────── -->
+      <div style="margin-top:24px;" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div style="padding:14px 20px;border-bottom:1px solid rgba(0,0,0,.06);">
+          <h2 style="font-weight:700;font-size:14px;color:#0c1428;">플랜 및 결제</h2>
+          <p style="font-size:11px;color:rgba(12,20,40,.40);margin-top:2px;">현재 구독 상태와 플랜을 확인합니다</p>
+        </div>
+        <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div id="plan-badge" style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;background:rgba(12,20,40,0.06);color:#0c1428;">로딩 중...</div>
+            <div>
+              <p id="plan-name" style="font-size:13px;font-weight:700;color:#0c1428;"></p>
+              <p id="plan-desc" style="font-size:11px;color:rgba(12,20,40,.45);margin-top:1px;"></p>
+            </div>
+          </div>
+          <a href="/billing/checkout" id="btn-upgrade" style="display:none;padding:8px 18px;border-radius:7px;background:#1a6ef8;border:none;color:#fff;font-size:13px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;text-decoration:none;">업그레이드</a>
+        </div>
+      </div>
+
+      <!-- ── 위험 구역 (계정 탈퇴) ──────────────────────────────────────── -->
+      <div style="margin-top:24px;margin-bottom:24px;" class="rounded-xl border border-red-200 overflow-hidden">
+        <div style="padding:14px 20px;border-bottom:1px solid rgba(220,38,38,.12);background:rgba(220,38,38,.03);">
+          <h2 style="font-weight:700;font-size:14px;color:#dc2626;">위험 구역</h2>
+          <p style="font-size:11px;color:rgba(12,20,40,.40);margin-top:2px;">아래 작업은 되돌릴 수 없습니다</p>
+        </div>
+        <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+          <div>
+            <p style="font-size:13px;font-weight:700;color:#0c1428;">계정 탈퇴</p>
+            <p style="font-size:11px;color:rgba(12,20,40,.45);margin-top:2px;">계정과 모든 데이터(위협·키워드·프로파일·팀)가 영구 삭제됩니다</p>
+          </div>
+          <button onclick="confirmDeleteAccount()" style="padding:8px 18px;border-radius:7px;border:1.5px solid #dc2626;background:transparent;color:#dc2626;font-size:13px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">계정 탈퇴</button>
+        </div>
+      </div>
+
       <!-- 업그레이드 모달 -->
       <div id="upgrade-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;">
         <div style="background:#fff;border-radius:16px;padding:32px;max-width:360px;width:90%;text-align:center;">
@@ -1003,6 +1036,64 @@ document.getElementById('comp-confirm').addEventListener('click', async () => {
 });
 
 loadCompetitorKeywords();
+</script>
+
+<script>
+// ── 플랜 및 결제 ───────────────────────────────────────────────────────────────
+const PLAN_INFO = {
+  free:    { label: 'FREE', color: '#6b7280', bg: 'rgba(107,114,128,.1)', name: '무료 플랜', desc: '기본 모니터링 기능 제공' },
+  starter: { label: 'STARTER', color: '#1a6ef8', bg: 'rgba(26,110,248,.1)', name: 'Starter 플랜', desc: '팀 협업 및 고급 분석 포함' },
+  pro:     { label: 'PRO', color: '#7c3aed', bg: 'rgba(124,58,237,.1)', name: 'Pro 플랜', desc: '무제한 스캔 및 전체 기능 제공' },
+};
+
+async function loadPlanInfo() {
+  try {
+    const user = await fetch('/auth/me').then(r => r.ok ? r.json() : null);
+    if (!user) return;
+    const tier = user.subscription_tier || 'free';
+    const info = PLAN_INFO[tier] || PLAN_INFO.free;
+
+    const badge = document.getElementById('plan-badge');
+    badge.textContent = info.label;
+    badge.style.background = info.bg;
+    badge.style.color = info.color;
+
+    document.getElementById('plan-name').textContent = info.name;
+    document.getElementById('plan-desc').textContent = info.desc;
+
+    if (tier === 'free') {
+      document.getElementById('btn-upgrade').style.display = 'block';
+    }
+  } catch (_) {}
+}
+
+// ── 계정 탈퇴 ──────────────────────────────────────────────────────────────────
+async function confirmDeleteAccount() {
+  const first = confirm('정말로 계정을 탈퇴하시겠습니까?\n\n모든 데이터(위협, 키워드, 프로파일, 팀)가 영구 삭제되며 복구할 수 없습니다.');
+  if (!first) return;
+
+  const email = document.getElementById('user-email').textContent;
+  const input = prompt(`탈퇴를 확인하려면 이메일 주소를 입력하세요:\n${email}`);
+  if (input !== email) {
+    alert('이메일이 일치하지 않습니다. 탈퇴가 취소되었습니다.');
+    return;
+  }
+
+  try {
+    const res = await fetch('/auth/account', { method: 'DELETE' });
+    if (res.ok) {
+      alert('계정이 삭제되었습니다.');
+      location.href = '/';
+    } else {
+      const d = await res.json();
+      alert('탈퇴 실패: ' + (d.detail || '알 수 없는 오류'));
+    }
+  } catch (e) {
+    alert('탈퇴 요청 중 오류가 발생했습니다: ' + e.message);
+  }
+}
+
+loadPlanInfo();
 </script>
 </body>
 </html>
