@@ -21,9 +21,15 @@ _POLAR_API = "https://api.polar.sh/v1"
 @router.get("/checkout")
 async def checkout(
     request: Request,
+    plan: str = "starter",
     current_user: dict = Depends(get_current_user),
 ):
-    if not settings.polar_access_token or not settings.polar_product_id:
+    if plan == "pro":
+        product_id = settings.polar_product_id_pro
+    else:
+        product_id = settings.polar_product_id_starter
+
+    if not settings.polar_access_token or not product_id:
         raise HTTPException(status_code=503, detail="결제 서비스가 설정되지 않았습니다")
 
     try:
@@ -32,7 +38,7 @@ async def checkout(
                 f"{_POLAR_API}/checkouts/",
                 headers={"Authorization": f"Bearer {settings.polar_access_token}"},
                 json={
-                    "product_id": settings.polar_product_id,
+                    "product_id": product_id,
                     "customer_email": current_user["email"],
                     "success_url": str(request.base_url),
                 },

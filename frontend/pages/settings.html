@@ -404,7 +404,10 @@
               <p id="plan-desc" style="font-size:11px;color:rgba(12,20,40,.45);margin-top:1px;"></p>
             </div>
           </div>
-          <a href="/billing/checkout" id="btn-upgrade" style="display:none;padding:8px 18px;border-radius:7px;background:#1a6ef8;border:none;color:#fff;font-size:13px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;text-decoration:none;">업그레이드</a>
+          <div id="btn-upgrade" style="display:none;gap:6px;">
+            <a href="/billing/checkout?plan=starter" style="padding:8px 14px;border-radius:7px;background:#1a6ef8;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;text-decoration:none;">Starter 업그레이드</a>
+            <a href="/billing/checkout?plan=pro" style="padding:8px 14px;border-radius:7px;background:#0c1428;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;text-decoration:none;">Pro 업그레이드</a>
+          </div>
         </div>
       </div>
 
@@ -430,7 +433,8 @@
           <h3 style="font-size:16px;font-weight:800;color:#0c1428;margin-bottom:8px;">플랜 업그레이드 필요</h3>
           <p id="upgrade-message" style="font-size:13px;color:rgba(12,20,40,.6);margin-bottom:20px;"></p>
           <div style="display:flex;gap:8px;justify-content:center;">
-            <button onclick="location.href='/billing/checkout'" style="padding:9px 20px;border-radius:8px;background:#1a6ef8;border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'NanumSquare',sans-serif;">업그레이드</button>
+            <button onclick="location.href='/billing/checkout?plan=starter'" style="padding:9px 16px;border-radius:8px;background:#1a6ef8;border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'NanumSquare',sans-serif;">Starter</button>
+            <button onclick="location.href='/billing/checkout?plan=pro'" style="padding:9px 16px;border-radius:8px;background:#0c1428;border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'NanumSquare',sans-serif;">Pro</button>
             <button onclick="document.getElementById('upgrade-modal').style.display='none'" style="padding:9px 16px;border-radius:8px;border:1px solid rgba(0,0,0,.12);background:transparent;font-size:13px;color:rgba(12,20,40,.6);cursor:pointer;font-family:'NanumSquare',sans-serif;">취소</button>
           </div>
         </div>
@@ -1062,7 +1066,7 @@ async function loadPlanInfo() {
     document.getElementById('plan-desc').textContent = info.desc;
 
     if (tier === 'free') {
-      document.getElementById('btn-upgrade').style.display = 'block';
+      document.getElementById('btn-upgrade').style.display = 'flex';
     }
   } catch (_) {}
 }
