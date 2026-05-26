@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.config import settings
 from backend.db.database import get_db
-from backend.models.orm import User
+from backend.models.orm import CustomerProfile, User
 from backend.models.schemas import UserOut
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -63,7 +63,12 @@ async def callback(request: Request, db: AsyncSession = Depends(get_db)):
     request.session["user_avatar"] = user.avatar_url or ""
     request.session["subscription_status"] = user.subscription_status
 
-    return RedirectResponse("/dashboard")
+    profile_result = await db.execute(
+        select(CustomerProfile).where(CustomerProfile.user_id == user.id).limit(1)
+    )
+    has_profile = profile_result.scalar_one_or_none() is not None
+
+    return RedirectResponse("/dashboard" if has_profile else "/onboarding")
 
 
 @router.get("/demo-status")
