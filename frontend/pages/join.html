@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAYbrand — 조직 참여</title>
+  <script>(function(){var t=localStorage.getItem('db-theme')||'dark';document.documentElement.setAttribute('data-theme',t);}());</script>
+  <link rel="stylesheet" href="/assets/css/custom.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{brand:{500:'#1a6ef8',600:'#1558cc'}}}}}</script>
+</head>
+<body style="font-family:'NanumSquare','Noto Sans KR',sans-serif;background:var(--db-bg);color:var(--db-text-1);min-height:100vh;display:flex;align-items:center;justify-content:center;">
+
+<div style="width:100%;max-width:420px;padding:24px;">
+  <div style="background:var(--db-surface);border:1px solid var(--db-border);border-radius:16px;padding:32px;">
+
+    <div style="text-align:center;margin-bottom:28px;">
+      <a href="/" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;margin-bottom:20px;">
+        <img src="/saybrand-logo2.png" alt="" style="width:28px;height:auto;" onerror="this.style.display='none'" />
+        <span style="font-weight:800;font-size:16px;color:var(--db-text-1);">SAYbrand</span>
+      </a>
+      <h1 style="font-size:20px;font-weight:800;color:var(--db-text-1);margin-bottom:6px;">초대코드로 참여</h1>
+      <p style="font-size:13px;color:var(--db-text-3);">받은 초대코드 8자리를 입력하세요</p>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <input id="code-input" type="text" maxlength="8" placeholder="ABCD1234"
+        style="width:100%;padding:14px 16px;border-radius:10px;border:1px solid var(--db-border);background:var(--db-bg);color:var(--db-text-1);font-size:20px;font-family:'JetBrains Mono',monospace;font-weight:700;text-align:center;letter-spacing:0.15em;text-transform:uppercase;outline:none;box-sizing:border-box;"
+        oninput="this.value=this.value.toUpperCase()" />
+    </div>
+
+    <button id="btn-join"
+      style="width:100%;padding:13px;border-radius:10px;background:#1a6ef8;border:none;color:#fff;font-size:14px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;margin-bottom:12px;">
+      참여하기
+    </button>
+
+    <div id="join-result" style="display:none;padding:12px 14px;border-radius:8px;font-size:13px;text-align:center;"></div>
+
+    <div style="margin-top:16px;text-align:center;">
+      <a href="/dashboard" style="font-size:12px;color:var(--db-text-3);text-decoration:none;">← 대시보드로 돌아가기</a>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('btn-join').addEventListener('click', joinOrg);
+document.getElementById('code-input').addEventListener('keydown', e => { if (e.key === 'Enter') joinOrg(); });
+
+async function joinOrg() {
+  const code = document.getElementById('code-input').value.trim();
+  if (code.length !== 8) { showResult('코드는 8자리입니다.', false); return; }
+
+  const btn = document.getElementById('btn-join');
+  btn.disabled = true;
+  btn.textContent = '처리 중...';
+
+  try {
+    const res = await fetch('/api/orgs/join', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showResult(data.message || '참여 완료!', true);
+      if (data.status === 'active') {
+        setTimeout(() => location.href = '/dashboard', 1500);
+      }
+    } else {
+      showResult(data.detail || '오류가 발생했습니다.', false);
+    }
+  } catch (e) {
+    showResult('네트워크 오류가 발생했습니다.', false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '참여하기';
+  }
+}
+
+function showResult(msg, success) {
+  const el = document.getElementById('join-result');
+  el.style.display = 'block';
+  el.style.background = success ? 'rgba(22,163,74,0.1)' : 'rgba(220,38,38,0.1)';
+  el.style.color = success ? '#16a34a' : '#dc2626';
+  el.style.border = `1px solid ${success ? 'rgba(22,163,74,0.2)' : 'rgba(220,38,38,0.2)'}`;
+  el.textContent = msg;
+}
+</script>
+</body>
+</html>

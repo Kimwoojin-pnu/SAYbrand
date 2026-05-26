@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAYbrand — 새 조직 만들기</title>
+  <script>(function(){var t=localStorage.getItem('db-theme')||'dark';document.documentElement.setAttribute('data-theme',t);}());</script>
+  <link rel="stylesheet" href="/assets/css/custom.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{brand:{500:'#1a6ef8',600:'#1558cc'}}}}}</script>
+</head>
+<body style="font-family:'NanumSquare','Noto Sans KR',sans-serif;background:var(--db-bg);color:var(--db-text-1);min-height:100vh;display:flex;align-items:center;justify-content:center;">
+
+<div style="width:100%;max-width:480px;padding:24px;">
+  <div style="background:var(--db-surface);border:1px solid var(--db-border);border-radius:16px;padding:32px;">
+
+    <div style="text-align:center;margin-bottom:28px;">
+      <a href="/" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;margin-bottom:20px;">
+        <img src="/saybrand-logo2.png" alt="" style="width:28px;height:auto;" onerror="this.style.display='none'" />
+        <span style="font-weight:800;font-size:16px;color:var(--db-text-1);">SAYbrand</span>
+      </a>
+      <h1 style="font-size:20px;font-weight:800;color:var(--db-text-1);margin-bottom:6px;">새 조직 만들기</h1>
+      <p style="font-size:13px;color:var(--db-text-3);">팀을 만들고 함께 브랜드를 모니터링하세요</p>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:20px;">
+      <div>
+        <label style="display:block;font-size:12px;font-weight:700;color:var(--db-text-2);margin-bottom:6px;">조직명 <span style="color:#dc2626;">*</span></label>
+        <input id="org-name" type="text" placeholder="예: ACME 코퍼레이션"
+          style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--db-border);background:var(--db-bg);color:var(--db-text-1);font-size:13px;font-family:'NanumSquare',sans-serif;outline:none;box-sizing:border-box;" />
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;font-weight:700;color:var(--db-text-2);margin-bottom:6px;">설명 (선택)</label>
+        <textarea id="org-desc" rows="2" placeholder="조직에 대한 간단한 설명"
+          style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--db-border);background:var(--db-bg);color:var(--db-text-1);font-size:13px;font-family:'NanumSquare',sans-serif;outline:none;resize:none;box-sizing:border-box;"></textarea>
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;font-weight:700;color:var(--db-text-2);margin-bottom:8px;">멤버 초대 방식</label>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px 12px;border-radius:8px;border:1px solid var(--db-border);">
+            <input type="radio" name="invite_mode" value="approval" checked style="margin-top:2px;" />
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--db-text-1);">관리자 승인</div>
+              <div style="font-size:11px;color:var(--db-text-3);">초대코드로 요청 후 Owner/Admin 승인 필요</div>
+            </div>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px 12px;border-radius:8px;border:1px solid var(--db-border);">
+            <input type="radio" name="invite_mode" value="auto" style="margin-top:2px;" />
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--db-text-1);">자동 승인</div>
+              <div style="font-size:11px;color:var(--db-text-3);">초대코드만 있으면 즉시 참여</div>
+            </div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <button id="btn-create"
+      style="width:100%;padding:13px;border-radius:10px;background:#1a6ef8;border:none;color:#fff;font-size:14px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;margin-bottom:12px;">
+      조직 만들기
+    </button>
+
+    <div id="create-error" style="display:none;padding:10px 12px;border-radius:8px;background:rgba(220,38,38,0.1);border:1px solid rgba(220,38,38,0.2);color:#dc2626;font-size:13px;text-align:center;"></div>
+
+    <div style="margin-top:16px;text-align:center;">
+      <a href="/dashboard" style="font-size:12px;color:var(--db-text-3);text-decoration:none;">← 대시보드로 돌아가기</a>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('btn-create').addEventListener('click', createOrg);
+
+async function createOrg() {
+  const name = document.getElementById('org-name').value.trim();
+  if (!name) { showError('조직명을 입력하세요.'); return; }
+
+  const btn = document.getElementById('btn-create');
+  btn.disabled = true;
+  btn.textContent = '생성 중...';
+
+  const invite_mode = document.querySelector('[name=invite_mode]:checked').value;
+
+  try {
+    const res = await fetch('/api/orgs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        description: document.getElementById('org-desc').value.trim() || null,
+        invite_mode,
+      }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      await fetch(`/api/orgs/${data.id}/switch`, { method: 'POST' });
+      location.href = '/dashboard';
+    } else {
+      showError(data.detail || '오류가 발생했습니다.');
+    }
+  } catch (e) {
+    showError('네트워크 오류가 발생했습니다.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '조직 만들기';
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('create-error');
+  el.style.display = 'block';
+  el.textContent = msg;
+}
+</script>
+</body>
+</html>

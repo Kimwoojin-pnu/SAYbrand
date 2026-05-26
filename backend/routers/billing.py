@@ -1,0 +1,121 @@
+import hashlib
+import hmac
+import json
+
+import httpx
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import RedirectResponse
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from backend.config import settings
+from backend.db.database import get_db
+from backend.middleware.auth import get_current_user
+from backend.models.orm import User
+
+router = APIRouter(prefix="/billing", tags=["billing"])
+
+_POLAR_API = "https://api.polar.sh/v1"
+
+
+@router.get("/checkout")
+async def checkout(
+    request: Request,
+    current_user: dict = Depends(get_current_user),
+):
+    if not settings.polar_access_token or not settings.polar_product_id:
+        raise HTTPException(status_code=503, detail="결제 서비스가 설정되지 않았습니다")
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.post(
+                f"{_POLAR_API}/checkouts/",
+                headers={"Authorization": f"Bearer {settings.polar_access_token}"},
+                json={
+                    "product_id": settings.polar_product_id,
+                    "customer_email": current_user["email"],
+                    "success_url": str(request.base_url),
+                },
+            )
+        if resp.status_code not in (200, 201):
+            raise HTTPException(status_code=502, detail="결제 페이지 생성 실패")
+        return RedirectResponse(resp.json()["url"])
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=502, detail="결제 서비스 연결 실패")
+
+
+@router.post("/webhook")
+async def webhook(request: Request, db: AsyncSession = Depends(get_db)):
+    body = await request.body()
+
+    if settings.polar_webhook_secret:
+        webhook_id = request.headers.get("webhook-id", "")
+        timestamp = request.headers.get("webhook-timestamp", "")
+        sig_header = request.headers.get("webhook-signature", "")
+
+        msg = f"{webhook_id}.{timestamp}.{body.decode()}"
+        expected = hmac.new(
+            settings.polar_webhook_secret.encode(),
+            msg.encode(),
+            hashlib.sha256,
+        ).hexdigest()
+
+        valid = any(
+            part.split("=", 1)[1] == expected
+            for part in sig_header.split(" ")
+            if "=" in part
+        )
+        if not valid:
+            raise HTTPException(status_code=400, detail="Invalid webhook signature")
+
+    try:
+        event = json.loads(body)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+
+    event_type = event.get("type", "")
+    data = event.get("data", {})
+
+    customer_email = (
+        data.get("customer", {}).get("email") or data.get("customer_email")
+    )
+    if not customer_email:
+        return {"ok": True}
+
+    result = await db.execute(select(User).where(User.email == customer_email))
+    user = result.scalar_one_or_none()
+    if not user:
+        return {"ok": True}
+
+    from backend.models.orm import Organization, OrganizationMember
+    from backend.services.org_service import handle_subscription_cancelled
+
+    org_result = await db.execute(
+        select(Organization).where(Organization.owner_user_id == user.id).limit(1)
+    )
+    org = org_result.scalar_one_or_none()
+
+    if event_type == "subscription.created":
+        user.subscription_status = "active"
+        user.polar_customer_id = data.get("customer_id")
+        new_tier = data.get("product", {}).get("name", "starter").lower()
+        user.subscription_tier = new_tier
+        if org:
+            org.subscription_status = "active"
+            org.subscription_tier = new_tier
+            org.polar_subscription_id = data.get("id")
+    elif event_type == "subscription.cancelled":
+        user.subscription_status = "cancelled"
+        if org:
+            await handle_subscription_cancelled(org.id, db)
+            return {"ok": True}
+    elif event_type == "subscription.updated":
+        new_tier = data.get("product", {}).get("name", "starter").lower()
+        user.subscription_tier = new_tier
+        if org:
+            org.subscription_tier = new_tier
+
+    await db.commit()
+    return {"ok": True}

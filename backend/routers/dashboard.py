@@ -1,0 +1,403 @@
+from datetime import datetime, timedelta, timezone
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, func
+from backend.db.database import get_db
+from backend.middleware.auth import get_current_user
+from backend.middleware.org_context import optional_current_org, require_non_viewer
+from backend.models.orm import Keyword, Threat, Alert, User, Organization
+from backend.models.schemas import (
+    AlertResponse,
+    ModuleScore,
+    RiskScoreResponse,
+    StatsResponse,
+    StatusUpdateRequest,
+    ThreatBase,
+    ThreatListResponse,
+)
+
+router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
+
+
+def _apply_org_filter(query, org: Organization | None):
+    if org is not None:
+        return query.where(Threat.org_id == org.id)
+    return query
+
+
+@router.get("/stats", response_model=StatsResponse)
+async def get_stats(
+    org: Organization | None = Depends(optional_current_org),
+    db: AsyncSession = Depends(get_db),
+):
+    sev_result = await db.execute(
+        _apply_org_filter(
+            select(Threat.severity, func.count(Threat.id)).group_by(Threat.severity),
+            org,
+        )
+    )
+    sev = {row[0]: row[1] for row in sev_result}
+
+    status_result = await db.execute(
+        _apply_org_filter(
+            select(Threat.status, func.count(Threat.id)).group_by(Threat.status),
+            org,
+        )
+    )
+    sta = {row[0]: row[1] for row in status_result}
+
+    total = await db.execute(
+        _apply_org_filter(select(func.count(Threat.id)), org)
+    )
+
+    return StatsResponse(
+        total=total.scalar(),
+        critical=sev.get("critical", 0),
+        high=sev.get("high", 0),
+        medium=sev.get("medium", 0),
+        low=sev.get("low", 0),
+        active=sta.get("active", 0),
+        reviewing=sta.get("reviewing", 0),
+        resolved=sta.get("resolved", 0),
+    )
+
+
+@router.get("/risk-score", response_model=RiskScoreResponse)
+async def get_risk_score(
+    org: Organization | None = Depends(optional_current_org),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        _apply_org_filter(
+            select(Threat.module, func.avg(Threat.risk_score), func.count(Threat.id))
+            .group_by(Threat.module),
+            org,
+        )
+    )
+    module_data = {row[0]: {"avg": float(row[1] or 0), "count": row[2]} for row in result}
+
+    a = module_data.get("A", {"avg": 0, "count": 0})
+    b = module_data.get("B", {"avg": 0, "count": 0})
+    c = module_data.get("C", {"avg": 0, "count": 0})
+
+    overall = a["avg"] * 0.40 + b["avg"] * 0.35 + c["avg"] * 0.25
+
+    if overall >= 80:
+        level = "CRITICAL"
+    elif overall >= 60:
+        level = "HIGH"
+    elif overall >= 35:
+        level = "MEDIUM"
+    else:
+        level = "LOW"
+
+    return RiskScoreResponse(
+        overall=round(overall, 1),
+        module_a=ModuleScore(module="A", score=round(a["avg"], 1), threat_count=a["count"]),
+        module_b=ModuleScore(module="B", score=round(b["avg"], 1), threat_count=b["count"]),
+        module_c=ModuleScore(module="C", score=round(c["avg"], 1), threat_count=c["count"]),
+        level=level,
+    )
+
+
+@router.get("/threats", response_model=ThreatListResponse)
+async def get_threats(
+    severity: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=50),
+    org: Organization | None = Depends(optional_current_org),
+    db: AsyncSession = Depends(get_db),
+):
+    base = _apply_org_filter(select(Threat), org)
+    count_base = _apply_org_filter(select(func.count(Threat.id)), org)
+
+    if severity:
+        base = base.where(Threat.severity == severity)
+        count_base = count_base.where(Threat.severity == severity)
+    if status:
+        base = base.where(Threat.status == status)
+        count_base = count_base.where(Threat.status == status)
+
+    total = (await db.execute(count_base)).scalar()
+    items_result = await db.execute(
+        base.order_by(Threat.risk_score.desc(), Threat.detected_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    items = items_result.scalars().all()
+
+    return ThreatListResponse(items=items, total=total, page=page, page_size=page_size)
+
+
+@router.get("/alerts", response_model=list[AlertResponse])
+async def get_alerts(
+    limit: int = Query(10, ge=1, le=50),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(Alert).order_by(Alert.sent_at.desc()).limit(limit))
+    return result.scalars().all()
+
+
+@router.patch("/threats/{threat_id}/status")
+async def update_threat_status(
+    threat_id: int,
+    body: StatusUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(Threat).where(Threat.id == threat_id))
+    threat = result.scalar_one_or_none()
+    if not threat:
+        raise HTTPException(status_code=404, detail="Threat not found")
+    if body.status not in ("active", "reviewing", "resolved"):
+        raise HTTPException(status_code=400, detail="Invalid status value")
+
+    threat.status = body.status
+    threat.updated_at = datetime.utcnow()
+    await db.commit()
+    return {"id": threat_id, "status": body.status}
+
+
+_CATEGORY_TO_THREAT_TYPE: dict[str, str] = {
+    "A1_impersonation_account":  "account_impersonation",
+    "A2_ceo_impersonation":      "account_impersonation",
+    "A3_product_counterfeit":    "logo_spoof",
+    "A4_logo_visual_abuse":      "logo_spoof",
+    "B1_product_safety_crisis":  "organized_rumor",
+    "B2_legal_crisis":           "organized_rumor",
+    "B3_financial_crisis":       "organized_rumor",
+    "B4_organized_attack_bot":   "organized_rumor",
+    "B5_consumer_complaint_high":"reputation_attack",
+    "B6_consumer_complaint_mid": "negative_comment",
+    "B7_fake_news_patterns":     "viral_rumor",
+    "B8_crisis_escalation":      "viral_rumor",
+    "B9_competitor_attack":      "competitor_mention",
+    "C1_executive_misconduct":   "reputation_attack",
+    "C2_internal_leak":          "organized_rumor",
+    "C3_labor_issue":            "negative_comment",
+    "C4_privacy_surveillance":   "organized_rumor",
+    "KR_community_slang":        "negative_comment",
+    "KR_sns_attack_patterns":    "organized_rumor",
+    "CRITICAL_BYPASS":           "organized_rumor",
+}
+
+
+@router.get("/trend")
+async def get_trend(
+    org: Organization | None = Depends(optional_current_org),
+    db: AsyncSession = Depends(get_db),
+):
+    """최근 7일 모듈별 위협 건수 반환."""
+    now = datetime.now(timezone.utc)
+    labels = []
+    module_a, module_b, module_c = [], [], []
+
+    for i in range(6, -1, -1):
+        day_start = (now - timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end   = day_start + timedelta(days=1)
+        labels.append("오늘" if i == 0 else f"{i}일전")
+
+        for module, lst in (("A", module_a), ("B", module_b), ("C", module_c)):
+            base_q = select(func.count(Threat.id)).where(
+                Threat.module == module,
+                Threat.detected_at >= day_start,
+                Threat.detected_at < day_end,
+            )
+            if org is not None:
+                base_q = base_q.where(Threat.org_id == org.id)
+            cnt = (await db.execute(base_q)).scalar() or 0
+            lst.append(cnt)
+
+    return {"labels": labels, "module_a": module_a, "module_b": module_b, "module_c": module_c}
+
+
+@router.get("/platform-stats")
+async def get_platform_stats(
+    org: Organization | None = Depends(optional_current_org),
+    db: AsyncSession = Depends(get_db),
+):
+    """플랫폼별 위협 건수 반환."""
+    base_q = select(Threat.platform, func.count(Threat.id)).group_by(Threat.platform)
+    if org is not None:
+        base_q = base_q.where(Threat.org_id == org.id)
+    result = await db.execute(base_q)
+    data = {row[0]: row[1] for row in result}
+    total = sum(data.values()) or 1
+    platforms = ["instagram", "x", "youtube", "tiktok", "naver"]
+    return [
+        {"platform": p, "count": data.get(p, 0), "pct": round(data.get(p, 0) / total * 100)}
+        for p in platforms
+    ]
+
+
+class ScanRequest(BaseModel):
+    keywords: list[str] = []
+    platforms: str = "all"
+
+
+@router.post("/scan")
+async def post_scan(
+    body: ScanRequest,
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+    org: Organization | None = Depends(optional_current_org),
+    _: None = Depends(require_non_viewer),
+):
+    """
+    Vercel: Celery 워커(Railway)에 태스크 발행.
+    로컬: Celery 없으면 직접 실행 fallback.
+    """
+    from backend.config import settings
+    from backend.models.orm import CustomerProfile
+
+    uid = user["id"]
+
+    if settings.is_vercel:
+        # Vercel 환경: Railway 워커에 태스크 발행
+        profile_result = await db.execute(
+            select(CustomerProfile).where(CustomerProfile.user_id == uid)
+        )
+        profile = profile_result.scalar_one_or_none()
+        if not profile:
+            return {"success": False, "message": "프로파일을 먼저 등록해주세요."}
+
+        try:
+            from backend.workers.collection_tasks import collect_single_profile
+            task = collect_single_profile.delay(profile.id, uid)
+            return {
+                "success": True,
+                "task_id": task.id,
+                "message": "수집을 시작했습니다. 30초 후 새로고침하세요.",
+                "is_async": True,
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"워커 서버에 연결할 수 없습니다: {str(e)}",
+            }
+
+    # 로컬 환경: 직접 실행
+    from backend.services.pipeline import run_scan
+
+    keywords = body.keywords
+    if not keywords:
+        kw_result = await db.execute(
+            select(Keyword.keyword).where(Keyword.user_id == uid, Keyword.active.is_(True))
+        )
+        keywords = [r[0] for r in kw_result.all()]
+
+    if not keywords:
+        raise HTTPException(status_code=400, detail="등록된 키워드가 없습니다. 먼저 키워드를 추가해 주세요.")
+
+    result = await run_scan(uid, keywords, body.platforms, db)
+    return result
+
+
+@router.post("/scan-local")
+async def post_scan_local(
+    body: ScanRequest,
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+    _: None = Depends(require_non_viewer),
+):
+    """
+    로컬 개발 전용: Celery 없이 직접 실행.
+    프로덕션(Vercel)에서는 비활성화.
+    """
+    from backend.config import settings
+    if settings.is_vercel:
+        raise HTTPException(status_code=403, detail="프로덕션에서는 사용 불가")
+
+    from backend.services.pipeline import run_scan
+
+    uid = user["id"]
+    keywords = body.keywords
+    if not keywords:
+        kw_result = await db.execute(
+            select(Keyword.keyword).where(Keyword.user_id == uid, Keyword.active.is_(True))
+        )
+        keywords = [r[0] for r in kw_result.all()]
+
+    if not keywords:
+        raise HTTPException(status_code=400, detail="등록된 키워드가 없습니다. 먼저 키워드를 추가해 주세요.")
+
+    result = await run_scan(uid, keywords, body.platforms, db)
+    return result
+
+
+@router.get("/scan")
+async def manual_scan(
+    keyword: str = Query(..., description="검색 키워드"),
+    platforms: str = Query("all", description="naver | x | all"),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    키워드로 Naver·X를 수집하고 L1 필터를 통과한 결과를 Threat으로 저장한다.
+    API 키 없으면 Mock 데이터로 동작한다.
+    """
+    from backend.services.collectors.naver import NaverCollector
+    from backend.services.collectors.x_twitter import XTwitterCollector
+    from backend.services.analyzers.l1_filter import l1_filter
+
+    # 데모/MVP — 첫 번째 유저에 귀속
+    user_result = await db.execute(select(User).limit(1))
+    user = user_result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="등록된 유저가 없습니다")
+
+    posts: list[dict] = []
+    if platforms in ("naver", "all"):
+        posts += await NaverCollector().search(keyword, limit=25)
+    if platforms in ("x", "all"):
+        posts += await XTwitterCollector().search(keyword, limit=10)
+
+    now = datetime.now(timezone.utc)
+    threats_created = 0
+
+    for post in posts:
+        result = l1_filter(post["content"], brand_keywords=[keyword])
+        if not result["pass"]:
+            continue
+
+        cats = result.get("matched_categories", [])
+        threat_type = _CATEGORY_TO_THREAT_TYPE.get(cats[0], "keyword_match") if cats else "keyword_match"
+        module = cats[0][0] if cats and cats[0][0] in ("A", "B", "C") else "B"
+
+        published = post.get("published_at") or now
+        # published가 naive datetime이면 UTC로 간주
+        if published.tzinfo is None:
+            published = published.replace(tzinfo=timezone.utc)
+
+        threat = Threat(
+            user_id=user.id,
+            module=module,
+            threat_type=threat_type,
+            severity=result["severity"] or "low",
+            platform=post["platform"],
+            source_account=post["source_account"],
+            source_url=post["post_url"],
+            content_preview=post["content"][:500],
+            confidence=result["score"],
+            risk_score=int(result["score"] * 100),
+            bot_probability=None,
+            is_organized=False,
+            post_published_at=published,
+            engagements_per_hour=0.0,
+            detected_at=now,
+            updated_at=now,
+        )
+        db.add(threat)
+        threats_created += 1
+
+    if threats_created:
+        await db.commit()
+
+    return {
+        "keyword": keyword,
+        "platforms": platforms,
+        "collected": len(posts),
+        "l1_passed": threats_created,
+        "threats_created": threats_created,
+    }

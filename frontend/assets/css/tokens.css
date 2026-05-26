@@ -1,0 +1,97 @@
+/*
+ * tokens.css — 디자인 토큰 단일 소스
+ *
+ * 색상·폰트·간격·그림자를 여기서만 수정하면 전체 UI가 바뀝니다.
+ * HTML/JS 파일을 수정하지 않아도 됩니다.
+ */
+
+:root {
+  /* ── Brand ─────────────────────────────────────────── */
+  --clr-brand:        #1a6ef8;
+  --clr-brand-hover:  #1558d4;
+  --clr-brand-light:  #eff4ff;
+  --clr-brand-ring:   #bfdbfe;
+
+  /* ── Surfaces ──────────────────────────────────────── */
+  --clr-bg:             #f8fafc;   /* 페이지 배경 */
+  --clr-surface:        #ffffff;   /* 카드/패널 */
+  --clr-surface-alt:    #f1f5f9;   /* 약간 어두운 surface */
+  --clr-border:         #e2e8f0;   /* 일반 구분선 */
+  --clr-border-subtle:  #f1f5f9;   /* 테이블 row 구분선 */
+
+  /* ── Sidebar ───────────────────────────────────────── */
+  --clr-sidebar:              #0f172a;
+  --clr-sidebar-item-hover:   rgba(255, 255, 255, 0.06);
+  --clr-sidebar-item-active:  rgba(255, 255, 255, 0.10);
+  --clr-sidebar-border:       rgba(255, 255, 255, 0.08);
+  --clr-sidebar-text:         #94a3b8;
+  --clr-sidebar-text-active:  #ffffff;
+  --clr-sidebar-logo-bg:      var(--clr-brand);
+  --sidebar-w:                240px;
+
+  /* ── Text ──────────────────────────────────────────── */
+  --clr-text-1:  #0f172a;   /* 주요 텍스트 */
+  --clr-text-2:  #475569;   /* 보조 텍스트 */
+  --clr-text-3:  #94a3b8;   /* 힌트/레이블 */
+
+  /* ── Severity ──────────────────────────────────────── */
+  --clr-critical:      #dc2626;
+  --clr-critical-bg:   #fef2f2;
+  --clr-critical-ring: #fecaca;
+  --clr-high:          #ea580c;
+  --clr-high-bg:       #fff7ed;
+  --clr-high-ring:     #fed7aa;
+  --clr-medium:        #d97706;
+  --clr-medium-bg:     #fffbeb;
+  --clr-medium-ring:   #fde68a;
+  --clr-low:           #16a34a;
+  --clr-low-bg:        #f0fdf4;
+  --clr-low-ring:      #bbf7d0;
+
+  /* ── Status ────────────────────────────────────────── */
+  --clr-status-active-text:     #dc2626;
+  --clr-status-active-bg:       #fef2f2;
+  --clr-status-reviewing-text:  #2563eb;
+  --clr-status-reviewing-bg:    #eff6ff;
+  --clr-status-resolved-text:   #94a3b8;
+  --clr-status-resolved-bg:     #f8fafc;
+
+  /* ── Modules ───────────────────────────────────────── */
+  --clr-module-a-text:  #7c3aed;
+  --clr-module-a-bg:    #f5f3ff;
+  --clr-module-b-text:  #0369a1;
+  --clr-module-b-bg:    #f0f9ff;
+  --clr-module-c-text:  #0f766e;
+  --clr-module-c-bg:    #f0fdfa;
+
+  /* ── Typography ────────────────────────────────────── */
+  --font-display:  'Syne', sans-serif;
+  --font-body:     'Noto Sans KR', sans-serif;
+  --font-mono:     'JetBrains Mono', monospace;
+
+  --text-xs:   11px;
+  --text-sm:   13px;
+  --text-base: 14px;
+  --text-lg:   16px;
+  --text-xl:   18px;
+  --text-2xl:  22px;
+  --text-3xl:  30px;
+
+  /* ── Shape ─────────────────────────────────────────── */
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   18px;
+  --radius-full: 9999px;
+
+  /* ── Elevation ─────────────────────────────────────── */
+  --shadow-sm:    0 1px 2px rgb(0 0 0 / 0.05);
+  --shadow-card:  0 1px 3px rgb(0 0 0 / 0.07), 0 1px 2px rgb(0 0 0 / 0.05);
+  --shadow-panel: 0 25px 50px rgb(0 0 0 / 0.14);
+
+  /* ── Layout ────────────────────────────────────────── */
+  --header-h:    56px;
+  --content-px:  24px;
+  --content-py:  24px;
+  --card-p:      20px;
+}

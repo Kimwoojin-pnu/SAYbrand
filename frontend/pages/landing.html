@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAYbrand — AI 브랜드 보호 플랫폼</title>
+  <meta name="description" content="사칭 계정, 가짜뉴스, 조직적 공격까지 — SAYbrand AI가 SNS 전 영역에서 위협을 사전 탐지하고 즉각 대응 전략을 제안합니다." />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="/assets/css/landing.css" />
+  <script>(function(){var t=localStorage.getItem('ld-theme')||'dark';document.documentElement.setAttribute('data-theme',t);}());</script>
+</head>
+<body>
+
+<!-- ────────────────────────────────────────────────────────────────── -->
+<!-- ① 탑 네비게이션                                                   -->
+<!-- ────────────────────────────────────────────────────────────────── -->
+<nav class="ld-nav" id="ld-nav">
+  <div class="ld-container">
+    <div class="ld-nav-inner">
+
+      <!-- Logo -->
+      <a href="/" class="ld-nav-logo">
+        <img src="/saybrand-logo2.png" alt="" class="ld-nav-logo-img"
+             onerror="this.style.display='none'" />
+        <span class="ld-nav-logo-text">SAYbrand</span>
+      </a>
+
+      <!-- Center links -->
+      <ul class="ld-nav-links">
+        <li><a href="#features">제품</a></li>
+        <li><a href="#pipeline">솔루션</a></li>
+        <li><a href="#pricing">요금</a></li>
+        <li><a href="#footer">자료실</a></li>
+      </ul>
+
+      <!-- Actions -->
+      <div class="ld-nav-actions">
+        <button class="ld-theme-toggle" id="theme-toggle" aria-label="다크모드 전환">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </button>
+        <a href="/login" class="ld-btn ld-btn--outlined ld-btn--sm">로그인</a>
+        <a href="/login" class="ld-btn ld-btn--dark ld-btn--sm">무료로 시작</a>
+      </div>
+
+      <!-- Hamburger -->
+      <button class="ld-nav-hamburger" id="hamburger" aria-label="메뉴">
+        <span></span><span></span><span></span>
+      </button>
+
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile menu -->
+<div class="ld-mobile-menu" id="mobile-menu">
+  <a href="#features">제품</a>
+  <a href="#pipeline">솔루션</a>
+  <a href="#pricing">요금</a>
+  <a href="#footer">자료실</a>
+  <a href="/login" style="color:#1d5fa8;font-weight:700;border:none;">로그인 / 무료로 시작 →</a>
+</div>
+
+
+<!-- ────────────────────────────────────────────────────────────────── -->
+<!-- ② 히어로 섹션                                                     -->
+<!-- ────────────────────────────────────────────────────────────────── -->
+<section class="ld-hero">
+  <div class="ld-container">
+    <div class="ld-hero-inner">
+
+      <!-- Left: Text -->
+      <div class="ld-hero-text">
+        <p class="ld-label">BRAND PROTECTION INTELLIGENCE</p>
+        <h1 class="ld-h1">
+          당신의 브랜드를<br>
+          24시간 지키는 AI의 눈
+        </h1>
+        <p class="ld-body" style="margin-top:20px;">
+          사칭 계정, 가짜뉴스, 조직적 공격까지 — SAYbrand AI가
+          SNS 전 영역에서 위협을 사전 탐지하고 즉각 대응 전략을 제안합니다.
+        </p>
+
+        <div class="ld-hero-ctas">
+          <a href="/login" class="ld-btn ld-btn--dark ld-btn--lg">14일 무료 체험</a>
+          <a href="#pipeline" class="ld-btn ld-btn--outlined ld-btn--lg">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polygon points="10 8 16 12 10 16 10 8"/>
+            </svg>
+            데모 영상 보기
+          </a>
+        </div>
+
+        <div class="ld-hero-trust">
+          <span class="ld-hero-trust-item">14일 무료</span>
+          <span class="ld-hero-trust-item">신용카드 불필요</span>
+          <span class="ld-hero-trust-item">5분 안에 시작</span>
+        </div>
+      </div>
+
+      <!-- Right: Product Mockup -->
+      <div class="ld-hero-visual">
+        <div class="hero-glow"></div>
+
+        <!-- Dashboard mockup -->
+        <div class="ld-product-mockup">
+          <!-- Browser chrome -->
+          <div class="mockup-chrome">
+            <div class="chrome-dots">
+              <span class="chrome-dot chrome-dot-red"></span>
+              <span class="chrome-dot chrome-dot-yellow"></span>
+              <span class="chrome-dot chrome-dot-green"></span>
+            </div>
+            <div class="chrome-url">saybrand.ai/dashboard</div>
+          </div>
+
+          <!-- Dashboard body -->
+          <div class="mockup-body">
+            <!-- Mini sidebar -->
+            <div class="mockup-sidebar">
+              <div class="mockup-sidebar-logo">
+                <div class="mockup-logo-icon">
+                  <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+                </div>
+                <span class="mockup-logo-label">SAYbrand</span>
+              </div>
+              <div class="mockup-nav-item active">대시보드</div>
+              <div class="mockup-nav-item">위협 목록</div>
+              <div class="mockup-nav-item">리포트</div>
+              <div class="mockup-nav-item">설정</div>
+            </div>
+
+            <!-- Main area -->
+            <div class="mockup-main">
+              <!-- KPIs -->
+              <div class="mockup-kpis">
+                <div class="mockup-kpi">
+                  <div class="mockup-kpi-label">CRITICAL</div>
+                  <div class="mockup-kpi-value red">14</div>
+                </div>
+                <div class="mockup-kpi">
+                  <div class="mockup-kpi-label">리스크 스코어</div>
+                  <div class="mockup-kpi-value orange">82.4</div>
+                </div>
+                <div class="mockup-kpi">
+                  <div class="mockup-kpi-label">오늘 탐지</div>
+                  <div class="mockup-kpi-value">247</div>
+                </div>
+              </div>
+
+              <!-- Gauge + threats -->
+              <div class="mockup-gauge-row">
+                <div class="mockup-gauge">
+                  <svg viewBox="0 0 100 62">
+                    <path d="M10 58 A40 40 0 0 1 90 58" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="7" stroke-linecap="round"/>
+                    <path d="M10 58 A40 40 0 0 1 82 28" fill="none" stroke="#ea580c" stroke-width="7" stroke-linecap="round"/>
+                    <text x="50" y="50" text-anchor="middle" font-size="14" font-weight="800" fill="#ea580c" font-family="sans-serif">82.4</text>
+                    <text x="50" y="60" text-anchor="middle" font-size="5.5" fill="rgba(255,255,255,.35)" font-family="sans-serif">HIGH RISK</text>
+                  </svg>
+                </div>
+                <div class="mockup-threats-mini">
+                  <div class="mockup-threat-row">
+                    <span class="mockup-badge critical">CRITICAL</span>
+                    <span class="mockup-threat-name">@fake_brand_kr</span>
+                    <span class="mockup-platform">Instagram</span>
+                  </div>
+                  <div class="mockup-threat-row">
+                    <span class="mockup-badge high">HIGH</span>
+                    <span class="mockup-threat-name">가짜뉴스 1.2K RT</span>
+                    <span class="mockup-platform">X</span>
+                  </div>
+                  <div class="mockup-threat-row">
+                    <span class="mockup-badge medium">MEDIUM</span>
+                    <span class="mockup-threat-name">사칭 쇼핑몰 발견</span>
+                    <span class="mockup-platform">Naver</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Alert bar -->
+              <div style="background:rgba(220,38,38,.12);border:1px solid rgba(220,38,38,.20);border-radius:4px;padding:7px 10px;display:flex;align-items:center;gap:6px;">
+                <span style="width:6px;height:6px;border-radius:50%;background:#dc2626;flex-shrink:0;"></span>
+                <span style="font-size:8px;color:#fca5a5;font-weight:400;">신규 위협 탐지 — @fake_samsung_official · 방금 전</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Score card — top-left overlay -->
+        <div class="mock-score-card">
+          <p class="mock-score-label">브랜드 위협 지수</p>
+          <p class="mock-score-number" id="hero-score">0</p>
+          <p class="mock-score-sub">↑ 12 지난 24시간</p>
+        </div>
+
+        <!-- Alert card — bottom-right overlay -->
+        <div class="mock-alert-card">
+          <div class="mock-alert-dot critical"></div>
+          <div>
+            <p class="mock-alert-title">새 위협 탐지</p>
+            <p class="mock-alert-sub">@fake_brand_kr — Instagram</p>
+          </div>
+          <span class="mock-alert-badge">CRITICAL</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ────────────────────────────────────────────────────────────────── -->
+<!-- ③ 소셜 프루프 / 스탯 바                                           -->
+<!-- ────────────────────────────────────────────────────────────────── -->
+<section class="ld-section--sm ld-section--alt animate-section">
+  <div class="ld-container">
+    <p class="ld-stats-tagline">이미 수천 개 브랜드가 SAYbrand로 지켜지고 있습니다</p>
+    <div class="ld-stats-grid">
+      <div class="ld-stat-item">
+        <div class="ld-stat-number" data-count="12400" data-suffix="+">12,400+</div>
+        <div class="ld-stat-label">모니터링 키워드</div>
+      </div>
+      <div class="ld-stat-item">
+        <div class="ld-stat-number" data-count="9.2" data-suffix="M">9.2M</div>
+        <div class="ld-stat-label">일일 분석 콘텐츠</div>
+      </div>
+      <div class="ld-stat-item">
+        <div class="ld-stat-number" data-count="47" data-suffix="초">47초</div>
+        <div class="ld-stat-label">평균 위협 탐지 시간</div>
+      </div>
+      <div class="ld-stat-item">
+        <div class="ld-stat-number" data-count="67" data-prefix="NPS ">NPS 67</div>
+        <div class="ld-stat-label">고객 만족도</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ────────────────────────────────────────────────────────────────── -->
+<!-- ④ 피처 A — 모듈 A 브랜드 사칭 탐지                              -->
+<!-- ────────────────────────────────────────────────────────────────── -->
+<section class="ld-section animate-section" id="features">
+  <div class="ld-container">
+    <div class="ld-feature">
+
+      <!-- Text -->
+      <div class="ld-feature-text">
+        <p class="ld-label ld-label--accent">MODULE A · VISION AI</p>
+        <h2 class="ld-h2">변형된 로고도<br>놓치지 않습니다</h2>
+        <p class="ld-body ld-feature-body">
+          pHash와 CLIP 기반 이미지 유사도 비교로 95% 이상 정확도를 달성합니다.
+          CEO·모델 사칭 계정과 워터마크를 제거한 이미지까지 실시간으로 탐지합니다.
+        </p>
+        <ul class="ld-checklist">
+          <li>95%+ 정확도의 로고 변형 탐지</li>
+          <li>사칭 계정 행동 패턴 분석</li>
+          <li>자동 신고 가이드 생성</li>
+          <li>법적 대응 근거 자료 제공</li>
+        </ul>
+      </div>
+
+      <!-- Visual: Threat card demo -->
+      <div>
+        <div class="ld-threat-card-demo feature-card">
+          <div class="threat-demo-header">
+            <span class="threat-demo-badge">CRITICAL</span>
+            <span class="threat-demo-score">97</span>
+          </div>
+          <div class="threat-demo-body">
+            <div class="threat-demo-account">
+              <div class="threat-demo-avatar">S</div>
+              <div>
+                <div class="threat-demo-handle">@fake_samsung_official</div>
+                <div class="threat-demo-meta">팔로워 12,400 · Instagram · 2시간 전 발견</div>
+              </div>
+            </div>
+            <div class="threat-demo-findings">
+              <div class="threat-demo-finding">
+                <span class="finding-dot"></span>
+                로고 유사도 94.3% — 변형 로고 사용
+              </div>
+              <div class="threat-demo-finding">
+                <span class="finding-dot"></span>
+                사칭 계정 행동 패턴 감지 (DM 스캠 위험)
+              </div>
+              <div class="threat-demo-finding">
+                <span class="finding-dot"></span>
+                허위 공식 마크 표시 확인
+              </div>
+            </div>
+          </div>
+          <div class="threat-demo-actions">
+            <button class="threat-action-btn primary">신고 가이드 생성</button>
+            <button class="threat-action-btn">자세히 보기</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ────────────────────────────────────────────────────────────────── -->
+<!-- ⑤ 피처 B — 모듈 B 가짜뉴스 분석                                 -->
+<!-- ────────────────────────────────────────────────────────────────── -->
+<section class="ld-section ld-section--alt animate-section">
+  <div class="ld-container">
+    <div class="ld-feature">
+
+      <!-- Visual: Bot network SVG -->
+      <div class="bot-network-wrap feature-card">
+        <svg viewBox="0 0 360 240" xmlns="http://www.w3.org/2000/svg">
+          <!-- Connection lines — bots to relay -->
+          <line x1="80"  y1="60"  x2="180" y2="120" stroke="rgba(220,38,38,.25)"  stroke-width="1.5"/>
+          <line x1="60"  y1="110" x2="180" y2="120" stroke="rgba(220,38,38,.25)"  stroke-width="1.5"/>
+          <line x1="90"  y1="160" x2="180" y2="120" stroke="rgba(220,38,38,.25)"  stroke-width="1.5"/>
+          <line x1="50"  y1="190" x2="180" y2="120" stroke="rgba(220,38,38,.20)"  stroke-width="1"/>
+          <line x1="110" y1="200" x2="180" y2="120" stroke="rgba(220,38,38,.20)"  stroke-width="1"/>
+          <!-- Relay to brand -->
+          <line x1="180" y1="120" x2="290" y2="120" stroke="rgba(29,95,168,.40)"  stroke-width="2" stroke-dasharray="6 3"/>
+          <!-- Real users (gray) -->
+          <line x1="270" y1="55"  x2="290" y2="120" stroke="rgba(100,120,160,.25)" stroke-width="1"/>
+          <line x1="310" y1="60"  x2="290" y2="120" stroke="rgba(100,120,160,.25)" stroke-width="1"/>
+          <line x1="320" y1="185" x2="290" y2="120" stroke="rgba(100,120,160,.25)" stroke-width="1"/>
+          <!-- Bot nodes (red cluster) -->
+          <circle cx="80"  cy="60"  r="14" fill="rgba(220,38,38,.12)" stroke="#dc2626" stroke-width="1.5"/>
+          <circle cx="60"  cy="110" r="12" fill="rgba(220,38,38,.12)" stroke="#dc2626" stroke-width="1.5"/>
+          <circle cx="90"  cy="160" r="16" fill="rgba(220,38,38,.15)" stroke="#dc2626" stroke-width="1.5"/>
+          <circle cx="50"  cy="190" r="10" fill="rgba(220,38,38,.10)" stroke="#dc2626" stroke-width="1"/>
+          <circle cx="110" cy="200" r="11" fill="rgba(220,38,38,.10)" stroke="#dc2626" stroke-width="1"/>
+          <!-- Bot labels -->
+          <text x="80"  y="64"  text-anchor="middle" font-size="7.5" fill="#dc2626" font-family="monospace">BOT</text>
+          <text x="60"  y="114" text-anchor="middle" font-size="7.5" fill="#dc2626" font-family="monospace">BOT</text>
+          <text x="90"  y="164" text-anchor="middle" font-size="7.5" fill="#dc2626" font-family="monospace">BOT</text>
+          <!-- Bot probability badge -->
+          <rect x="22" y="40" width="48" height="16" rx="3" fill="#dc2626"/>
+          <text x="46" y="51" text-anchor="middle" font-size="7" fill="white" font-family="sans-serif" font-weight="700">BOT 94%</text>
+          <!-- Relay node -->
+          <circle cx="180" cy="120" r="22" fill="rgba(29,95,168,.10)" stroke="#1d5fa8" stroke-width="2"/>
+          <text x="180" y="117" text-anchor="middle" font-size="7" fill="#1d5fa8" font-family="sans-serif">RELAY</text>
+          <text x="180" y="127" text-anchor="middle" font-size="6" fill="rgba(29,95,168,.60)" font-family="sans-serif">계정</text>
+          <!-- Brand node -->
+          <circle cx="290" cy="120" r="26" fill="rgba(29,95,168,.08)" stroke="#1d5fa8" stroke-width="2.5"/>
+          <text x="290" y="116" text-anchor="middle" font-size="8" fill="#1d5fa8" font-family="sans-serif" font-weight="700">브랜드</text>
+          <text x="290" y="128" text-anchor="middle" font-size="6.5" fill="rgba(29,95,168,.55)" font-family="sans-serif">@official</text>
+          <!-- Real user nodes (gray) -->
+          <circle cx="270" cy="55"  r="11" fill="rgba(148,163,184,.15)" stroke="#94a3b8" stroke-width="1"/>
+          <circle cx="310" cy="60"  r="10" fill="rgba(148,163,184,.15)" stroke="#94a3b8" stroke-width="1"/>
+          <circle cx="320" cy="185" r="11" fill="rgba(148,163,184,.15)" stroke="#94a3b8" stroke-width="1"/>
+          <text x="270" y="58"  text-anchor="middle" font-size="6.5" fill="#94a3b8" font-family="sans-serif">USER</text>
+          <text x="310" y="63"  text-anchor="middle" font-size="6.5" fill="#94a3b8" font-family="sans-serif">USER</text>
+          <text x="320" y="188" text-anchor="middle" font-size="6.5" fill="#94a3b8" font-family="sans-serif">USER</text>
+          <!-- Legend -->
+          <circle cx="20"  cy="225" r="5" fill="rgba(220,38,38,.15)" stroke="#dc2626" stroke-width="1"/>
+          <text x="30" y="229" font-size="8" fill="#64748b" font-family="sans-serif">봇 계정 (조직적 공격)</text>
+          <circle cx="170" cy="225" r="5" fill="rgba(148,163,184,.15)" stroke="#94a3b8" stroke-width="1"/>
+          <text x="180" y="229" font-size="8" fill="#64748b" font-family="sans-serif">일반 사용자</text>
+          <circle cx="290" cy="225" r="5" fill="rgba(29,95,168,.10)" stroke="#1d5fa8" stroke-width="1"/>
+          <text x="300" y="229" font-size="8" fill="#64748b" font-family="sans-serif">공식 계정</text>
+        </svg>
+      </div>
+
+      <!-- Text -->
+      <div class="ld-feature-text">
+        <p class="ld-label ld-label--accent">MODULE B · NLP + NETWORK</p>
+        <h2 class="ld-h2">조직적 공격과<br>진짜 불만을 구분합니다</h2>
+        <p class="ld-body ld-feature-body">
+          봇 확률 알고리즘과 전파 속도 분석, 텍스트 유사성 군집화로
+          조직적 부정 캠페인을 실시간으로 감지합니다.
+          진짜 고객 피드백은 소중하게, 봇 공격은 즉각 대응합니다.
+        </p>
+        <div class="ld-differentiator">
+          단순 악플은 노이즈로 처리, 조직적 봇 공격은 즉각 대응 — 불필요한 법적 비용을 막습니다.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ────────────────────────────────────────────────────────────────── -->
+<!-- ⑥ 다크 심층 분석 섹션 — AI 파이프라인                           -->
+<!-- ────────────────────────────────────────────────────────────────── -->
+<section class="ld-section ld-section--dark animate-section" id="pipeline">
+  <div class="ld-container">
+    <div style="text-align:center;margin-bottom:0;">
+      <p class="ld-label ld-label--brand">AI ANALYSIS PIPELINE</p>
+      <h2 class="ld-h2 ld-h2--dark">3단계 AI 레이어로<br>비용은 줄이고 정확도는 높입니다</h2>
+    </div>
+
+    <div class="ld-pipeline-cards">
+      <!-- L1 -->
+      <div class="ld-pipeline-card">
+        <p class="ld-pipeline-step">01 · L1 FILTER</p>
+        <h3 class="ld-pipeline-title">규칙 기반 필터</h3>
+        <p class="ld-pipeline-cost">키워드 매칭 · 비용 $0</p>
+        <span class="ld-pipeline-share">70%</span>
+        <p class="ld-pipeline-share-label">콘텐츠 처리</p>
+        <ul style="list-style:none;margin-top:16px;display:flex;flex-direction:column;gap:7px;">
+          <li style="font-size:12px;color:rgba(255,255,255,.40);display:flex;align-items:center;gap:7px;">
+            <span style="width:4px;height:4px;border-radius:50%;background:rgba(79,163,245,.5);flex-shrink:0;"></span>
+            키워드·정규식 1차 필터링
+          </li>
+          <li style="font-size:12px;color:rgba(255,255,255,.40);display:flex;align-items:center;gap:7px;">
+            <span style="width:4px;height:4px;border-radius:50%;background:rgba(79,163,245,.5);flex-shrink:0;"></span>
+            명백한 무관 콘텐츠 즉시 제거
+          </li>
+          <li style="font-size:12px;color:rgba(255,255,255,.40);display:flex;align-items:center;gap:7px;">
+            <span style="width:4px;height:4px;border-radius:50%;background:rgba(79,163,245,.5);flex-shrink:0;"></span>
+            처리 비용 $0 · 즉각 응답
+          </li>
+        </ul>
+      </div>
+
+      <!-- Arrow -->
+      <div class="ld-pipeline-arrow">→</div>
+
+      <!-- L2 -->
+      <div class="ld-pipeline-card">
+        <p class="ld-pipeline-step">02 · L2 ANALYSIS</p>
+        <h3 class="ld-pipeline-title">텍스트 + 이미지 분석</h3>
+        <p class="ld-pipeline-cost">Gemini Flash + Vision API</p>
+        <span class="ld-pipeline-share">25%</span>
+        <p class="ld-pipeline-share-label">콘텐츠 처리</p>
+        <ul style="list-style:none;margin-top:16px;display:flex;flex-direction:column;gap:7px;">
+          <li style="font-size:12px;color:rgba(255,255,255,.40);display:flex;align-items:center;gap:7px;">
+            <span style="width:4px;height:4px;border-radius:50%;background:rgba(79,163,245,.5);flex-shrink:0;"></span>
+            NLP 감성·의도 분류
+          </li>
+          <li style="font-size:12px;color:rgba(255,255,255,.40);display:flex;align-items:center;gap:7px;">
+            <span style="width:4px;height:4px;border-radius:50%;background:rgba(79,163,245,.5);flex-shrink:0;"></span>
+            pHash 이미지 유사도 비교
+          </li>
+          <li style="font-size:12px;color:rgba(255,255,255,.40);display:flex;align-items:center;gap:7px;">
+            <span style="width:4px;height:4px;border-radius:50%;background:rgba(79,163,245,.5);flex-shrink:0;"></span>
+            봇 계정 패턴 감지
+          </li>
+        </ul>
+      </div>
+
+      <!-- Arrow -->
+      <div class="ld-pipeline-arrow">→</div>
+
+      <!-- L3 -->
+      <div class="ld-pipeline-card" style="border-color:rgba(79,163,245,.25);">
+        <p class="ld-pipeline-step">03 · L3 DEEP AI</p>
+        <h3 class="ld-pipeline-title">Claude Haiku 4.5</h3>
+        <p class="ld-pipeline-cost">심층 분석 + 대응 전략 생성</p>
+        <span class="ld-pipeline-share" style="color:#4fa3f5;">5%</span>
+        <p class="ld-pipeline-share-label">고위협 콘텐츠만</p>
+        <ul style="list-style:none;margin-top:16px;display:flex;flex-direction:column;gap:7px;">
+          <li style="font-size:12px;color:rgba(255,255,255,.40);display:flex;align-items:center;gap:7px;">
+            <span style="width:4px;height:4px;border-radius:50%;background:rgba(79,163,245,.8);flex-shrink:0;"></span>
+            맥락 이해 기반 위협 평가
+          </li>
+          <li style="font-size:12px;color:rgba(255,255,255,.40);display:flex;align-items:center;gap:7px;">
+            <span style="width:4px;height:4px;border-radius:50%;background:rgba(79,163,245,.8);flex-shrink:0;"></span>
+            맞춤형 대응 전략 자동 생성
+          </li>
+          <li style="font-size:12px;color:rgba(255,255,255,.40);display:flex;align-items:center;gap:7px;">
+            <span style="width:4px;height:4px;border-radius:50%;background:rgba(79,163,245,.8);flex-shrink:0;"></span>
+            법적 신고 초안 작성 지원
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="ld-pipeline-tagline">
+      100명 사용 기준 월 <strong>$91</strong>로 동작 — 경쟁사 대비 <strong>80% 비용 절감</strong>
+    </p>
+  </div>
+</section>
+
+
+<!-- ────────────────────────────────────────────────────────────────── -->
+<!-- ⑦ 가격 섹션                                                       -->
+<!-- ────────────────────────────────────────────────────────────────── -->
+<section class="ld-section animate-section" id="pricing">
+  <div class="ld-container">
+    <div style="text-align:center;margin-bottom:0;">
+      <p class="ld-label ld-label--accent">PRICING</p>
+      <h2 class="ld-h2 ld-h2--center">사용한 만큼만 지불합니다</h2>
+    </div>
+
+    <div class="ld-pricing-grid">
+
+      <!-- Starter -->
+      <div class="ld-plan-card">
+        <p class="ld-plan-name">Starter</p>
+        <div class="ld-plan-price">₩29,000<span>/월</span></div>
+        <p class="ld-plan-desc">브랜드 모니터링을 처음 시작하는 팀을 위한 플랜</p>
+        <div class="ld-plan-divider"></div>
+        <ul class="ld-plan-features">
+          <li>키워드 최대 5개</li>
+          <li>SNS 채널 1개</li>
+          <li>주간 리포트</li>
+          <li>이메일 알림</li>
+          <li>L1 + L2 분석</li>
+        </ul>
+        <a href="/login" class="ld-plan-cta">무료로 시작</a>
+      </div>
+
+      <!-- Pro -->
+      <div class="ld-plan-card">
+        <p class="ld-plan-name" style="color:#1d5fa8;">Pro</p>
+        <div class="ld-plan-price">₩79,000<span>/월</span></div>
+        <p class="ld-plan-desc">성장하는 브랜드의 실시간 위협 대응을 위한 플랜</p>
+        <div class="ld-plan-divider"></div>
+        <ul class="ld-plan-features">
+          <li>키워드 최대 30개</li>
+          <li>SNS 채널 5개 전체</li>
+          <li>실시간 위협 알림</li>
+          <li>L1 + L2 + L3 심층 분석</li>
+          <li>사칭 계정 신고 자동화</li>
+          <li>PDF 리포트 생성</li>
+          <li>슬랙·이메일 통합</li>
+        </ul>
+        <a href="/login" class="ld-plan-cta ld-plan-cta--primary">14일 무료 체험</a>
+      </div>
+
+      <!-- Enterprise -->
+      <div class="ld-plan-card">
+        <p class="ld-plan-name">Enterprise</p>
+        <div class="ld-plan-price-custom">가격 문의</div>
+        <p class="ld-plan-desc">대기업·대형 브랜드를 위한 완전 맞춤형 플랜</p>
+        <div class="ld-plan-divider"></div>
+        <ul class="ld-plan-features">
+          <li>키워드 무제한</li>
+          <li>전 채널 모니터링</li>
+          <li>전담 매니저 배정</li>
+          <li>SLA 99.9% 보장</li>
+          <li>API 연동 지원</li>
+          <li>맞춤형 대시보드</li>
+        </ul>
+        <a href="mailto:sales@saybrand.ai" class="ld-plan-cta">영업팀 문의</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ────────────────────────────────────────────────────────────────── -->
+<!-- ⑧ 마무리 CTA 섹션                                                -->
+<!-- ────────────────────────────────────────────────────────────────── -->
+<section class="ld-cta-section animate-section">
+  <div class="ld-container">
+    <h2 class="ld-h2 ld-h2--center">
+      지금 5분 안에<br>브랜드 보호를 시작하세요
+    </h2>
+    <p class="ld-cta-sub">신용카드 없이 14일 무료 체험</p>
+    <div class="ld-cta-actions">
+      <a href="/login" class="ld-btn ld-btn--dark ld-btn--lg">무료 체험 시작</a>
+      <a href="mailto:sales@saybrand.ai" class="ld-btn ld-btn--outlined ld-btn--lg">영업팀 문의</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ────────────────────────────────────────────────────────────────── -->
+<!-- ⑨ 푸터                                                            -->
+<!-- ────────────────────────────────────────────────────────────────── -->
+<footer class="ld-footer" id="footer">
+  <div class="ld-container">
+    <div class="ld-footer-grid">
+
+      <!-- Col 1: Brand -->
+      <div>
+        <div class="ld-footer-logo">
+          <img src="/saybrand-logo2.png" alt="" class="ld-footer-logo-img"
+               onerror="this.style.display='none'" />
+          <span class="ld-footer-logo-text">SAYbrand</span>
+        </div>
+        <p class="ld-footer-mission">
+          AI가 SNS 전 영역을 24시간 감시해<br>
+          브랜드를 사칭·공격으로부터 지킵니다.
+        </p>
+        <div class="ld-footer-socials">
+          <!-- X (Twitter) -->
+          <a href="#" class="ld-footer-social" aria-label="X"><!-- TODO: SNS link -->
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+          </a>
+          <!-- LinkedIn -->
+          <a href="#" class="ld-footer-social" aria-label="LinkedIn"><!-- TODO: SNS link -->
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/>
+              <circle cx="4" cy="4" r="2"/>
+            </svg>
+          </a>
+          <!-- GitHub -->
+          <a href="#" class="ld-footer-social" aria-label="GitHub"><!-- TODO: SNS link -->
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Col 2: 제품 -->
+      <div>
+        <p class="ld-footer-col-title">제품</p>
+        <ul class="ld-footer-links">
+          <li><a href="/dashboard">대시보드</a></li><!-- TODO: 페이지 추가 시 링크 업데이트 -->
+          <li><a href="#features">모듈 A — 사칭 탐지</a></li>
+          <li><a href="#features">모듈 B — 가짜뉴스</a></li>
+          <li><a href="#pipeline">API 연동</a></li>
+        </ul>
+      </div>
+
+      <!-- Col 3: 회사 -->
+      <div>
+        <p class="ld-footer-col-title">회사</p>
+        <ul class="ld-footer-links">
+          <li><a href="#">소개</a></li><!-- TODO: 페이지 추가 시 링크 업데이트 -->
+          <li><a href="#">채용</a></li>
+          <li><a href="#">블로그</a></li>
+          <li><a href="#">보도자료</a></li>
+        </ul>
+      </div>
+
+      <!-- Col 4: 지원 -->
+      <div>
+        <p class="ld-footer-col-title">지원</p>
+        <ul class="ld-footer-links">
+          <li><a href="#">고객센터</a></li><!-- TODO: 페이지 추가 시 링크 업데이트 -->
+          <li><a href="#">보안 정책</a></li>
+          <li><a href="#">개인정보처리방침</a></li>
+          <li><a href="#">서비스 이용약관</a></li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- Bottom bar -->
+    <div class="ld-footer-bottom">
+      <p class="ld-footer-copy">© 2026 SAYbrand. All rights reserved.</p>
+      <div class="ld-footer-legal">
+        <a href="#">이용약관</a>
+        <a href="#">개인정보처리방침</a>
+        <a href="#">쿠키 정책</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+<!-- ────────────────────────────────────────────────────────────────── -->
+<!-- JS                                                                  -->
+<!-- ────────────────────────────────────────────────────────────────── -->
+<script>
+(function () {
+  'use strict';
+
+  /* ── countUp ──────────────────────────────────────────────────────── */
+  function countUp(el, duration) {
+    duration = duration || 1500;
+    var target = parseFloat(el.getAttribute('data-count'));
+    var suffix = el.getAttribute('data-suffix') || '';
+    var prefix = el.getAttribute('data-prefix') || '';
+    var isDecimal = target % 1 !== 0;
+    var start = performance.now();
+    function update(now) {
+      var progress = Math.min((now - start) / duration, 1);
+      var ease = 1 - Math.pow(1 - progress, 3);
+      var value = ease * target;
+      var display = isDecimal ? value.toFixed(1) : Math.floor(value).toLocaleString();
+      el.textContent = prefix + display + suffix;
+      if (progress < 1) {
+        requestAnimationFrame(update);
+      } else {
+        el.textContent = prefix + (isDecimal ? target.toFixed(1) : target.toLocaleString()) + suffix;
+      }
+    }
+    requestAnimationFrame(update);
+  }
+
+  /* ── Hero score countUp (1초 후 0→73) ────────────────────────────── */
+  var heroScore = document.getElementById('hero-score');
+  if (heroScore) {
+    setTimeout(function () {
+      var start = performance.now();
+      var target = 73;
+      var duration = 1500;
+      function update(now) {
+        var progress = Math.min((now - start) / duration, 1);
+        var ease = 1 - Math.pow(1 - progress, 3);
+        heroScore.textContent = Math.floor(ease * target);
+        if (progress < 1) requestAnimationFrame(update);
+      }
+      requestAnimationFrame(update);
+    }, 1000);
+  }
+
+  /* ── Stats bar countUp (Intersection Observer) ────────────────────── */
+  var statEls = document.querySelectorAll('[data-count]');
+  statEls.forEach(function (el) {
+    var suffix = el.getAttribute('data-suffix') || '';
+    var prefix = el.getAttribute('data-prefix') || '';
+    el.textContent = prefix + '0' + suffix;
+  });
+  if (statEls.length) {
+    var statsObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        countUp(entry.target);
+        statsObserver.unobserve(entry.target);
+      });
+    }, { threshold: 0.5 });
+    statEls.forEach(function (el) { statsObserver.observe(el); });
+  }
+
+  /* ── Section scroll-in animation ─────────────────────────────────── */
+  var animSections = document.querySelectorAll('.animate-section');
+  if (animSections.length) {
+    var sectionObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          sectionObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    animSections.forEach(function (el) { sectionObserver.observe(el); });
+  }
+
+  /* ── Dark mode toggle ────────────────────────────────────────────── */
+  var themeToggle = document.getElementById('theme-toggle');
+  themeToggle.addEventListener('click', function () {
+    var current = document.documentElement.getAttribute('data-theme');
+    var next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('ld-theme', next);
+  });
+
+  /* ── Nav scroll frosted glass ─────────────────────────────────────── */
+  var nav = document.getElementById('ld-nav');
+  window.addEventListener('scroll', function () {
+    nav.classList.toggle('scrolled', window.scrollY > 40);
+  }, { passive: true });
+
+  /* ── Hamburger toggle ─────────────────────────────────────────────── */
+  var hamburger = document.getElementById('hamburger');
+  var mobileMenu = document.getElementById('mobile-menu');
+  hamburger.addEventListener('click', function () {
+    mobileMenu.classList.toggle('open');
+  });
+  mobileMenu.querySelectorAll('a').forEach(function (a) {
+    a.addEventListener('click', function () { mobileMenu.classList.remove('open'); });
+  });
+
+  /* ── Smooth scroll ────────────────────────────────────────────────── */
+  document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      var target = document.querySelector(a.getAttribute('href'));
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+
+})();
+</script>
+
+</body>
+</html>

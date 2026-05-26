@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAYbrand — 로그인</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Noto+Sans+KR:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 500: 'var(--clr-brand)', 600: 'var(--clr-brand-hover)' },
+          },
+          fontFamily: {
+            display: ['Syne', 'sans-serif'],
+            body: ['Noto Sans KR', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Noto Sans KR', sans-serif; }
+    .grid-bg {
+      background-image:
+        linear-gradient(rgba(26,110,248,.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(26,110,248,.06) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 antialiased flex items-center justify-center grid-bg">
+
+  <div class="w-full max-w-sm px-6">
+
+    <!-- Back to home -->
+    <a href="/" class="flex items-center gap-1.5 text-slate-500 hover:text-slate-300 text-xs mb-8 transition-colors">
+      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      홈으로
+    </a>
+
+    <!-- Logo -->
+    <div class="flex flex-col items-center mb-10">
+      <div class="w-14 h-14 rounded-2xl bg-brand-500 flex items-center justify-center mb-4 shadow-lg shadow-brand-500/30">
+        <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+        </svg>
+      </div>
+      <h1 class="font-display font-bold text-2xl text-white tracking-tight">SAYbrand</h1>
+      <p class="text-slate-400 text-sm mt-1.5">브랜드 리스크를 실시간으로 감지합니다</p>
+    </div>
+
+    <!-- Card -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl">
+
+      <p class="text-sm text-slate-400 text-center mb-6">
+        계속하려면 Google 계정으로 로그인하세요
+      </p>
+
+      <!-- Google OAuth button -->
+      <a href="/auth/login"
+         class="flex items-center justify-center gap-3 w-full py-3 px-4 rounded-xl bg-white text-slate-800 font-semibold text-sm hover:bg-slate-100 transition-colors shadow-sm">
+        <!-- Google G logo -->
+        <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Google로 시작하기
+      </a>
+
+      <!-- Error message -->
+      <div id="error-msg" class="hidden mt-4 text-xs text-red-400 text-center bg-red-900/20 border border-red-800/40 rounded-lg py-2 px-3"></div>
+
+      <!-- Demo mode button (표시 여부는 서버에서 결정) -->
+      <div id="demo-section" class="hidden mt-4 pt-4 border-t border-slate-700">
+        <p class="text-xs text-slate-500 text-center mb-3">또는</p>
+        <a href="/auth/demo-login"
+           class="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl border border-slate-700 text-slate-300 text-sm hover:bg-slate-800 transition-colors">
+          <svg class="w-4 h-4 text-brand-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M13 12H3"/>
+          </svg>
+          데모로 보기 (로그인 없이)
+        </a>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <p class="text-center text-xs text-slate-600 mt-6">
+      로그인 시
+      <span class="text-slate-500">서비스 이용약관</span> 및
+      <span class="text-slate-500">개인정보처리방침</span>에 동의하는 것으로 간주됩니다
+    </p>
+
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const error = params.get('error');
+    if (error) {
+      const el = document.getElementById('error-msg');
+      const msgs = {
+        auth_failed: '인증에 실패했습니다. 다시 시도해주세요.',
+        no_email: 'Google 계정에서 이메일을 가져올 수 없습니다.',
+      };
+      el.textContent = msgs[error] || '로그인 중 오류가 발생했습니다.';
+      el.classList.remove('hidden');
+    }
+
+    fetch('/auth/demo-status')
+      .then(r => r.json())
+      .then(data => {
+        if (data.demo_mode) {
+          document.getElementById('demo-section').classList.remove('hidden');
+        }
+      })
+      .catch(() => {});
+  </script>
+</body>
+</html>

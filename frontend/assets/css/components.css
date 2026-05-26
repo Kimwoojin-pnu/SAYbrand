@@ -1,0 +1,180 @@
+/*
+ * components.css — 재사용 UI 컴포넌트
+ *
+ * tokens.css의 변수를 사용합니다.
+ * 디자인 변경 시 components.css는 건드리지 않아도 되도록 설계되었습니다.
+ * (대부분의 경우 tokens.css 수정만으로 충분합니다)
+ */
+
+/* ── Cards ─────────────────────────────────────────────────── */
+.ui-card {
+  background: var(--clr-surface);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--card-p);
+}
+
+/* ── Severity Badges ────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  line-height: 1.6;
+}
+.badge-critical { background: var(--clr-critical-bg); color: var(--clr-critical); box-shadow: inset 0 0 0 1px var(--clr-critical-ring); }
+.badge-high     { background: var(--clr-high-bg);     color: var(--clr-high);     box-shadow: inset 0 0 0 1px var(--clr-high-ring);     }
+.badge-medium   { background: var(--clr-medium-bg);   color: var(--clr-medium);   box-shadow: inset 0 0 0 1px var(--clr-medium-ring);   }
+.badge-low      { background: var(--clr-low-bg);      color: var(--clr-low);      box-shadow: inset 0 0 0 1px var(--clr-low-ring);      }
+
+/* ── Status Pills ───────────────────────────────────────────── */
+.status-pill {
+  display: inline-flex;
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  line-height: 1.6;
+}
+.status-active    { background: var(--clr-status-active-bg);    color: var(--clr-status-active-text);    }
+.status-reviewing { background: var(--clr-status-reviewing-bg); color: var(--clr-status-reviewing-text); }
+.status-resolved  { background: var(--clr-status-resolved-bg);  color: var(--clr-status-resolved-text);  }
+
+/* ── Module Tags ────────────────────────────────────────────── */
+.module-tag {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1.6;
+}
+.module-a { background: var(--clr-module-a-bg); color: var(--clr-module-a-text); }
+.module-b { background: var(--clr-module-b-bg); color: var(--clr-module-b-text); }
+.module-c { background: var(--clr-module-c-bg); color: var(--clr-module-c-text); }
+
+/* ── Buttons ────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-family: var(--font-body);
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s, opacity 0.15s;
+  text-decoration: none;
+}
+.btn-primary        { background: var(--clr-brand);       color: #fff; }
+.btn-primary:hover  { background: var(--clr-brand-hover); }
+.btn-ghost          { background: transparent; color: var(--clr-text-2); border: 1px solid var(--clr-border); }
+.btn-ghost:hover    { background: var(--clr-surface-alt); }
+.btn-google {
+  background: #fff;
+  color: var(--clr-text-1);
+  border: 1px solid var(--clr-border);
+  padding: 12px 24px;
+  font-size: var(--text-base);
+  font-weight: 600;
+  box-shadow: var(--shadow-card);
+  gap: 10px;
+}
+.btn-google:hover { background: var(--clr-surface-alt); }
+
+/* ── Status action buttons (detail panel) ───────────────────── */
+.status-action {
+  flex: 1;
+  padding: 8px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s;
+}
+.status-action-active    { background: var(--clr-critical-bg); color: var(--clr-critical);      border: 1px solid var(--clr-critical-ring);      }
+.status-action-reviewing { background: var(--clr-status-reviewing-bg); color: var(--clr-status-reviewing-text); border: 1px solid #bfdbfe; }
+.status-action-resolved  { background: var(--clr-surface);     color: var(--clr-text-2);        border: 1px solid var(--clr-border); }
+.status-action.is-current { outline: 2px solid var(--clr-brand); outline-offset: 2px; }
+
+/* ── Table ──────────────────────────────────────────────────── */
+.ui-table { width: 100%; border-collapse: collapse; }
+.ui-table thead th {
+  padding: 10px 16px;
+  text-align: left;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--clr-text-3);
+  background: var(--clr-surface-alt);
+  border-bottom: 1px solid var(--clr-border);
+}
+.ui-table tbody td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--clr-border-subtle);
+}
+.ui-table tbody tr[data-id] { cursor: pointer; transition: background 0.1s; }
+.ui-table tbody tr[data-id]:hover td { background: var(--clr-surface-alt); }
+
+/* ── Filter tabs ────────────────────────────────────────────── */
+.filter-group { display: flex; align-items: center; gap: 2px; background: var(--clr-surface-alt); border-radius: var(--radius-md); padding: 4px; }
+.filter-btn {
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--clr-text-2);
+  transition: all 0.15s;
+}
+.filter-btn.active { background: var(--clr-text-1); color: #fff; }
+
+.tab-group { display: flex; align-items: center; gap: 2px; }
+.tab-btn {
+  padding: 5px 10px;
+  font-size: var(--text-xs);
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--clr-text-3);
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab-btn.active { color: var(--clr-brand); border-bottom-color: var(--clr-brand); }
+
+/* ── Section title ──────────────────────────────────────────── */
+.section-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--text-base);
+  color: var(--clr-text-1);
+}
+
+/* ── Sidebar ────────────────────────────────────────────────── */
+.sidebar { background: var(--clr-sidebar); width: var(--sidebar-w); flex-shrink: 0; }
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--clr-sidebar-text);
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+.sidebar-nav-item:hover { background: var(--clr-sidebar-item-hover); color: var(--clr-sidebar-text-active); }
+.sidebar-nav-item.active { background: var(--clr-sidebar-item-active); color: var(--clr-sidebar-text-active); }
+.sidebar-divider { border-color: var(--clr-sidebar-border); }

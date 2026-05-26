@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAYbrand — 브랜드 리스크 대시보드</title>
+  <script>(function(){var t=localStorage.getItem('db-theme')||'dark';document.documentElement.setAttribute('data-theme',t);}());</script>
+  <link rel="stylesheet" href="/assets/css/custom.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>tailwind.config={theme:{extend:{colors:{brand:{500:'#1a6ef8'}}}}}</script>
+</head>
+<body style="font-family:'NanumSquare','Noto Sans KR',sans-serif;background:var(--db-bg);color:var(--db-text-1);">
+
+<div style="display:flex;height:100vh;overflow:hidden;">
+
+  <!-- ── Sidebar ─────────────────────────────────────────────────────── -->
+  <aside style="background:#0c1428;width:200px;flex-shrink:0;display:flex;flex-direction:column;">
+
+    <!-- Logo -->
+    <a href="/" target="_blank" style="display:flex;align-items:center;gap:10px;padding:18px 16px;border-bottom:1px solid rgba(255,255,255,0.08);text-decoration:none;">
+      <div style="width:34px;height:34px;overflow:hidden;flex-shrink:0;">
+        <img src="/saybrand-logo2.png" alt="" style="width:34px;height:auto;display:block;filter:brightness(1.8);" onerror="this.parentElement.style.display='none'" />
+      </div>
+      <span style="font-weight:700;font-size:15px;color:#ffffff;letter-spacing:-.02em;line-height:1;">SAYbrand</span>
+    </a>
+
+    <!-- Org selector -->
+    <div style="position:relative;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.08);">
+      <button id="org-selector-btn" onclick="toggleOrgMenu()" style="width:100%;display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:7px;border:none;background:rgba(255,255,255,0.06);cursor:pointer;text-align:left;">
+        <div id="org-avatar" style="width:24px;height:24px;border-radius:5px;background:#1a6ef8;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:800;">?</div>
+        <div style="flex:1;min-width:0;">
+          <div id="org-name-display" style="font-size:11px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">로딩 중...</div>
+          <div id="org-role-display" style="font-size:9px;color:rgba(255,255,255,0.4);margin-top:1px;">-</div>
+        </div>
+        <svg style="width:10px;height:10px;flex-shrink:0;color:rgba(255,255,255,0.4);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div id="org-menu" style="display:none;position:absolute;left:10px;right:10px;top:calc(100% - 4px);background:#131e35;border:1px solid rgba(255,255,255,0.12);border-radius:8px;overflow:hidden;z-index:100;box-shadow:0 4px 16px rgba(0,0,0,0.4);">
+        <div id="org-list" style="padding:4px 0;max-height:160px;overflow-y:auto;"></div>
+        <div style="border-top:1px solid rgba(255,255,255,0.08);padding:4px 0;">
+          <a href="/orgs/new" style="display:block;padding:8px 12px;font-size:11px;color:rgba(255,255,255,0.6);text-decoration:none;hover:background:rgba(255,255,255,0.05);">+ 새 조직 만들기</a>
+          <a href="/orgs/join" style="display:block;padding:8px 12px;font-size:11px;color:rgba(255,255,255,0.6);text-decoration:none;">초대코드로 참여</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <nav style="flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:2px;">
+      <a href="/dashboard" class="db-nav-item db-nav-active">
+        <svg style="width:16px;height:16px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+        </svg>
+        대시보드
+      </a>
+      <a href="/threats" class="db-nav-item">
+        <svg style="width:16px;height:16px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        현재 위협
+      </a>
+      <a href="/actions" class="db-nav-item">
+        <svg style="width:16px;height:16px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+        </svg>
+        처리해야할 사항
+      </a>
+      <a href="/brand-image" class="db-nav-item">
+        <svg style="width:16px;height:16px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/>
+        </svg>
+        브랜드 이미지
+      </a>
+      <a href="/negative-mentions" class="db-nav-item">
+        <svg style="width:16px;height:16px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+        </svg>
+        부정적 언급
+      </a>
+    </nav>
+
+    <!-- User -->
+    <div style="padding:12px 14px;border-top:1px solid rgba(255,255,255,0.08);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <img id="user-avatar" src="" alt="" style="width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0;display:none;" />
+        <div id="user-avatar-fallback" style="width:26px;height:26px;border-radius:50%;background:#1a6ef8;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;flex-shrink:0;">?</div>
+        <div style="min-width:0;">
+          <p id="user-name" style="font-size:11px;color:#fff;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">로딩 중...</p>
+          <p id="user-email" style="font-size:10px;color:rgba(255,255,255,0.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></p>
+        </div>
+      </div>
+      <a href="/settings" class="db-nav-item" style="padding:5px 8px;font-size:11px;">
+        <svg style="width:13px;height:13px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41M20 12h2M2 12h2M12 20v2M12 2v2"/>
+        </svg>
+        설정
+      </a>
+      <a href="/auth/logout" class="db-nav-item" style="padding:5px 8px;font-size:11px;">
+        <svg style="width:13px;height:13px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        로그아웃
+      </a>
+    </div>
+  </aside>
+
+  <!-- ── Main ────────────────────────────────────────────────────────── -->
+  <main class="db-main" style="flex:1;overflow-y:auto;background:var(--db-bg);">
+
+    <!-- Top header -->
+    <header class="db-topheader" style="position:sticky;top:0;z-index:10;background:var(--db-surface);border-bottom:1px solid var(--db-border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <h1 style="font-weight:800;font-size:15px;color:var(--db-text-1);letter-spacing:-.02em;">브랜드 리스크 대시보드</h1>
+        <p style="font-size:10px;color:var(--db-text-3);margin-top:1px;">최종 업데이트: <span id="last-updated" style="font-family:'JetBrains Mono',monospace;">로딩 중...</span></p>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(12,20,40,0.40);">
+          <span style="width:6px;height:6px;border-radius:50%;background:#1D9E75;display:inline-block;animation:pulse 1.5s infinite;"></span>
+          실시간 모니터링
+        </span>
+        <button class="db-theme-toggle" id="theme-toggle" aria-label="다크모드 전환">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <button id="btn-scan" style="display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:6px;background:#1a6ef8;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">
+          <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>스캔 실행
+        </button>
+        <button onclick="location.reload()" style="display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:6px;background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.08);color:rgba(12,20,40,0.55);font-size:12px;font-family:'NanumSquare',sans-serif;cursor:pointer;">
+          <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+          </svg>새로고침
+        </button>
+      </div>
+    </header>
+
+    <!-- Mock 배너 -->
+    <div id="mock-banner" style="display:none;align-items:center;gap:10px;padding:10px 24px;background:rgba(186,117,23,0.08);border-bottom:1px solid rgba(186,117,23,0.20);">
+      <span style="font-size:13px;">⚠️</span>
+      <p style="font-size:12px;color:#BA7517;">현재 데모 데이터를 표시 중입니다. 위의 <strong>스캔 실행</strong> 버튼을 눌러 실제 데이터 수집을 시작하세요.</p>
+    </div>
+
+    <div style="padding:20px;display:flex;flex-direction:column;gap:16px;">
+
+      <!-- KPI Cards -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
+        <div class="db-card">
+          <p class="db-kpi-label">CRITICAL</p>
+          <p id="stat-critical" class="db-kpi-number" style="color:#E24B4A;">—</p>
+          <p class="db-kpi-sub">즉각 대응 필요</p>
+        </div>
+        <div class="db-card">
+          <p class="db-kpi-label">HIGH</p>
+          <p id="stat-high" class="db-kpi-number" style="color:#BA7517;">—</p>
+          <p class="db-kpi-sub">당일 대응 권고</p>
+        </div>
+        <div class="db-card">
+          <p class="db-kpi-label">MEDIUM</p>
+          <p id="stat-medium" class="db-kpi-number" style="color:#185FA5;">—</p>
+          <p class="db-kpi-sub">모니터링 중</p>
+        </div>
+        <div class="db-card">
+          <p class="db-kpi-label">LOW</p>
+          <p id="stat-low" class="db-kpi-number" style="color:#1D9E75;">—</p>
+          <p class="db-kpi-sub">정기 리포트</p>
+        </div>
+      </div>
+
+      <!-- Trend Chart + Platform Stats -->
+      <div style="display:grid;grid-template-columns:1fr 340px;gap:14px;">
+
+        <!-- Trend Chart -->
+        <div class="db-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <h3 style="font-weight:700;font-size:13px;letter-spacing:-.01em;">위협 트렌드</h3>
+              <span style="font-size:10px;font-weight:300;letter-spacing:.06em;text-transform:uppercase;background:rgba(24,95,165,0.08);color:#185FA5;border-radius:4px;padding:2px 8px;">7일</span>
+            </div>
+            <div id="trend-filters" style="display:flex;gap:4px;">
+              <button class="trend-filter-btn active" data-dataset="">전체</button>
+              <button class="trend-filter-btn" data-dataset="0">모듈 A</button>
+              <button class="trend-filter-btn" data-dataset="1">모듈 B</button>
+              <button class="trend-filter-btn" data-dataset="2">모듈 C</button>
+            </div>
+          </div>
+          <div style="height:190px;position:relative;">
+            <canvas id="trendChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Platform Stats -->
+        <div class="db-card">
+          <h3 style="font-weight:700;font-size:13px;letter-spacing:-.01em;margin-bottom:14px;">플랫폼별 현황</h3>
+          <div id="platform-list"></div>
+        </div>
+      </div>
+
+      <!-- Risk Gauge + Alerts -->
+      <div style="display:grid;grid-template-columns:280px 1fr;gap:14px;">
+
+        <!-- Gauge -->
+        <div class="db-card" style="padding:18px 20px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <h2 style="font-weight:700;font-size:13px;letter-spacing:-.01em;">전체 리스크 지수</h2>
+          </div>
+          <div style="display:flex;justify-content:center;margin-top:4px;">
+            <svg viewBox="0 0 200 145" style="width:100%;max-width:200px;">
+              <path d="M 43.4 161.6 A 80 80 0 1 1 156.6 161.6" fill="none" stroke="#e2e8f0" stroke-width="14" stroke-linecap="round"/>
+              <path id="gauge-value" d="M 43.4 161.6 A 80 80 0 1 1 156.6 161.6" fill="none" stroke="#16a34a" stroke-width="14" stroke-linecap="round" stroke-dasharray="0 500" pathLength="376.99"/>
+              <text id="gauge-score" x="100" y="105" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="38" font-weight="700" fill="#16a34a">0</text>
+              <text id="gauge-level" x="100" y="126" text-anchor="middle" font-family="NanumSquare,sans-serif" font-size="10" fill="#64748b">—</text>
+              <text x="28" y="168" font-size="9" fill="#94a3b8" font-family="JetBrains Mono,monospace">0</text>
+              <text x="164" y="168" font-size="9" fill="#94a3b8" font-family="JetBrains Mono,monospace">100</text>
+            </svg>
+          </div>
+          <p id="gauge-action" style="font-size:11px;font-weight:700;text-align:center;margin-top:-6px;color:#16a34a;">—</p>
+          <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;">
+            <div id="module-a">
+              <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;margin-bottom:4px;">
+                <div style="display:flex;align-items:center;gap:5px;">
+                  <span style="width:16px;height:16px;border-radius:3px;background:rgba(226,75,74,0.12);color:#E24B4A;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;">A</span>
+                  <span style="color:#0c1428;">브랜드 사칭</span>
+                </div>
+                <div style="display:flex;gap:6px;">
+                  <span class="module-count" style="color:rgba(12,20,40,.38);font-family:'JetBrains Mono',monospace;font-size:10px;">—</span>
+                  <span class="module-score" style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10px;">—</span>
+                </div>
+              </div>
+              <div style="height:3px;background:rgba(0,0,0,.06);border-radius:2px;overflow:hidden;">
+                <div class="module-bar" style="width:0%;height:100%;border-radius:2px;"></div>
+              </div>
+            </div>
+            <div id="module-b">
+              <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;margin-bottom:4px;">
+                <div style="display:flex;align-items:center;gap:5px;">
+                  <span style="width:16px;height:16px;border-radius:3px;background:rgba(186,117,23,0.12);color:#BA7517;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;">B</span>
+                  <span style="color:#0c1428;">가짜뉴스·루머</span>
+                </div>
+                <div style="display:flex;gap:6px;">
+                  <span class="module-count" style="color:rgba(12,20,40,.38);font-family:'JetBrains Mono',monospace;font-size:10px;">—</span>
+                  <span class="module-score" style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10px;">—</span>
+                </div>
+              </div>
+              <div style="height:3px;background:rgba(0,0,0,.06);border-radius:2px;overflow:hidden;">
+                <div class="module-bar" style="width:0%;height:100%;border-radius:2px;"></div>
+              </div>
+            </div>
+            <div id="module-c">
+              <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;margin-bottom:4px;">
+                <div style="display:flex;align-items:center;gap:5px;">
+                  <span style="width:16px;height:16px;border-radius:3px;background:rgba(24,95,165,0.12);color:#185FA5;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;">C</span>
+                  <span style="color:#0c1428;">임직원 평판</span>
+                </div>
+                <div style="display:flex;gap:6px;">
+                  <span class="module-count" style="color:rgba(12,20,40,.38);font-family:'JetBrains Mono',monospace;font-size:10px;">—</span>
+                  <span class="module-score" style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10px;">—</span>
+                </div>
+              </div>
+              <div style="height:3px;background:rgba(0,0,0,.06);border-radius:2px;overflow:hidden;">
+                <div class="module-bar" style="width:0%;height:100%;border-radius:2px;"></div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding-top:14px;border-top:1px solid rgba(0,0,0,.06);">
+            <div style="text-align:center;">
+              <p id="stat-active" style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#E24B4A;font-size:16px;">—</p>
+              <p style="font-size:9px;color:rgba(12,20,40,.38);margin-top:2px;">활성</p>
+            </div>
+            <div style="text-align:center;">
+              <p id="stat-reviewing" style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#185FA5;font-size:16px;">—</p>
+              <p style="font-size:9px;color:rgba(12,20,40,.38);margin-top:2px;">검토중</p>
+            </div>
+            <div style="text-align:center;">
+              <p id="stat-total" style="font-family:'JetBrains Mono',monospace;font-weight:700;color:rgba(12,20,40,.50);font-size:16px;">—</p>
+              <p style="font-size:9px;color:rgba(12,20,40,.38);margin-top:2px;">전체</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alerts -->
+        <div class="db-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <h2 style="font-weight:700;font-size:13px;letter-spacing:-.01em;">최근 알림</h2>
+            <span style="display:flex;align-items:center;gap:5px;font-size:10px;color:rgba(12,20,40,.38);">
+              <span style="width:5px;height:5px;border-radius:50%;background:#E24B4A;animation:pulse 1.5s infinite;display:inline-block;"></span>
+              실시간
+            </span>
+          </div>
+          <div id="alerts-feed" style="max-height:300px;overflow-y:auto;">
+            <p style="color:rgba(12,20,40,.38);font-size:12px;text-align:center;padding:24px 0;">로딩 중...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Threat Table -->
+      <div class="db-card" style="padding:0;overflow:hidden;">
+        <div style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+          <h2 style="font-weight:700;font-size:13px;flex-shrink:0;">위협 목록</h2>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:2px;background:rgba(0,0,0,.04);border-radius:6px;padding:3px;">
+              <button class="filter-btn active" data-severity="">전체</button>
+              <button class="filter-btn" data-severity="critical">Critical</button>
+              <button class="filter-btn" data-severity="high">High</button>
+              <button class="filter-btn" data-severity="medium">Medium</button>
+              <button class="filter-btn" data-severity="low">Low</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:1px;padding-left:8px;border-left:1px solid rgba(0,0,0,.08);">
+              <button class="status-filter-btn active" data-status="">전체</button>
+              <button class="status-filter-btn" data-status="active">활성</button>
+              <button class="status-filter-btn" data-status="reviewing">검토중</button>
+              <button class="status-filter-btn" data-status="resolved">해결됨</button>
+            </div>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;font-size:12px;border-collapse:collapse;">
+            <thead>
+              <tr style="background:rgba(0,0,0,.02);border-bottom:1px solid rgba(0,0,0,.06);">
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">심각도</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">유형</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">플랫폼</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">계정</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">리스크</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">탐지</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">상태</th>
+              </tr>
+            </thead>
+            <tbody id="threat-tbody">
+              <tr><td colspan="7" style="padding:40px;text-align:center;color:rgba(12,20,40,.38);">로딩 중...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="padding:10px 18px;border-top:1px solid rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between;">
+          <span id="page-info" style="font-size:10px;color:rgba(12,20,40,.38);font-family:'JetBrains Mono',monospace;">—</span>
+          <div style="display:flex;gap:6px;">
+            <button id="btn-prev" style="padding:4px 10px;border-radius:4px;border:1px solid rgba(0,0,0,.10);font-size:11px;font-family:'NanumSquare',sans-serif;color:rgba(12,20,40,.55);background:#fff;cursor:pointer;">이전</button>
+            <button id="btn-next" style="padding:4px 10px;border-radius:4px;border:1px solid rgba(0,0,0,.10);font-size:11px;font-family:'NanumSquare',sans-serif;color:rgba(12,20,40,.55);background:#fff;cursor:pointer;">다음</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Brand Profile Panel ──────────────────────────────────────── -->
+      <div class="db-card" style="padding:0;overflow:hidden;">
+
+        <!-- Header -->
+        <div style="padding:14px 18px;border-bottom:1px solid rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <h2 style="font-weight:700;font-size:13px;letter-spacing:-.01em;color:#0c1428;">브랜드 프로필</h2>
+              <span style="font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:rgba(26,110,248,0.10);color:#1a6ef8;">AI 분석 연동</span>
+            </div>
+            <p style="font-size:10px;color:rgba(12,20,40,.38);margin-top:2px;">AI 엔진이 이 정보를 기반으로 위협 대상 판별·키워드 매칭·사칭 탐지를 수행합니다</p>
+          </div>
+        </div>
+
+        <!-- Body -->
+        <div style="padding:18px;">
+          <div style="display:grid;grid-template-columns:260px 1fr;gap:20px;align-items:start;">
+
+            <!-- Left: basic info -->
+            <div>
+              <p style="font-size:9px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.45);margin-bottom:12px;">기본 정보</p>
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div>
+                  <label style="font-size:10px;color:rgba(12,20,40,.45);display:block;margin-bottom:4px;">브랜드명 *</label>
+                  <input id="bp-name" type="text" placeholder="예: 삼성전자" class="bp-input" style="width:100%;padding:7px 10px;" />
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                  <div>
+                    <label style="font-size:10px;color:rgba(12,20,40,.45);display:block;margin-bottom:4px;">유형</label>
+                    <select id="bp-type" class="bp-select" style="width:100%;padding:7px 10px;">
+                      <option value="company">기업</option>
+                      <option value="individual">개인</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style="font-size:10px;color:rgba(12,20,40,.45);display:block;margin-bottom:4px;">업종</label>
+                    <input id="bp-industry" type="text" placeholder="전자·반도체" class="bp-input" style="width:100%;padding:7px 10px;" />
+                  </div>
+                </div>
+                <div>
+                  <label style="font-size:10px;color:rgba(12,20,40,.45);display:block;margin-bottom:4px;">브랜드 설명 <span style="color:rgba(12,20,40,.28);">(AI 컨텍스트)</span></label>
+                  <textarea id="bp-description" rows="3" placeholder="핵심 가치, 주요 제품·서비스, 시장 포지션 등을 입력하면 AI가 더 정확히 위협을 판단합니다." class="bp-textarea" style="width:100%;padding:7px 10px;resize:vertical;"></textarea>
+                </div>
+                <button id="bp-save-btn" style="padding:8px;border-radius:5px;background:#0c1428;border:none;color:#fff;font-size:11px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;width:100%;">저장</button>
+                <p id="bp-save-msg" style="font-size:10px;text-align:center;display:none;"></p>
+              </div>
+            </div>
+
+            <!-- Right: aliases + social + executives -->
+            <div style="display:flex;flex-direction:column;gap:16px;">
+
+              <!-- Aliases -->
+              <div>
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:8px;">
+                  <div>
+                    <p style="font-size:9px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.45);">브랜드 명칭 <span style="font-size:9px;font-weight:700;color:#185FA5;background:rgba(24,95,165,.08);padding:1px 5px;border-radius:3px;text-transform:none;letter-spacing:0;">키워드 매칭</span></p>
+                    <p style="font-size:10px;color:rgba(12,20,40,.30);margin-top:2px;">공식명·별칭·약칭·영문 등 탐지할 모든 명칭을 등록하세요</p>
+                  </div>
+                  <button id="bp-alias-add-btn" style="flex-shrink:0;padding:4px 10px;border-radius:4px;border:1px solid rgba(0,0,0,.12);background:transparent;font-size:11px;font-family:'NanumSquare',sans-serif;color:rgba(12,20,40,.55);cursor:pointer;white-space:nowrap;">+ 추가</button>
+                </div>
+                <div id="bp-aliases" style="display:flex;flex-wrap:wrap;gap:6px;min-height:24px;"></div>
+                <div id="bp-alias-form" style="display:none;margin-top:10px;gap:6px;align-items:center;flex-wrap:wrap;">
+                  <input id="bp-alias-input" type="text" placeholder="명칭 입력" class="bp-input" style="padding:5px 9px;width:140px;" />
+                  <select id="bp-alias-type" class="bp-select" style="padding:5px 9px;">
+                    <option value="official">공식명</option>
+                    <option value="nickname">별칭</option>
+                    <option value="abbreviation">약칭</option>
+                    <option value="english">영문</option>
+                  </select>
+                  <button id="bp-alias-confirm" style="padding:5px 10px;border-radius:4px;background:#0c1428;border:none;color:#fff;font-size:11px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">등록</button>
+                  <button id="bp-alias-cancel" style="padding:5px 8px;border-radius:4px;border:1px solid rgba(0,0,0,.12);background:transparent;font-size:11px;font-family:'NanumSquare',sans-serif;color:rgba(12,20,40,.45);cursor:pointer;">취소</button>
+                </div>
+              </div>
+
+              <div style="height:1px;background:rgba(0,0,0,.06);"></div>
+
+              <!-- Social Accounts -->
+              <div>
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:8px;">
+                  <div>
+                    <p style="font-size:9px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.45);">공식 소셜 계정 <span style="font-size:9px;font-weight:700;color:#E24B4A;background:rgba(226,75,74,.08);padding:1px 5px;border-radius:3px;text-transform:none;letter-spacing:0;">사칭 탐지 기준</span></p>
+                    <p style="font-size:10px;color:rgba(12,20,40,.30);margin-top:2px;">등록된 공식 계정 외 유사 계정을 자동으로 감시합니다</p>
+                  </div>
+                  <button id="bp-social-add-btn" style="flex-shrink:0;padding:4px 10px;border-radius:4px;border:1px solid rgba(0,0,0,.12);background:transparent;font-size:11px;font-family:'NanumSquare',sans-serif;color:rgba(12,20,40,.55);cursor:pointer;white-space:nowrap;">+ 추가</button>
+                </div>
+                <div id="bp-socials" style="display:flex;flex-wrap:wrap;gap:6px;min-height:24px;"></div>
+                <div id="bp-social-form" style="display:none;margin-top:10px;gap:6px;align-items:center;flex-wrap:wrap;">
+                  <select id="bp-social-platform" class="bp-select" style="padding:5px 9px;">
+                    <option value="instagram">Instagram</option>
+                    <option value="x">X (Twitter)</option>
+                    <option value="youtube">YouTube</option>
+                    <option value="tiktok">TikTok</option>
+                    <option value="naver">Naver</option>
+                  </select>
+                  <input id="bp-social-handle" type="text" placeholder="@계정명" class="bp-input" style="padding:5px 9px;width:160px;" />
+                  <button id="bp-social-confirm" style="padding:5px 10px;border-radius:4px;background:#0c1428;border:none;color:#fff;font-size:11px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">등록</button>
+                  <button id="bp-social-cancel" style="padding:5px 8px;border-radius:4px;border:1px solid rgba(0,0,0,.12);background:transparent;font-size:11px;font-family:'NanumSquare',sans-serif;color:rgba(12,20,40,.45);cursor:pointer;">취소</button>
+                </div>
+              </div>
+
+              <div style="height:1px;background:rgba(0,0,0,.06);"></div>
+
+              <!-- Executives -->
+              <div>
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:8px;">
+                  <div>
+                    <p style="font-size:9px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.45);">주요 임원 <span style="font-size:9px;font-weight:700;color:#BA7517;background:rgba(186,117,23,.08);padding:1px 5px;border-radius:3px;text-transform:none;letter-spacing:0;">모듈 C 모니터링</span></p>
+                    <p style="font-size:10px;color:rgba(12,20,40,.30);margin-top:2px;">임직원 평판 위협(모듈 C) 탐지 대상 인물을 등록하세요</p>
+                  </div>
+                  <button id="bp-exec-add-btn" style="flex-shrink:0;padding:4px 10px;border-radius:4px;border:1px solid rgba(0,0,0,.12);background:transparent;font-size:11px;font-family:'NanumSquare',sans-serif;color:rgba(12,20,40,.55);cursor:pointer;white-space:nowrap;">+ 추가</button>
+                </div>
+                <div id="bp-executives" style="display:flex;flex-direction:column;gap:5px;min-height:24px;"></div>
+                <div id="bp-exec-form" style="display:none;margin-top:10px;gap:6px;align-items:center;flex-wrap:wrap;">
+                  <input id="bp-exec-name" type="text" placeholder="이름" class="bp-input" style="padding:5px 9px;width:100px;" />
+                  <input id="bp-exec-role" type="text" placeholder="직책 (예: CEO)" class="bp-input" style="padding:5px 9px;width:140px;" />
+                  <select id="bp-exec-priority" class="bp-select" style="padding:5px 9px;">
+                    <option value="1">대표·CEO</option>
+                    <option value="2" selected>임원</option>
+                    <option value="3">기타</option>
+                  </select>
+                  <button id="bp-exec-confirm" style="padding:5px 10px;border-radius:4px;background:#0c1428;border:none;color:#fff;font-size:11px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">등록</button>
+                  <button id="bp-exec-cancel" style="padding:5px 8px;border-radius:4px;border:1px solid rgba(0,0,0,.12);background:transparent;font-size:11px;font-family:'NanumSquare',sans-serif;color:rgba(12,20,40,.45);cursor:pointer;">취소</button>
+                </div>
+              </div>
+
+            </div><!-- /right -->
+          </div><!-- /grid -->
+        </div><!-- /body -->
+      </div><!-- /brand profile panel -->
+
+    </div>
+  </main>
+</div>
+
+<!-- ── Detail Panel ───────────────────────────────────────────────────────── -->
+<div id="panel-backdrop" style="display:none;position:fixed;inset:0;background:rgba(12,20,40,0.28);z-index:39;backdrop-filter:blur(2px);"></div>
+
+<div id="detail-panel" class="db-detail-panel" style="position:fixed;right:0;top:0;height:100vh;width:420px;background:#fff;border-left:1px solid rgba(0,0,0,0.08);box-shadow:rgba(12,20,40,0.18) -4px 0 24px;z-index:40;overflow-y:auto;display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);">
+
+  <!-- Panel header -->
+  <div style="padding:16px 18px;border-bottom:1px solid rgba(0,0,0,.08);flex-shrink:0;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:7px;">
+        <span id="detail-severity">—</span>
+        <span id="detail-module">—</span>
+      </div>
+      <button id="btn-close-panel" style="padding:5px;border-radius:5px;border:none;background:transparent;cursor:pointer;color:rgba(12,20,40,.35);">
+        <svg style="width:15px;height:15px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <h2 id="detail-account" style="font-weight:800;font-size:14px;color:#0c1428;letter-spacing:-.02em;font-family:'JetBrains Mono',monospace;margin-bottom:8px;">—</h2>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span id="detail-platform" style="font-size:11px;color:rgba(12,20,40,.50);"></span>
+      <span id="detail-detected" style="font-size:10px;color:rgba(12,20,40,.35);font-family:'JetBrains Mono',monospace;"></span>
+      <a id="detail-url" href="#" target="_blank" rel="noopener noreferrer"
+         style="display:inline-flex;align-items:center;gap:3px;font-size:12px;color:#185FA5;text-decoration:none;font-weight:700;">
+        <svg style="width:11px;height:11px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+          <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+        원본 게시글 보기
+      </a>
+    </div>
+  </div>
+
+  <!-- Panel body -->
+  <div style="flex:1;padding:16px 18px;display:flex;flex-direction:column;gap:14px;font-size:12px;">
+
+    <div>
+      <p style="font-weight:300;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.45);margin-bottom:7px;">탐지 내용</p>
+      <p id="detail-content" style="color:#0c1428;line-height:1.65;background:rgba(0,0,0,.03);border-radius:6px;padding:10px;font-size:12px;"></p>
+    </div>
+
+    <div id="detail-analysis-wrap" style="background:rgba(24,95,165,0.04);border:1px solid rgba(24,95,165,0.12);border-radius:7px;padding:12px;">
+      <p style="font-weight:300;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#185FA5;margin-bottom:7px;">🤖 AI 분석</p>
+      <p id="detail-analysis" style="color:#0c1428;line-height:1.65;font-size:11px;"></p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div style="background:#f5f6f8;border-radius:7px;padding:10px;">
+        <span style="font-size:9px;font-weight:300;text-transform:uppercase;letter-spacing:.08em;color:rgba(12,20,40,.45);display:block;margin-bottom:3px;">리스크 점수</span>
+        <span id="detail-score" style="font-weight:800;font-size:20px;letter-spacing:-.5px;">—</span>
+      </div>
+      <div style="background:#f5f6f8;border-radius:7px;padding:10px;">
+        <span style="font-size:9px;font-weight:300;text-transform:uppercase;letter-spacing:.08em;color:rgba(12,20,40,.45);display:block;margin-bottom:3px;">AI 신뢰도</span>
+        <span id="detail-confidence" style="font-weight:800;font-size:20px;letter-spacing:-.5px;color:#0c1428;">—</span>
+      </div>
+      <div style="background:#f5f6f8;border-radius:7px;padding:10px;">
+        <span style="font-size:9px;font-weight:300;text-transform:uppercase;letter-spacing:.08em;color:rgba(12,20,40,.45);display:block;margin-bottom:3px;">봇 확률</span>
+        <span id="detail-bot" style="font-weight:800;font-size:20px;letter-spacing:-.5px;color:#0c1428;">—</span>
+      </div>
+      <div style="background:#f5f6f8;border-radius:7px;padding:10px;">
+        <span style="font-size:9px;font-weight:300;text-transform:uppercase;letter-spacing:.08em;color:rgba(12,20,40,.45);display:block;margin-bottom:3px;">조직적 공격</span>
+        <span id="detail-organized" style="font-weight:800;font-size:20px;letter-spacing:-.5px;color:#0c1428;">—</span>
+      </div>
+    </div>
+
+    <div id="detail-suggestion-wrap" style="background:rgba(29,158,117,0.04);border:1px solid rgba(29,158,117,0.12);border-radius:7px;padding:12px;">
+      <p style="font-weight:300;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#1D9E75;margin-bottom:7px;">대응 방안</p>
+      <p id="detail-suggestion" style="color:#0c1428;line-height:1.7;font-size:11px;white-space:pre-line;"></p>
+    </div>
+
+  </div>
+
+  <!-- Status footer -->
+  <div style="flex-shrink:0;padding:14px 18px;border-top:1px solid rgba(0,0,0,.06);background:rgba(0,0,0,.02);">
+    <p style="font-size:9px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.45);margin-bottom:8px;">상태 변경</p>
+    <div style="display:flex;gap:6px;">
+      <button id="status-active" style="flex:1;padding:7px;border-radius:4px;font-size:11px;font-family:'NanumSquare',sans-serif;font-weight:700;cursor:pointer;border:1px solid rgba(226,75,74,.25);color:#E24B4A;background:transparent;">활성</button>
+      <button id="status-reviewing" style="flex:1;padding:7px;border-radius:4px;font-size:11px;font-family:'NanumSquare',sans-serif;font-weight:700;cursor:pointer;border:1px solid rgba(24,95,165,.25);color:#185FA5;background:transparent;">검토중</button>
+      <button id="status-resolved" style="flex:1;padding:7px;border-radius:4px;font-size:11px;font-family:'NanumSquare',sans-serif;font-weight:700;cursor:pointer;border:1px solid rgba(0,0,0,.12);color:rgba(12,20,40,.45);background:transparent;">해결됨</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-wrap" style="position:fixed;bottom:20px;right:20px;z-index:100;display:flex;flex-direction:column;gap:8px;pointer-events:none;"></div>
+
+<script type="module" src="/assets/js/dashboard.js"></script>
+<script type="module">
+import { profileApi } from '/assets/js/api.js';
+
+let currentProfile = null;
+const $ = id => document.getElementById(id);
+
+const ALIAS_META = {
+  official:     { label: '공식명', color: '#185FA5', bg: 'rgba(24,95,165,0.10)' },
+  nickname:     { label: '별칭',   color: '#BA7517', bg: 'rgba(186,117,23,0.10)' },
+  abbreviation: { label: '약칭',   color: '#1D9E75', bg: 'rgba(29,158,117,0.10)' },
+  english:      { label: '영문',   color: '#6B7280', bg: 'rgba(107,114,128,0.10)' },
+};
+const PLATFORM_META = {
+  instagram: { label: 'IG', color: '#E1306C', bg: 'rgba(225,48,108,0.08)' },
+  x:         { label: '𝕏',  color: '#0f1419', bg: 'rgba(0,0,0,0.07)' },
+  youtube:   { label: 'YT', color: '#FF0000', bg: 'rgba(255,0,0,0.08)' },
+  tiktok:    { label: 'TT', color: '#69C9D0', bg: 'rgba(105,201,208,0.10)' },
+  naver:     { label: 'N',  color: '#03C75A', bg: 'rgba(3,199,90,0.08)' },
+};
+const PRIORITY_LABEL = { 1: 'CEO', 2: '임원', 3: '기타' };
+const PRIORITY_COLOR = { 1: '#E24B4A', 2: '#BA7517', 3: 'rgba(12,20,40,.45)' };
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderProfile(p) {
+  currentProfile = p;
+  $('bp-name').value = p.display_name || '';
+  $('bp-type').value = p.profile_type || 'company';
+  $('bp-industry').value = p.industry || '';
+  $('bp-description').value = p.description || '';
+  renderAliases(p.aliases || []);
+  renderSocials(p.social_accounts || []);
+  renderExecutives(p.executives || []);
+}
+
+function renderAliases(list) {
+  const c = $('bp-aliases');
+  c.innerHTML = '';
+  if (!list.length) { c.innerHTML = '<span style="font-size:11px;color:rgba(12,20,40,.30);">등록된 명칭 없음</span>'; return; }
+  list.forEach(a => {
+    const m = ALIAS_META[a.alias_type] || ALIAS_META.official;
+    const tag = document.createElement('span');
+    tag.style.cssText = `display:inline-flex;align-items:center;gap:4px;padding:3px 8px 3px 7px;border-radius:20px;background:${m.bg};font-size:11px;font-weight:700;color:${m.color};white-space:nowrap;`;
+    tag.innerHTML = `<span style="font-size:9px;opacity:.65;font-weight:400;">${m.label}</span>${esc(a.alias)}<button style="background:none;border:none;cursor:pointer;color:${m.color};opacity:.45;padding:0;margin-left:2px;font-size:13px;line-height:1;" title="삭제">×</button>`;
+    tag.querySelector('button').addEventListener('click', () => deleteAlias(a.id));
+    c.appendChild(tag);
+  });
+}
+
+function renderSocials(list) {
+  const c = $('bp-socials');
+  c.innerHTML = '';
+  if (!list.length) { c.innerHTML = '<span style="font-size:11px;color:rgba(12,20,40,.30);">등록된 계정 없음</span>'; return; }
+  list.forEach(a => {
+    const m = PLATFORM_META[a.platform] || { label: a.platform, color: '#6B7280', bg: 'rgba(107,114,128,0.08)' };
+    const tag = document.createElement('span');
+    tag.style.cssText = `display:inline-flex;align-items:center;gap:4px;padding:3px 8px 3px 7px;border-radius:20px;background:${m.bg};font-size:11px;font-weight:700;color:${m.color};white-space:nowrap;`;
+    tag.innerHTML = `<span style="font-size:9px;font-weight:700;">${m.label}</span>${esc(a.handle)}${a.verified ? '<span style="font-size:10px;opacity:.7;" title="공식 인증">✓</span>' : ''}<button style="background:none;border:none;cursor:pointer;color:${m.color};opacity:.45;padding:0;margin-left:2px;font-size:13px;line-height:1;" title="삭제">×</button>`;
+    tag.querySelector('button').addEventListener('click', () => deleteSocial(a.id));
+    c.appendChild(tag);
+  });
+}
+
+function renderExecutives(list) {
+  const c = $('bp-executives');
+  c.innerHTML = '';
+  if (!list.length) { c.innerHTML = '<span style="font-size:11px;color:rgba(12,20,40,.30);">등록된 임원 없음</span>'; return; }
+  list.forEach(e => {
+    const color = PRIORITY_COLOR[e.priority] || PRIORITY_COLOR[2];
+    const pLabel = PRIORITY_LABEL[e.priority] || '임원';
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:rgba(0,0,0,.02);border-radius:5px;';
+    row.innerHTML = `<div style="display:flex;align-items:center;gap:8px;"><div style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0;background:${color}1a;color:${color};">${esc(e.name[0])}</div><span style="font-size:12px;font-weight:700;color:#0c1428;">${esc(e.name)}</span><span style="font-size:11px;color:rgba(12,20,40,.45);">${esc(e.role)}</span></div><div style="display:flex;align-items:center;gap:6px;"><span style="font-size:9px;padding:2px 6px;border-radius:3px;font-weight:700;background:${color}1a;color:${color};">${pLabel}</span><button style="background:none;border:none;cursor:pointer;color:rgba(12,20,40,.35);font-size:13px;padding:0;line-height:1;" title="삭제">×</button></div>`;
+    row.querySelector('button').addEventListener('click', () => deleteExecutive(e.id));
+    c.appendChild(row);
+  });
+}
+
+async function deleteAlias(id) {
+  try { await profileApi.deleteAlias(currentProfile.id, id); currentProfile.aliases = currentProfile.aliases.filter(a => a.id !== id); renderAliases(currentProfile.aliases); }
+  catch(e) { bpToast('삭제 실패: ' + e.message, true); }
+}
+async function deleteSocial(id) {
+  try { await profileApi.deleteSocial(currentProfile.id, id); currentProfile.social_accounts = currentProfile.social_accounts.filter(a => a.id !== id); renderSocials(currentProfile.social_accounts); }
+  catch(e) { bpToast('삭제 실패: ' + e.message, true); }
+}
+async function deleteExecutive(id) {
+  try { await profileApi.deleteExecutive(currentProfile.id, id); currentProfile.executives = currentProfile.executives.filter(e => e.id !== id); renderExecutives(currentProfile.executives); }
+  catch(e) { bpToast('삭제 실패: ' + e.message, true); }
+}
+
+$('bp-save-btn').addEventListener('click', async () => {
+  const name = $('bp-name').value.trim();
+  const msg = $('bp-save-msg');
+  if (!name) { msg.textContent = '브랜드명은 필수입니다.'; msg.style.color = '#E24B4A'; msg.style.display = 'block'; return; }
+  const body = { profile_type: $('bp-type').value, display_name: name, industry: $('bp-industry').value.trim() || null, description: $('bp-description').value.trim() || null };
+  try {
+    $('bp-save-btn').disabled = true; $('bp-save-btn').textContent = '저장 중...';
+    if (currentProfile) {
+      const u = await profileApi.update(currentProfile.id, body);
+      Object.assign(currentProfile, u);
+    } else {
+      renderProfile(await profileApi.create(body));
+    }
+    msg.textContent = '저장됐습니다.'; msg.style.color = '#1D9E75'; msg.style.display = 'block';
+    setTimeout(() => { msg.style.display = 'none'; }, 2000);
+  } catch(e) { msg.textContent = '저장 실패: ' + e.message; msg.style.color = '#E24B4A'; msg.style.display = 'block'; }
+  finally { $('bp-save-btn').disabled = false; $('bp-save-btn').textContent = '저장'; }
+});
+
+$('bp-alias-add-btn').addEventListener('click', () => { $('bp-alias-form').style.display = 'flex'; $('bp-alias-input').focus(); });
+$('bp-alias-cancel').addEventListener('click', () => { $('bp-alias-form').style.display = 'none'; $('bp-alias-input').value = ''; });
+$('bp-alias-confirm').addEventListener('click', async () => {
+  const alias = $('bp-alias-input').value.trim();
+  if (!alias) return;
+  if (!currentProfile) { bpToast('먼저 기본 정보를 저장해 주세요.', true); return; }
+  try {
+    const a = await profileApi.addAlias(currentProfile.id, { alias, alias_type: $('bp-alias-type').value, weight: 1.0 });
+    currentProfile.aliases.push(a); renderAliases(currentProfile.aliases);
+    $('bp-alias-input').value = ''; $('bp-alias-form').style.display = 'none';
+  } catch(e) { bpToast('추가 실패: ' + e.message, true); }
+});
+
+$('bp-social-add-btn').addEventListener('click', () => { $('bp-social-form').style.display = 'flex'; $('bp-social-handle').focus(); });
+$('bp-social-cancel').addEventListener('click', () => { $('bp-social-form').style.display = 'none'; $('bp-social-handle').value = ''; });
+$('bp-social-confirm').addEventListener('click', async () => {
+  const handle = $('bp-social-handle').value.trim();
+  if (!handle) return;
+  if (!currentProfile) { bpToast('먼저 기본 정보를 저장해 주세요.', true); return; }
+  try {
+    const a = await profileApi.addSocial(currentProfile.id, { platform: $('bp-social-platform').value, handle, verified: true });
+    currentProfile.social_accounts.push(a); renderSocials(currentProfile.social_accounts);
+    $('bp-social-handle').value = ''; $('bp-social-form').style.display = 'none';
+  } catch(e) { bpToast('추가 실패: ' + e.message, true); }
+});
+
+$('bp-exec-add-btn').addEventListener('click', () => { $('bp-exec-form').style.display = 'flex'; $('bp-exec-name').focus(); });
+$('bp-exec-cancel').addEventListener('click', () => { $('bp-exec-form').style.display = 'none'; $('bp-exec-name').value = ''; $('bp-exec-role').value = ''; });
+$('bp-exec-confirm').addEventListener('click', async () => {
+  const name = $('bp-exec-name').value.trim();
+  const role = $('bp-exec-role').value.trim();
+  if (!name || !role) return;
+  if (!currentProfile) { bpToast('먼저 기본 정보를 저장해 주세요.', true); return; }
+  try {
+    const e = await profileApi.addExecutive(currentProfile.id, { name, role, priority: parseInt($('bp-exec-priority').value, 10) });
+    currentProfile.executives.push(e); renderExecutives(currentProfile.executives);
+    $('bp-exec-name').value = ''; $('bp-exec-role').value = ''; $('bp-exec-form').style.display = 'none';
+  } catch(e) { bpToast('추가 실패: ' + e.message, true); }
+});
+
+function bpToast(msg, isErr = false) {
+  const wrap = document.getElementById('toast-wrap');
+  if (!wrap) return;
+  const el = document.createElement('div');
+  el.style.cssText = `padding:10px 16px;border-radius:6px;background:${isErr ? '#E24B4A' : '#0c1428'};color:#fff;font-size:12px;pointer-events:auto;font-family:'NanumSquare',sans-serif;box-shadow:0 4px 12px rgba(0,0,0,.25);`;
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 2500);
+}
+
+(async () => {
+  try {
+    const profiles = await profileApi.list();
+    if (profiles.length) renderProfile(profiles[0]);
+    else { renderAliases([]); renderSocials([]); renderExecutives([]); }
+  } catch(_) {
+    renderAliases([]); renderSocials([]); renderExecutives([]);
+  }
+})();
+</script>
+<script>
+  (function(){var t=localStorage.getItem('db-theme')||'dark';document.documentElement.setAttribute('data-theme',t);}());
+  document.addEventListener('DOMContentLoaded', function() {
+    var toggle = document.getElementById('theme-toggle');
+    if (toggle) toggle.addEventListener('click', function() {
+      var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('db-theme', next);
+      document.dispatchEvent(new CustomEvent('themechange', { detail: { theme: next } }));
+    });
+  });
+</script>
+<script>
+  fetch('/auth/me').then(r => {
+    if (!r.ok) { location.href = '/login'; return; }
+    return r.json();
+  }).then(user => {
+    if (!user) return;
+    document.getElementById('user-name').textContent = user.name || user.email;
+    document.getElementById('user-email').textContent = user.email;
+    if (user.avatar_url) {
+      const img = document.getElementById('user-avatar');
+      img.src = user.avatar_url; img.style.display = 'block';
+      document.getElementById('user-avatar-fallback').style.display = 'none';
+    } else {
+      document.getElementById('user-avatar-fallback').textContent = (user.name || user.email || '?')[0].toUpperCase();
+    }
+  }).catch(() => { location.href = '/login'; });
+</script>
+<script>
+// ── Org selector ──────────────────────────────────────────────────────────────
+const ROLE_LABEL = { owner: 'Owner', admin: 'Admin', member: 'Member', viewer: 'Viewer' };
+
+async function loadOrgs() {
+  try {
+    const res = await fetch('/api/orgs');
+    if (!res.ok) return;
+    const orgs = await res.json();
+    if (!orgs.length) return;
+
+    const current = orgs.find(o => o.my_role) || orgs[0];
+    document.getElementById('org-name-display').textContent = current.name;
+    document.getElementById('org-role-display').textContent = ROLE_LABEL[current.my_role] || '';
+    document.getElementById('org-avatar').textContent = current.name[0].toUpperCase();
+
+    const list = document.getElementById('org-list');
+    list.innerHTML = orgs.map(o => `
+      <button onclick="switchOrg(${o.id})" style="width:100%;display:flex;align-items:center;gap:8px;padding:8px 12px;background:none;border:none;cursor:pointer;text-align:left;">
+        <div style="width:20px;height:20px;border-radius:4px;background:#1a6ef8;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:800;flex-shrink:0;">${o.name[0].toUpperCase()}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:11px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${o.name}</div>
+          <div style="font-size:9px;color:rgba(255,255,255,0.4);">${ROLE_LABEL[o.my_role] || ''}</div>
+        </div>
+      </button>
+    `).join('');
+  } catch (e) {}
+}
+
+async function switchOrg(orgId) {
+  await fetch(`/api/orgs/${orgId}/switch`, { method: 'POST' });
+  location.reload();
+}
+
+function toggleOrgMenu() {
+  const menu = document.getElementById('org-menu');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#org-selector-btn') && !e.target.closest('#org-menu')) {
+    const menu = document.getElementById('org-menu');
+    if (menu) menu.style.display = 'none';
+  }
+});
+
+loadOrgs();
+</script>
+</body>
+</html>

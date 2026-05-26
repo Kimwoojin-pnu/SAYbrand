@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAYbrand — 설정</title>
+  <script>(function(){var t=localStorage.getItem('db-theme')||'dark';document.documentElement.setAttribute('data-theme',t);}());</script>
+  <link rel="stylesheet" href="/assets/css/custom.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{brand:{500:'#1a6ef8',600:'#1558cc'}}}}}</script>
+</head>
+<body data-page="settings" style="font-family:'NanumSquare','Noto Sans KR',sans-serif;background:var(--db-bg);color:var(--db-text-1);">
+
+<div style="display:flex;height:100vh;overflow:hidden;">
+
+  <!-- ── Sidebar ─────────────────────────────────────────────────────── -->
+  <aside style="background:#0c1428;width:200px;flex-shrink:0;display:flex;flex-direction:column;">
+
+    <!-- Logo -->
+    <a href="/" target="_blank" style="display:flex;align-items:center;gap:10px;padding:18px 16px;border-bottom:1px solid rgba(255,255,255,0.08);text-decoration:none;">
+      <div style="width:34px;height:34px;overflow:hidden;flex-shrink:0;">
+        <img src="/saybrand-logo2.png" alt="" style="width:34px;height:auto;display:block;filter:brightness(1.8);" onerror="this.parentElement.style.display='none'" />
+      </div>
+      <span style="font-weight:700;font-size:15px;color:#ffffff;letter-spacing:-.02em;line-height:1;">SAYbrand</span>
+    </a>
+
+    <!-- Nav -->
+    <nav style="flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:2px;">
+      <a href="/dashboard" class="db-nav-item">
+        <svg style="width:16px;height:16px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+        </svg>
+        대시보드
+      </a>
+      <a href="/threats" class="db-nav-item">
+        <svg style="width:16px;height:16px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        현재 위협
+      </a>
+      <a href="/actions" class="db-nav-item">
+        <svg style="width:16px;height:16px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+        </svg>
+        처리해야할 사항
+      </a>
+      <a href="/brand-image" class="db-nav-item">
+        <svg style="width:16px;height:16px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/>
+        </svg>
+        브랜드 이미지
+      </a>
+      <a href="/negative-mentions" class="db-nav-item">
+        <svg style="width:16px;height:16px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+        </svg>
+        부정적 언급
+      </a>
+      <a href="/settings" class="db-nav-item db-nav-active">
+        <svg style="width:16px;height:16px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41M20 12h2M2 12h2M12 20v2M12 2v2"/>
+        </svg>
+        설정
+      </a>
+    </nav>
+
+    <!-- User -->
+    <div style="padding:12px 14px;border-top:1px solid rgba(255,255,255,0.08);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <img id="user-avatar" src="" alt="" style="width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0;display:none;" />
+        <div id="user-avatar-fallback" style="width:26px;height:26px;border-radius:50%;background:#1a6ef8;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;flex-shrink:0;">?</div>
+        <div style="min-width:0;">
+          <p id="user-name" style="font-size:11px;color:#fff;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">로딩 중...</p>
+          <p id="user-email" style="font-size:10px;color:rgba(255,255,255,0.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></p>
+        </div>
+      </div>
+      <a href="/auth/logout" class="db-nav-item" style="padding:5px 8px;font-size:11px;">
+        <svg style="width:13px;height:13px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        로그아웃
+      </a>
+    </div>
+  </aside>
+
+  <!-- ── Main ────────────────────────────────────────────────────────── -->
+  <main class="db-main" style="flex:1;overflow-y:auto;background:var(--db-bg);">
+
+    <!-- Top header -->
+    <header class="db-topheader" style="position:sticky;top:0;z-index:10;background:var(--db-surface);border-bottom:1px solid var(--db-border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <h1 style="font-weight:800;font-size:15px;color:var(--db-text-1);letter-spacing:-.02em;">설정</h1>
+        <p style="font-size:10px;color:var(--db-text-3);margin-top:1px;">모니터링 대상 브랜드 프로파일을 관리합니다</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button id="btn-new-profile" style="display:flex;align-items:center;gap:5px;padding:6px 13px;border-radius:6px;background:#1a6ef8;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">
+          <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          새 프로파일
+        </button>
+        <button class="db-theme-toggle" id="theme-toggle" aria-label="다크모드 전환">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="p-6">
+
+      <!-- Profile list -->
+      <div id="profile-list" class="space-y-3 mb-6">
+        <p class="text-slate-400 text-sm text-center py-8">로딩 중...</p>
+      </div>
+
+      <!-- Profile editor (hidden by default) -->
+      <div id="profile-editor" class="hidden bg-white rounded-xl border border-slate-200 shadow-sm">
+
+        <!-- Tab nav -->
+        <div class="flex border-b border-slate-200 px-5 pt-4">
+          <button class="tab-btn pb-3 px-3 text-sm font-medium border-b-2 border-brand-500 text-brand-500 transition-colors" data-tab="basic">기본 정보</button>
+          <button class="tab-btn pb-3 px-3 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-colors" data-tab="aliases">이름 변형</button>
+          <button class="tab-btn pb-3 px-3 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-colors" data-tab="accounts">공식 계정</button>
+          <button class="tab-btn pb-3 px-3 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-colors" data-tab="executives">임직원</button>
+        </div>
+
+        <!-- Tab 1: Basic info -->
+        <div id="tab-basic" class="tab-panel p-6 space-y-5">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1.5">고객 유형</label>
+              <div class="flex gap-2">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="profile_type" value="company" checked class="accent-brand-500" />
+                  <span class="text-sm text-slate-700">기업</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="profile_type" value="individual" class="accent-brand-500" />
+                  <span class="text-sm text-slate-700">개인</span>
+                </label>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1.5">대표 이름 <span class="text-red-500">*</span></label>
+              <input id="field-display-name" type="text" placeholder="예: 삼성전자"
+                class="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1.5">업종</label>
+              <input id="field-industry" type="text" placeholder="예: 전자·반도체"
+                class="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1.5">로고 URL</label>
+              <input id="field-logo-url" type="text" placeholder="https://..."
+                class="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500" />
+            </div>
+          </div>
+
+          <!-- DART lookup -->
+          <div class="bg-slate-50 rounded-lg p-4 border border-slate-200">
+            <p class="text-xs font-semibold text-slate-600 mb-2">DART 자동 조회 (상장사)</p>
+            <div class="flex gap-2">
+              <input id="field-dart-code" type="text" placeholder="DART 기업코드 8자리"
+                class="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500" />
+              <button id="btn-dart-lookup"
+                class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition-colors">
+                자동 조회
+              </button>
+            </div>
+            <p id="dart-result" class="text-xs text-slate-500 mt-2 hidden"></p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">설명</label>
+            <textarea id="field-description" rows="3" placeholder="브랜드에 대한 간단한 설명"
+              class="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 resize-none"></textarea>
+          </div>
+
+          <div class="flex gap-2 pt-2">
+            <button id="btn-save-profile"
+              class="px-5 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold transition-colors">
+              저장
+            </button>
+            <button id="btn-cancel"
+              class="px-5 py-2 rounded-lg border border-slate-200 text-slate-600 text-sm hover:bg-slate-50 transition-colors">
+              취소
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab 2: Aliases -->
+        <div id="tab-aliases" class="tab-panel hidden p-6 space-y-4">
+          <div class="flex gap-2">
+            <input id="alias-input" type="text" placeholder="이름 변형 입력"
+              class="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500" />
+            <select id="alias-type"
+              class="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 bg-white">
+              <option value="official">공식명</option>
+              <option value="english">영문명</option>
+              <option value="abbreviation">약칭</option>
+              <option value="nickname">별칭</option>
+            </select>
+            <div class="flex flex-col justify-center w-32">
+              <label class="text-xs text-slate-500 mb-0.5">중요도 <span id="alias-weight-val" class="font-mono font-bold text-slate-700">1.0</span></label>
+              <input id="alias-weight" type="range" min="0.1" max="2.0" step="0.1" value="1.0"
+                class="accent-brand-500" />
+            </div>
+            <button id="btn-add-alias"
+              class="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-semibold transition-colors">
+              추가
+            </button>
+          </div>
+          <div id="alias-list" class="space-y-2">
+            <p class="text-slate-400 text-sm text-center py-4">등록된 이름 변형이 없습니다</p>
+          </div>
+        </div>
+
+        <!-- Tab 3: Social accounts -->
+        <div id="tab-accounts" class="tab-panel hidden p-6 space-y-4">
+          <p class="text-xs text-slate-500 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+            등록된 공식 계정에서 올라온 콘텐츠는 위협 탐지에서 자동 제외됩니다.
+          </p>
+          <div class="flex gap-2">
+            <select id="account-platform"
+              class="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 bg-white">
+              <option value="instagram">Instagram</option>
+              <option value="x">X (Twitter)</option>
+              <option value="youtube">YouTube</option>
+              <option value="tiktok">TikTok</option>
+              <option value="naver">Naver</option>
+            </select>
+            <input id="account-handle" type="text" placeholder="@handle"
+              class="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500" />
+            <button id="btn-add-account"
+              class="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-semibold transition-colors">
+              추가
+            </button>
+          </div>
+          <div id="account-list" class="space-y-2">
+            <p class="text-slate-400 text-sm text-center py-4">등록된 공식 계정이 없습니다</p>
+          </div>
+        </div>
+
+        <!-- Tab 4: Executives -->
+        <div id="tab-executives" class="tab-panel hidden p-6 space-y-4">
+          <div class="grid grid-cols-2 gap-3">
+            <input id="exec-name" type="text" placeholder="이름"
+              class="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500" />
+            <input id="exec-role" type="text" placeholder="직책 (예: CEO)"
+              class="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500" />
+            <input id="exec-photo" type="text" placeholder="사진 URL (선택)"
+              class="px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500" />
+            <div class="flex items-center gap-3">
+              <select id="exec-priority"
+                class="flex-1 px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/30">
+                <option value="1">우선순위 1 — CEO</option>
+                <option value="2" selected>우선순위 2 — 임원</option>
+                <option value="3">우선순위 3 — 일반</option>
+              </select>
+              <button id="btn-add-exec"
+                class="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-white text-xs font-semibold transition-colors whitespace-nowrap">
+                추가
+              </button>
+            </div>
+          </div>
+          <div id="exec-list" class="space-y-2">
+            <p class="text-slate-400 text-sm text-center py-4">등록된 임직원이 없습니다</p>
+          </div>
+        </div>
+
+      </div><!-- /profile-editor -->
+
+      <!-- ── 키워드 관리 섹션 ─────────────────────────────────────────── -->
+      <div style="margin-top:24px;" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div style="padding:14px 20px;border-bottom:1px solid rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <h2 style="font-weight:700;font-size:14px;color:#0c1428;">모니터링 키워드</h2>
+            <p style="font-size:11px;color:rgba(12,20,40,.40);margin-top:2px;">스캔 시 이 키워드를 기준으로 SNS를 검색합니다</p>
+          </div>
+          <button id="kw-add-btn" style="padding:5px 13px;border-radius:5px;background:#1a6ef8;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">+ 키워드 추가</button>
+        </div>
+
+        <!-- 추가 폼 -->
+        <div id="kw-form" style="display:none;padding:12px 20px;background:rgba(26,110,248,0.03);border-bottom:1px solid rgba(0,0,0,.06);">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <input id="kw-input" type="text" placeholder="키워드 입력 (예: 브랜드명)" style="flex:1;min-width:160px;padding:7px 10px;border-radius:5px;border:1px solid rgba(0,0,0,.12);font-size:13px;font-family:'NanumSquare',sans-serif;" />
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;"><input type="checkbox" id="kw-plat-instagram" checked /> Instagram</label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;"><input type="checkbox" id="kw-plat-x" checked /> X</label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;"><input type="checkbox" id="kw-plat-youtube" checked /> YouTube</label>
+              <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;"><input type="checkbox" id="kw-plat-naver" checked /> Naver</label>
+            </div>
+            <button id="kw-confirm" style="padding:7px 14px;border-radius:5px;background:#0c1428;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">등록</button>
+            <button id="kw-cancel" style="padding:7px 10px;border-radius:5px;border:1px solid rgba(0,0,0,.12);background:transparent;font-size:12px;font-family:'NanumSquare',sans-serif;color:rgba(12,20,40,.45);cursor:pointer;">취소</button>
+          </div>
+        </div>
+
+        <!-- 키워드 목록 -->
+        <div id="kw-list" style="padding:14px 20px;display:flex;flex-direction:column;gap:8px;">
+          <p style="font-size:12px;color:rgba(12,20,40,.35);text-align:center;padding:16px 0;">로딩 중...</p>
+        </div>
+      </div>
+
+      <!-- ── 팀 관리 섹션 ──────────────────────────────────────────────── -->
+      <div style="margin-top:24px;" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div style="padding:14px 20px;border-bottom:1px solid rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <h2 style="font-weight:700;font-size:14px;color:#0c1428;">팀 관리</h2>
+            <p style="font-size:11px;color:rgba(12,20,40,.40);margin-top:2px;">멤버를 초대하고 역할을 관리합니다</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span id="team-org-name" style="font-size:11px;font-weight:700;color:#1a6ef8;"></span>
+            <span id="member-usage" style="font-size:11px;color:rgba(12,20,40,.45);background:rgba(12,20,40,.05);padding:3px 8px;border-radius:20px;"></span>
+          </div>
+        </div>
+
+        <!-- 초대코드 발급 -->
+        <div style="padding:14px 20px;border-bottom:1px solid rgba(0,0,0,.06);">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <select id="invite-role" style="padding:6px 10px;border-radius:5px;border:1px solid rgba(0,0,0,.12);font-size:12px;font-family:'NanumSquare',sans-serif;background:#fff;cursor:pointer;">
+              <option value="member">Member</option>
+              <option value="admin">Admin</option>
+              <option value="viewer">Viewer (한도 미포함)</option>
+            </select>
+            <select id="invite-expires" style="padding:6px 10px;border-radius:5px;border:1px solid rgba(0,0,0,.12);font-size:12px;font-family:'NanumSquare',sans-serif;background:#fff;">
+              <option value="7">7일 유효</option>
+              <option value="14">14일 유효</option>
+              <option value="30">30일 유효</option>
+            </select>
+            <button id="btn-gen-code" style="padding:6px 14px;border-radius:5px;background:#0c1428;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">초대코드 발급</button>
+          </div>
+          <div id="code-display" style="display:none;margin-top:10px;padding:10px 14px;background:rgba(26,110,248,0.06);border:1px solid rgba(26,110,248,0.15);border-radius:7px;display:none;align-items:center;gap:10px;">
+            <span id="code-value" style="font-size:18px;font-family:'JetBrains Mono',monospace;font-weight:700;color:#1a6ef8;letter-spacing:0.12em;"></span>
+            <span id="code-expires" style="font-size:11px;color:rgba(12,20,40,.4);"></span>
+            <button onclick="copyCode()" style="margin-left:auto;padding:4px 10px;border-radius:4px;border:1px solid rgba(26,110,248,0.3);background:transparent;font-size:11px;color:#1a6ef8;cursor:pointer;font-family:'NanumSquare',sans-serif;">복사</button>
+          </div>
+        </div>
+
+        <!-- 대기 중 멤버 -->
+        <div id="pending-section" style="display:none;padding:14px 20px;border-bottom:1px solid rgba(0,0,0,.06);">
+          <p style="font-size:12px;font-weight:700;color:#0c1428;margin-bottom:8px;">승인 대기 <span id="pending-count" style="color:#1a6ef8;"></span></p>
+          <div id="pending-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+        </div>
+
+        <!-- 활성 멤버 목록 -->
+        <div id="member-list" style="padding:14px 20px;display:flex;flex-direction:column;gap:6px;">
+          <p style="font-size:12px;color:rgba(12,20,40,.35);text-align:center;padding:12px 0;">로딩 중...</p>
+        </div>
+      </div>
+
+      <!-- 업그레이드 모달 -->
+      <div id="upgrade-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:16px;padding:32px;max-width:360px;width:90%;text-align:center;">
+          <div style="font-size:32px;margin-bottom:12px;">🚀</div>
+          <h3 style="font-size:16px;font-weight:800;color:#0c1428;margin-bottom:8px;">플랜 업그레이드 필요</h3>
+          <p id="upgrade-message" style="font-size:13px;color:rgba(12,20,40,.6);margin-bottom:20px;"></p>
+          <div style="display:flex;gap:8px;justify-content:center;">
+            <button onclick="location.href='/billing/checkout'" style="padding:9px 20px;border-radius:8px;background:#1a6ef8;border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'NanumSquare',sans-serif;">업그레이드</button>
+            <button onclick="document.getElementById('upgrade-modal').style.display='none'" style="padding:9px 16px;border-radius:8px;border:1px solid rgba(0,0,0,.12);background:transparent;font-size:13px;color:rgba(12,20,40,.6);cursor:pointer;font-family:'NanumSquare',sans-serif;">취소</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+const BASE = '/api/profile';
+let currentProfileId = null;
+
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(BASE + path, {
+    headers: { 'Content-Type': 'application/json', ...opts.headers },
+    ...opts,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || 'API Error');
+  }
+  return res.status === 204 ? null : res.json();
+}
+
+// ── User info ────────────────────────────────────────────────────────────────
+fetch('/auth/me').then(r => {
+  if (!r.ok) { location.href = '/login'; return; }
+  return r.json();
+}).then(user => {
+  if (!user) return;
+  document.getElementById('user-name').textContent = user.name || user.email;
+  document.getElementById('user-email').textContent = user.email;
+  if (user.avatar_url) {
+    const img = document.getElementById('user-avatar');
+    img.src = user.avatar_url;
+    img.style.display = 'block';
+    document.getElementById('user-avatar-fallback').style.display = 'none';
+  } else {
+    document.getElementById('user-avatar-fallback').textContent = (user.name || user.email || '?')[0].toUpperCase();
+  }
+}).catch(() => { location.href = '/login'; });
+
+// ── Theme toggle ─────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  var toggle = document.getElementById('theme-toggle');
+  if (toggle) toggle.addEventListener('click', function() {
+    var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('db-theme', next);
+  });
+});
+
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.classList.replace('border-brand-500', 'border-transparent');
+      b.classList.replace('text-brand-500', 'text-slate-400');
+    });
+    btn.classList.replace('border-transparent', 'border-brand-500');
+    btn.classList.replace('text-slate-400', 'text-brand-500');
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+    document.getElementById('tab-' + btn.dataset.tab).classList.remove('hidden');
+  });
+});
+
+// ── Profile list ─────────────────────────────────────────────────────────────
+async function loadProfiles() {
+  const list = document.getElementById('profile-list');
+  try {
+    const profiles = await apiFetch('');
+    if (!profiles.length) {
+      list.innerHTML = '<p class="text-slate-400 text-sm text-center py-8">등록된 프로파일이 없습니다. 새 프로파일을 추가하세요.</p>';
+      return;
+    }
+    list.innerHTML = profiles.map(p => `
+      <div class="bg-white rounded-xl border border-slate-200 p-4 flex items-center justify-between shadow-sm hover:border-brand-500 transition-colors cursor-pointer profile-card" data-id="${p.id}">
+        <div class="flex items-center gap-3">
+          ${p.logo_url ? `<img src="${p.logo_url}" class="w-10 h-10 rounded-lg object-contain border border-slate-100" />` : `<div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 font-bold">${p.display_name[0]}</div>`}
+          <div>
+            <p class="font-semibold text-slate-800 text-sm">${p.display_name}</p>
+            <p class="text-xs text-slate-400">${p.profile_type === 'company' ? '기업' : '개인'} · 별칭 ${p.aliases.length}개 · 계정 ${p.social_accounts.length}개</p>
+          </div>
+        </div>
+        <span class="text-xs text-brand-500 font-medium">편집 →</span>
+      </div>
+    `).join('');
+    document.querySelectorAll('.profile-card').forEach(card => {
+      card.addEventListener('click', () => openEditor(Number(card.dataset.id)));
+    });
+  } catch (e) {
+    list.innerHTML = `<p class="text-red-500 text-sm text-center py-4">${e.message}</p>`;
+  }
+}
+
+// ── Editor open/close ────────────────────────────────────────────────────────
+async function openEditor(profileId) {
+  currentProfileId = profileId;
+  document.getElementById('profile-editor').classList.remove('hidden');
+  if (profileId) {
+    const p = await apiFetch(`/${profileId}`);
+    document.querySelector('[name=profile_type][value=' + p.profile_type + ']').checked = true;
+    document.getElementById('field-display-name').value = p.display_name;
+    document.getElementById('field-industry').value = p.industry || '';
+    document.getElementById('field-logo-url').value = p.logo_url || '';
+    document.getElementById('field-dart-code').value = p.dart_corp_code || '';
+    document.getElementById('field-description').value = p.description || '';
+    renderAliases(p.aliases);
+    renderAccounts(p.social_accounts);
+    renderExecutives(p.executives);
+  }
+  document.getElementById('profile-editor').scrollIntoView({ behavior: 'smooth' });
+}
+
+document.getElementById('btn-new-profile').addEventListener('click', () => {
+  currentProfileId = null;
+  document.getElementById('profile-editor').classList.remove('hidden');
+  document.getElementById('field-display-name').value = '';
+  document.getElementById('field-industry').value = '';
+  document.getElementById('field-logo-url').value = '';
+  document.getElementById('field-dart-code').value = '';
+  document.getElementById('field-description').value = '';
+  renderAliases([]); renderAccounts([]); renderExecutives([]);
+  document.getElementById('profile-editor').scrollIntoView({ behavior: 'smooth' });
+});
+
+document.getElementById('btn-cancel').addEventListener('click', () => {
+  document.getElementById('profile-editor').classList.add('hidden');
+  currentProfileId = null;
+});
+
+// ── Save profile ─────────────────────────────────────────────────────────────
+document.getElementById('btn-save-profile').addEventListener('click', async () => {
+  const body = {
+    profile_type: document.querySelector('[name=profile_type]:checked').value,
+    display_name: document.getElementById('field-display-name').value.trim(),
+    industry: document.getElementById('field-industry').value.trim() || null,
+    logo_url: document.getElementById('field-logo-url').value.trim() || null,
+    dart_corp_code: document.getElementById('field-dart-code').value.trim() || null,
+    description: document.getElementById('field-description').value.trim() || null,
+  };
+  if (!body.display_name) { alert('대표 이름은 필수입니다'); return; }
+  try {
+    if (currentProfileId) {
+      await apiFetch(`/${currentProfileId}`, { method: 'PATCH', body: JSON.stringify(body) });
+    } else {
+      const p = await apiFetch('', { method: 'POST', body: JSON.stringify(body) });
+      currentProfileId = p.id;
+    }
+    await loadProfiles();
+    alert('저장되었습니다');
+  } catch (e) { alert(e.message); }
+});
+
+// ── DART lookup ───────────────────────────────────────────────────────────────
+document.getElementById('btn-dart-lookup').addEventListener('click', async () => {
+  if (!currentProfileId) { alert('먼저 기본 정보를 저장하세요'); return; }
+  const resultEl = document.getElementById('dart-result');
+  try {
+    const r = await apiFetch(`/${currentProfileId}/enrich/dart`, { method: 'POST' });
+    document.getElementById('field-display-name').value = r.corp_name;
+    document.getElementById('field-industry').value = r.industry;
+    resultEl.textContent = `✓ ${r.corp_name} · 대표: ${r.ceo_name}`;
+    resultEl.classList.remove('hidden', 'text-red-500');
+    resultEl.classList.add('text-green-600');
+  } catch (e) {
+    resultEl.textContent = e.message;
+    resultEl.classList.remove('hidden', 'text-green-600');
+    resultEl.classList.add('text-red-500');
+  }
+});
+
+// ── Aliases ───────────────────────────────────────────────────────────────────
+const aliasWeightInput = document.getElementById('alias-weight');
+aliasWeightInput.addEventListener('input', () => {
+  document.getElementById('alias-weight-val').textContent = aliasWeightInput.value;
+});
+
+function renderAliases(aliases) {
+  const el = document.getElementById('alias-list');
+  if (!aliases.length) {
+    el.innerHTML = '<p class="text-slate-400 text-sm text-center py-4">등록된 이름 변형이 없습니다</p>';
+    return;
+  }
+  const typeLabel = { official:'공식명', english:'영문명', abbreviation:'약칭', nickname:'별칭' };
+  el.innerHTML = aliases.map(a => `
+    <div class="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-2">
+      <div class="flex items-center gap-2">
+        <span class="text-xs bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-medium">${typeLabel[a.alias_type] || a.alias_type}</span>
+        <span class="text-sm font-medium text-slate-800">${a.alias}</span>
+        <span class="text-xs text-slate-400 font-mono">×${a.weight}</span>
+      </div>
+      <button class="text-slate-400 hover:text-red-500 transition-colors text-xs" onclick="deleteAlias(${a.id})">삭제</button>
+    </div>
+  `).join('');
+}
+
+document.getElementById('btn-add-alias').addEventListener('click', async () => {
+  if (!currentProfileId) { alert('먼저 기본 정보를 저장하세요'); return; }
+  const alias = document.getElementById('alias-input').value.trim();
+  if (!alias) return;
+  try {
+    await apiFetch(`/${currentProfileId}/aliases`, {
+      method: 'POST',
+      body: JSON.stringify({
+        alias,
+        alias_type: document.getElementById('alias-type').value,
+        weight: parseFloat(aliasWeightInput.value),
+      }),
+    });
+    document.getElementById('alias-input').value = '';
+    const p = await apiFetch(`/${currentProfileId}`);
+    renderAliases(p.aliases);
+  } catch (e) { alert(e.message); }
+});
+
+async function deleteAlias(aliasId) {
+  if (!currentProfileId) return;
+  await apiFetch(`/${currentProfileId}/aliases/${aliasId}`, { method: 'DELETE' });
+  const p = await apiFetch(`/${currentProfileId}`);
+  renderAliases(p.aliases);
+}
+
+// ── Social Accounts ───────────────────────────────────────────────────────────
+function renderAccounts(accounts) {
+  const el = document.getElementById('account-list');
+  if (!accounts.length) {
+    el.innerHTML = '<p class="text-slate-400 text-sm text-center py-4">등록된 공식 계정이 없습니다</p>';
+    return;
+  }
+  const icons = { instagram:'📸', x:'✕', youtube:'▶', tiktok:'♪', naver:'N' };
+  el.innerHTML = accounts.map(a => `
+    <div class="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-2">
+      <span class="text-sm text-slate-800">${icons[a.platform] || ''} <span class="font-mono">@${a.handle}</span> <span class="text-xs text-slate-400">(${a.platform})</span></span>
+      <button class="text-slate-400 hover:text-red-500 text-xs transition-colors" onclick="deleteAccount(${a.id})">삭제</button>
+    </div>
+  `).join('');
+}
+
+document.getElementById('btn-add-account').addEventListener('click', async () => {
+  if (!currentProfileId) { alert('먼저 기본 정보를 저장하세요'); return; }
+  const handle = document.getElementById('account-handle').value.trim().replace(/^@/, '');
+  if (!handle) return;
+  try {
+    await apiFetch(`/${currentProfileId}/social-accounts`, {
+      method: 'POST',
+      body: JSON.stringify({ platform: document.getElementById('account-platform').value, handle }),
+    });
+    document.getElementById('account-handle').value = '';
+    const p = await apiFetch(`/${currentProfileId}`);
+    renderAccounts(p.social_accounts);
+  } catch (e) { alert(e.message); }
+});
+
+async function deleteAccount(accountId) {
+  if (!currentProfileId) return;
+  await apiFetch(`/${currentProfileId}/social-accounts/${accountId}`, { method: 'DELETE' });
+  const p = await apiFetch(`/${currentProfileId}`);
+  renderAccounts(p.social_accounts);
+}
+
+// ── Executives ────────────────────────────────────────────────────────────────
+function renderExecutives(executives) {
+  const el = document.getElementById('exec-list');
+  if (!executives.length) {
+    el.innerHTML = '<p class="text-slate-400 text-sm text-center py-4">등록된 임직원이 없습니다</p>';
+    return;
+  }
+  const priorityLabel = { 1:'CEO', 2:'임원', 3:'일반' };
+  el.innerHTML = executives.map(e => `
+    <div class="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-2">
+      <div class="flex items-center gap-2">
+        ${e.photo_url ? `<img src="${e.photo_url}" class="w-7 h-7 rounded-full object-cover" />` : `<div class="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-500">${e.name[0]}</div>`}
+        <span class="text-sm font-medium text-slate-800">${e.name}</span>
+        <span class="text-xs text-slate-400">${e.role}</span>
+        <span class="text-xs bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded">${priorityLabel[e.priority] || e.priority}</span>
+      </div>
+      <button class="text-slate-400 hover:text-red-500 text-xs transition-colors" onclick="deleteExecutive(${e.id})">삭제</button>
+    </div>
+  `).join('');
+}
+
+document.getElementById('btn-add-exec').addEventListener('click', async () => {
+  if (!currentProfileId) { alert('먼저 기본 정보를 저장하세요'); return; }
+  const name = document.getElementById('exec-name').value.trim();
+  const role = document.getElementById('exec-role').value.trim();
+  if (!name || !role) { alert('이름과 직책은 필수입니다'); return; }
+  try {
+    await apiFetch(`/${currentProfileId}/executives`, {
+      method: 'POST',
+      body: JSON.stringify({
+        name, role,
+        photo_url: document.getElementById('exec-photo').value.trim() || null,
+        priority: parseInt(document.getElementById('exec-priority').value),
+      }),
+    });
+    document.getElementById('exec-name').value = '';
+    document.getElementById('exec-role').value = '';
+    document.getElementById('exec-photo').value = '';
+    const p = await apiFetch(`/${currentProfileId}`);
+    renderExecutives(p.executives);
+  } catch (e) { alert(e.message); }
+});
+
+async function deleteExecutive(execId) {
+  if (!currentProfileId) return;
+  await apiFetch(`/${currentProfileId}/executives/${execId}`, { method: 'DELETE' });
+  const p = await apiFetch(`/${currentProfileId}`);
+  renderExecutives(p.executives);
+}
+
+loadProfiles();
+
+// ── 키워드 관리 ───────────────────────────────────────────────────────────────
+async function loadKeywords() {
+  const el = document.getElementById('kw-list');
+  try {
+    const res = await fetch('/api/keywords', { headers: { 'Content-Type': 'application/json' } });
+    if (!res.ok) throw new Error(res.statusText);
+    const keywords = await res.json();
+    if (!keywords.length) {
+      el.innerHTML = '<p style="font-size:12px;color:rgba(12,20,40,.35);text-align:center;padding:16px 0;">등록된 키워드가 없습니다. 위 버튼으로 추가하세요.</p>';
+      return;
+    }
+    el.innerHTML = keywords.map(kw => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:7px;background:rgba(0,0,0,.02);border:1px solid rgba(0,0,0,.06);">
+        <div>
+          <span style="font-weight:700;font-size:13px;color:#0c1428;">${esc(kw.keyword)}</span>
+          <span style="margin-left:8px;font-size:11px;color:rgba(12,20,40,.40);">${(kw.platforms||[]).join(' · ')}</span>
+        </div>
+        <button onclick="deleteKeyword(${kw.id})" style="padding:3px 9px;border-radius:4px;border:1px solid rgba(226,75,74,.25);color:#E24B4A;background:transparent;font-size:11px;font-family:'NanumSquare',sans-serif;cursor:pointer;">삭제</button>
+      </div>`).join('');
+  } catch (e) {
+    el.innerHTML = `<p style="font-size:12px;color:#E24B4A;text-align:center;padding:16px 0;">로드 실패: ${e.message}</p>`;
+  }
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+async function deleteKeyword(id) {
+  try {
+    const res = await fetch(`/api/keywords/${id}`, { method: 'DELETE' });
+    if (!res.ok && res.status !== 204) throw new Error(res.statusText);
+    showKwToast('키워드가 삭제되었습니다.');
+    loadKeywords();
+  } catch (e) { showKwToast('삭제 실패: ' + e.message, true); }
+}
+
+function showKwToast(msg, isErr = false) {
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;bottom:20px;right:20px;z-index:999;padding:10px 16px;border-radius:6px;background:${isErr?'#E24B4A':'#0c1428'};color:#fff;font-size:12px;font-family:'NanumSquare',sans-serif;box-shadow:0 4px 12px rgba(0,0,0,.2);`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
+}
+
+document.getElementById('kw-add-btn').addEventListener('click', () => {
+  document.getElementById('kw-form').style.display = 'block';
+  document.getElementById('kw-input').focus();
+});
+document.getElementById('kw-cancel').addEventListener('click', () => {
+  document.getElementById('kw-form').style.display = 'none';
+  document.getElementById('kw-input').value = '';
+});
+document.getElementById('kw-confirm').addEventListener('click', async () => {
+  const kw = document.getElementById('kw-input').value.trim();
+  if (!kw) return;
+  const platforms = ['instagram','x','youtube','naver'].filter(p => document.getElementById('kw-plat-' + p).checked);
+  if (!platforms.length) { showKwToast('플랫폼을 하나 이상 선택하세요.', true); return; }
+  try {
+    const res = await fetch('/api/keywords', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keyword: kw, platforms }),
+    });
+    if (!res.ok) { const e = await res.json(); throw new Error(e.detail || res.statusText); }
+    document.getElementById('kw-input').value = '';
+    document.getElementById('kw-form').style.display = 'none';
+    showKwToast(`"${kw}" 키워드가 추가되었습니다.`);
+    loadKeywords();
+  } catch (e) { showKwToast('추가 실패: ' + e.message, true); }
+});
+
+loadKeywords();
+loadTeam();
+</script>
+
+<script>
+// ── 팀 관리 ───────────────────────────────────────────────────────────────────
+let currentOrgId = null;
+
+const ROLE_KR = { owner: 'Owner', admin: 'Admin', member: 'Member', viewer: 'Viewer (보기 전용)' };
+const ROLE_COLOR = { owner: '#1a6ef8', admin: '#7c3aed', member: '#0c1428', viewer: '#6b7280' };
+
+async function loadTeam() {
+  try {
+    const orgs = await fetch('/api/orgs').then(r => r.ok ? r.json() : []);
+    if (!orgs.length) return;
+    const org = orgs.find(o => o.my_role === 'owner' || o.my_role === 'admin') || orgs[0];
+    currentOrgId = org.id;
+
+    document.getElementById('team-org-name').textContent = org.name;
+    const limit = org.member_limit === -1 ? '∞' : org.member_limit;
+    const usageEl = document.getElementById('member-usage');
+    usageEl.textContent = `${org.member_count} / ${limit}명`;
+    if (org.member_limit !== -1 && org.member_count >= org.member_limit * 0.8) {
+      usageEl.style.color = '#d97706';
+    }
+
+    await renderMembers(org.id);
+  } catch (e) {}
+}
+
+async function renderMembers(orgId) {
+  try {
+    const data = await fetch(`/api/orgs/${orgId}/members`).then(r => r.json());
+
+    const pending = data.members.filter(m => m.status === 'pending');
+    const active = data.members.filter(m => m.status === 'active');
+
+    const pendingSection = document.getElementById('pending-section');
+    if (pending.length) {
+      pendingSection.style.display = 'block';
+      document.getElementById('pending-count').textContent = `(${pending.length})`;
+      document.getElementById('pending-list').innerHTML = pending.map(m => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;">
+          <div>
+            <span style="font-size:12px;font-weight:700;color:#0c1428;">${m.name}</span>
+            <span style="font-size:11px;color:rgba(12,20,40,.4);margin-left:6px;">${m.email}</span>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button onclick="approveMember(${m.user_id},'approve')" style="padding:4px 10px;border-radius:4px;background:#1a6ef8;border:none;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:'NanumSquare',sans-serif;">승인</button>
+            <button onclick="approveMember(${m.user_id},'reject')" style="padding:4px 10px;border-radius:4px;border:1px solid rgba(0,0,0,.12);background:transparent;font-size:11px;color:rgba(12,20,40,.5);cursor:pointer;font-family:'NanumSquare',sans-serif;">거절</button>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      pendingSection.style.display = 'none';
+    }
+
+    document.getElementById('member-list').innerHTML = active.length ? active.map(m => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.04);">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:28px;height:28px;border-radius:50%;background:rgba(26,110,248,0.1);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#1a6ef8;">${(m.name||'?')[0].toUpperCase()}</div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:#0c1428;">${m.name}</div>
+            <div style="font-size:10px;color:rgba(12,20,40,.4);">${m.email}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(26,110,248,0.08);color:${ROLE_COLOR[m.role]||'#0c1428'};">${ROLE_KR[m.role]||m.role}</span>
+          ${m.role !== 'owner' ? `<button onclick="removeMember(${m.user_id})" style="padding:3px 8px;border-radius:4px;border:1px solid rgba(0,0,0,.1);background:transparent;font-size:10px;color:rgba(12,20,40,.4);cursor:pointer;font-family:'NanumSquare',sans-serif;">강퇴</button>` : ''}
+        </div>
+      </div>
+    `).join('') : '<p style="font-size:12px;color:rgba(12,20,40,.35);text-align:center;padding:12px 0;">활성 멤버가 없습니다</p>';
+  } catch (e) {}
+}
+
+document.getElementById('btn-gen-code').addEventListener('click', async () => {
+  if (!currentOrgId) return;
+  const role = document.getElementById('invite-role').value;
+  const expires = document.getElementById('invite-expires').value;
+  try {
+    const res = await fetch(`/api/orgs/${currentOrgId}/invite-codes?role_to_assign=${role}&expires_days=${expires}`, { method: 'POST' });
+    if (res.status === 402) {
+      const data = await res.json();
+      showUpgradeModal(data.detail?.message || '플랜 업그레이드가 필요합니다.');
+      return;
+    }
+    const data = await res.json();
+    document.getElementById('code-value').textContent = data.code;
+    document.getElementById('code-expires').textContent = `${expires}일 유효`;
+    document.getElementById('code-display').style.display = 'flex';
+  } catch (e) { alert('코드 발급 실패: ' + e.message); }
+});
+
+async function approveMember(userId, action) {
+  if (!currentOrgId) return;
+  try {
+    const res = await fetch(`/api/orgs/${currentOrgId}/members/${userId}/approve?action=${action}`, { method: 'PATCH' });
+    if (res.ok) { await renderMembers(currentOrgId); await loadTeam(); }
+    else { const d = await res.json(); alert(d.detail || '처리 실패'); }
+  } catch (e) {}
+}
+
+async function removeMember(userId) {
+  if (!confirm('이 멤버를 강퇴하시겠습니까?')) return;
+  try {
+    const res = await fetch(`/api/orgs/${currentOrgId}/members/${userId}`, { method: 'DELETE' });
+    if (res.ok) { await renderMembers(currentOrgId); await loadTeam(); }
+    else { const d = await res.json(); alert(d.detail || '처리 실패'); }
+  } catch (e) {}
+}
+
+function copyCode() {
+  const code = document.getElementById('code-value').textContent;
+  navigator.clipboard.writeText(code).then(() => alert(`코드 "${code}" 복사됨`));
+}
+
+function showUpgradeModal(message) {
+  document.getElementById('upgrade-message').textContent = message;
+  document.getElementById('upgrade-modal').style.display = 'flex';
+}
+</script>
+</body>
+</html>

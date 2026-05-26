@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAYbrand — 현재 위협</title>
+  <script>(function(){var t=localStorage.getItem('db-theme')||'dark';document.documentElement.setAttribute('data-theme',t);}());</script>
+  <link rel="stylesheet" href="/assets/css/custom.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{brand:{500:'#1a6ef8'}}}}}</script>
+</head>
+<body style="font-family:'NanumSquare','Noto Sans KR',sans-serif;background:var(--db-bg);color:var(--db-text-1);">
+<div style="display:flex;height:100vh;overflow:hidden;">
+
+  <!-- Sidebar -->
+  <aside style="background:#0c1428;width:200px;flex-shrink:0;display:flex;flex-direction:column;">
+    <a href="/" style="display:flex;align-items:center;gap:10px;padding:18px 16px;border-bottom:1px solid rgba(255,255,255,0.08);text-decoration:none;">
+      <div style="width:34px;height:34px;overflow:hidden;flex-shrink:0;"><img src="/saybrand-logo2.png" alt="" style="width:34px;height:auto;display:block;filter:brightness(1.8);" onerror="this.parentElement.style.display='none'" /></div>
+      <span style="font-weight:700;font-size:15px;color:#ffffff;letter-spacing:-.02em;line-height:1;">SAYbrand</span>
+    </a>
+    <nav style="flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:2px;">
+      <a href="/dashboard" class="db-nav-item"><svg style="width:16px;height:16px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>대시보드</a>
+      <a href="/threats" class="db-nav-item db-nav-active"><svg style="width:16px;height:16px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>현재 위협</a>
+      <a href="/actions" class="db-nav-item"><svg style="width:16px;height:16px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>처리해야할 사항</a>
+      <a href="/brand-image" class="db-nav-item"><svg style="width:16px;height:16px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg>브랜드 이미지</a>
+      <a href="/negative-mentions" class="db-nav-item"><svg style="width:16px;height:16px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>부정적 언급</a>
+    </nav>
+    <div style="padding:12px 14px;border-top:1px solid rgba(255,255,255,0.08);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <img id="user-avatar" src="" alt="" style="width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0;display:none;" />
+        <div id="user-avatar-fallback" style="width:26px;height:26px;border-radius:50%;background:#1a6ef8;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;flex-shrink:0;">?</div>
+        <div style="min-width:0;"><p id="user-name" style="font-size:11px;color:#fff;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">로딩 중...</p><p id="user-email" style="font-size:10px;color:rgba(255,255,255,0.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></p></div>
+      </div>
+      <a href="/settings" class="db-nav-item" style="padding:5px 8px;font-size:11px;"><svg style="width:13px;height:13px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41M20 12h2M2 12h2M12 20v2M12 2v2"/></svg>설정</a>
+      <a href="/auth/logout" class="db-nav-item" style="padding:5px 8px;font-size:11px;"><svg style="width:13px;height:13px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>로그아웃</a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="db-main" style="flex:1;overflow-y:auto;background:var(--db-bg);">
+    <header class="db-topheader" style="position:sticky;top:0;z-index:10;background:var(--db-surface);border-bottom:1px solid var(--db-border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <h1 style="font-weight:800;font-size:15px;color:var(--db-text-1);letter-spacing:-.02em;">현재 위협</h1>
+        <p style="font-size:10px;color:var(--db-text-3);margin-top:1px;">탐지된 전체 위협 목록</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div id="stats-chips" style="display:flex;gap:6px;"></div>
+        <button class="db-theme-toggle" id="theme-toggle" aria-label="다크모드 전환">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+
+      <!-- Filters -->
+      <div class="db-card" style="padding:12px 16px;">
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+          <div>
+            <p style="font-size:9px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);margin-bottom:5px;">심각도</p>
+            <div style="display:flex;gap:2px;background:rgba(0,0,0,.04);border-radius:6px;padding:3px;">
+              <button class="filter-btn active" data-severity="">전체</button>
+              <button class="filter-btn" data-severity="critical">Critical</button>
+              <button class="filter-btn" data-severity="high">High</button>
+              <button class="filter-btn" data-severity="medium">Medium</button>
+              <button class="filter-btn" data-severity="low">Low</button>
+            </div>
+          </div>
+          <div style="width:1px;height:32px;background:rgba(0,0,0,.08);"></div>
+          <div>
+            <p style="font-size:9px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);margin-bottom:5px;">상태</p>
+            <div style="display:flex;gap:1px;">
+              <button class="status-filter-btn active" data-status="">전체</button>
+              <button class="status-filter-btn" data-status="active">활성</button>
+              <button class="status-filter-btn" data-status="reviewing">검토중</button>
+              <button class="status-filter-btn" data-status="resolved">해결됨</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="db-card" style="padding:0;overflow:hidden;">
+        <div style="overflow-x:auto;">
+          <table style="width:100%;font-size:12px;border-collapse:collapse;">
+            <thead>
+              <tr style="background:rgba(0,0,0,.02);border-bottom:1px solid rgba(0,0,0,.06);">
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">심각도</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">유형</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">플랫폼</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">계정</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">내용</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">리스크</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">탐지</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">상태</th>
+              </tr>
+            </thead>
+            <tbody id="threat-tbody">
+              <tr><td colspan="8" style="padding:40px;text-align:center;color:rgba(12,20,40,.38);">로딩 중...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="padding:10px 18px;border-top:1px solid rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between;">
+          <span id="page-info" style="font-size:10px;color:rgba(12,20,40,.38);font-family:'JetBrains Mono',monospace;">—</span>
+          <div style="display:flex;gap:6px;">
+            <button id="btn-prev" style="padding:4px 10px;border-radius:4px;border:1px solid rgba(0,0,0,.10);font-size:11px;font-family:'NanumSquare',sans-serif;color:rgba(12,20,40,.55);background:var(--db-surface);cursor:pointer;">이전</button>
+            <button id="btn-next" style="padding:4px 10px;border-radius:4px;border:1px solid rgba(0,0,0,.10);font-size:11px;font-family:'NanumSquare',sans-serif;color:rgba(12,20,40,.55);background:var(--db-surface);cursor:pointer;">다음</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Detail Panel -->
+<div id="panel-backdrop" style="display:none;position:fixed;inset:0;background:rgba(12,20,40,0.28);z-index:39;backdrop-filter:blur(2px);"></div>
+<div id="detail-panel" class="db-detail-panel" style="position:fixed;right:0;top:0;height:100vh;width:420px;background:#fff;border-left:1px solid rgba(0,0,0,0.08);box-shadow:rgba(12,20,40,0.18) -4px 0 24px;z-index:40;overflow-y:auto;display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);">
+  <div style="padding:16px 18px;border-bottom:1px solid rgba(0,0,0,.08);flex-shrink:0;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:7px;"><span id="detail-severity">—</span><span id="detail-module">—</span></div>
+      <button id="btn-close-panel" style="padding:5px;border-radius:5px;border:none;background:transparent;cursor:pointer;color:rgba(12,20,40,.35);"><svg style="width:15px;height:15px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <h2 id="detail-account" style="font-weight:800;font-size:14px;color:#0c1428;letter-spacing:-.02em;font-family:'JetBrains Mono',monospace;margin-bottom:8px;">—</h2>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span id="detail-platform" style="font-size:11px;color:rgba(12,20,40,.50);"></span>
+      <span id="detail-detected" style="font-size:10px;color:rgba(12,20,40,.35);font-family:'JetBrains Mono',monospace;"></span>
+      <a id="detail-url" href="#" target="_blank" rel="noopener noreferrer" style="display:none;align-items:center;gap:3px;font-size:12px;color:#185FA5;text-decoration:none;font-weight:700;"><svg style="width:11px;height:11px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>원본 보기</a>
+    </div>
+  </div>
+  <div style="flex:1;padding:16px 18px;display:flex;flex-direction:column;gap:14px;font-size:12px;">
+    <div><p style="font-weight:300;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.45);margin-bottom:7px;">탐지 내용</p><p id="detail-content" style="color:#0c1428;line-height:1.65;background:rgba(0,0,0,.03);border-radius:6px;padding:10px;"></p></div>
+    <div id="detail-analysis-wrap" style="background:rgba(24,95,165,0.04);border:1px solid rgba(24,95,165,0.12);border-radius:7px;padding:12px;"><p style="font-weight:300;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#185FA5;margin-bottom:7px;">🤖 AI 분석</p><p id="detail-analysis" style="color:#0c1428;line-height:1.65;font-size:11px;"></p></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div style="background:#f5f6f8;border-radius:7px;padding:10px;"><span style="font-size:9px;font-weight:300;text-transform:uppercase;letter-spacing:.08em;color:rgba(12,20,40,.45);display:block;margin-bottom:3px;">리스크 점수</span><span id="detail-score" style="font-weight:800;font-size:20px;">—</span></div>
+      <div style="background:#f5f6f8;border-radius:7px;padding:10px;"><span style="font-size:9px;font-weight:300;text-transform:uppercase;letter-spacing:.08em;color:rgba(12,20,40,.45);display:block;margin-bottom:3px;">AI 신뢰도</span><span id="detail-confidence" style="font-weight:800;font-size:20px;color:#0c1428;">—</span></div>
+      <div style="background:#f5f6f8;border-radius:7px;padding:10px;"><span style="font-size:9px;font-weight:300;text-transform:uppercase;letter-spacing:.08em;color:rgba(12,20,40,.45);display:block;margin-bottom:3px;">봇 확률</span><span id="detail-bot" style="font-weight:800;font-size:20px;color:#0c1428;">—</span></div>
+      <div style="background:#f5f6f8;border-radius:7px;padding:10px;"><span style="font-size:9px;font-weight:300;text-transform:uppercase;letter-spacing:.08em;color:rgba(12,20,40,.45);display:block;margin-bottom:3px;">조직적 공격</span><span id="detail-organized" style="font-weight:800;font-size:20px;color:#0c1428;">—</span></div>
+    </div>
+    <div id="detail-suggestion-wrap" style="background:rgba(29,158,117,0.04);border:1px solid rgba(29,158,117,0.12);border-radius:7px;padding:12px;"><p style="font-weight:300;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#1D9E75;margin-bottom:7px;">대응 방안</p><p id="detail-suggestion" style="color:#0c1428;line-height:1.7;font-size:11px;white-space:pre-line;"></p></div>
+  </div>
+  <div style="flex-shrink:0;padding:14px 18px;border-top:1px solid rgba(0,0,0,.06);background:rgba(0,0,0,.02);">
+    <p style="font-size:9px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.45);margin-bottom:8px;">상태 변경</p>
+    <div style="display:flex;gap:6px;">
+      <button id="status-active" style="flex:1;padding:7px;border-radius:4px;font-size:11px;font-family:'NanumSquare',sans-serif;font-weight:700;cursor:pointer;border:1px solid rgba(226,75,74,.25);color:#E24B4A;background:transparent;">활성</button>
+      <button id="status-reviewing" style="flex:1;padding:7px;border-radius:4px;font-size:11px;font-family:'NanumSquare',sans-serif;font-weight:700;cursor:pointer;border:1px solid rgba(24,95,165,.25);color:#185FA5;background:transparent;">검토중</button>
+      <button id="status-resolved" style="flex:1;padding:7px;border-radius:4px;font-size:11px;font-family:'NanumSquare',sans-serif;font-weight:700;cursor:pointer;border:1px solid rgba(0,0,0,.12);color:rgba(12,20,40,.45);background:transparent;">해결됨</button>
+    </div>
+  </div>
+</div>
+<div id="toast-wrap" style="position:fixed;bottom:20px;right:20px;z-index:100;display:flex;flex-direction:column;gap:8px;pointer-events:none;"></div>
+
+<script type="module">
+import { api } from "/assets/js/api.js";
+import { timeAgo, severityBadge, statusBadge, moduleBadge, platformIcon, scoreColor } from "/assets/js/utils.js";
+const state = { threats:[], total:0, page:1, pageSize:15, filterSeverity:'', filterStatus:'', selected:null };
+const TYPE_MAP = { logo_spoof:'로고 사칭', account_impersonation:'계정 사칭', organized_rumor:'조직적 루머', viral_rumor:'바이럴 루머', executive_exposure:'임직원 노출', bot_attack:'봇 공격', reputation_attack:'평판 공격', negative_review_cluster:'부정 리뷰 클러스터', internal_info_leak:'내부 정보 유출', watermark_removal:'워터마크 제거', negative_comment:'부정 댓글', casual_mention:'일반 언급', competitor_mention:'경쟁사 언급', similar_logo:'유사 로고' };
+function showToast(msg, type='success') {
+  const wrap=document.getElementById('toast-wrap'); if(!wrap)return;
+  const colors={success:'#1D9E75',error:'#E24B4A',info:'#185FA5'}; const color=colors[type]||'#1D9E75';
+  const el=document.createElement('div'); el.style.cssText=`display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--db-surface);border:1px solid var(--db-border);border-left:3px solid ${color};border-radius:8px;box-shadow:rgba(12,20,40,.14) 0 4px 16px;font-size:12px;font-family:'NanumSquare',sans-serif;pointer-events:auto;transform:translateX(120%);transition:transform .3s cubic-bezier(.34,1.56,.64,1);min-width:240px;`;
+  el.innerHTML=`<span style="width:7px;height:7px;border-radius:50%;background:${color};flex-shrink:0;"></span><span style="color:var(--db-text-1);">${msg}</span>`;
+  wrap.appendChild(el); requestAnimationFrame(()=>requestAnimationFrame(()=>{el.style.transform='translateX(0)';}));
+  setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .4s';setTimeout(()=>el.remove(),400);},3500);
+}
+function renderThreats(data) {
+  state.threats=data.items; state.total=data.total;
+  const tbody=document.getElementById('threat-tbody');
+  if(!data.items.length){tbody.innerHTML=`<tr><td colspan="8" style="padding:40px;text-align:center;color:rgba(12,20,40,.38);">위협 없음</td></tr>`;return;}
+  tbody.innerHTML=data.items.map(t=>`
+    <tr style="cursor:pointer;transition:background .1s;border-bottom:1px solid rgba(0,0,0,.05);" onmouseover="this.style.background='rgba(0,0,0,.02)'" onmouseout="this.style.background='transparent'" onclick="window._openThreat(${t.id})">
+      <td style="padding:10px 14px;">${severityBadge(t.severity)}</td>
+      <td style="padding:10px 14px;"><div style="display:flex;align-items:center;gap:6px;">${moduleBadge(t.module)}<span style="font-size:11px;color:#0c1428;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${TYPE_MAP[t.threat_type]||t.threat_type}</span></div></td>
+      <td style="padding:10px 14px;"><div style="display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(12,20,40,.60);">${platformIcon(t.platform)}<span style="text-transform:capitalize;">${t.platform}</span></div></td>
+      <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(12,20,40,.60);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.source_account}</td>
+      <td style="padding:10px 14px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:rgba(12,20,40,.55);">${(t.content_preview||'').slice(0,55)}${(t.content_preview||'').length>55?'…':''}</td>
+      <td style="padding:10px 14px;"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${scoreColor(t.risk_score)}">${t.risk_score}</span></td>
+      <td style="padding:10px 14px;font-size:11px;color:rgba(12,20,40,.38);font-family:'JetBrains Mono',monospace;white-space:nowrap;">${timeAgo(t.detected_at)}</td>
+      <td style="padding:10px 14px;">${statusBadge(t.status)}</td>
+    </tr>`).join('');
+  const tp=Math.max(1,Math.ceil(data.total/state.pageSize));
+  document.getElementById('page-info').textContent=`${data.page} / ${tp} 페이지 (총 ${data.total}건)`;
+  document.getElementById('btn-prev').disabled=data.page<=1;
+  document.getElementById('btn-next').disabled=data.page>=tp;
+}
+async function loadThreats() {
+  const data=await api.threats({severity:state.filterSeverity||null,status:state.filterStatus||null,page:state.page,page_size:state.pageSize});
+  renderThreats(data);
+}
+async function loadStats() {
+  try { const s=await api.stats(); const chips=document.getElementById('stats-chips');
+    const cfg=[{k:'critical',c:'#E24B4A',l:'C'},{k:'high',c:'#BA7517',l:'H'},{k:'medium',c:'#185FA5',l:'M'},{k:'low',c:'#1D9E75',l:'L'}];
+    chips.innerHTML=cfg.map(x=>`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;border:1px solid ${x.c}40;font-size:11px;font-family:'JetBrains Mono',monospace;font-weight:700;color:${x.c};">${x.l} ${s[x.k]}</span>`).join('');
+  } catch(e){}
+}
+window._openThreat = function(id) {
+  const t=state.threats.find(x=>x.id===id); if(!t)return; state.selected=t;
+  document.getElementById('detail-severity').innerHTML=severityBadge(t.severity);
+  document.getElementById('detail-module').innerHTML=moduleBadge(t.module);
+  document.getElementById('detail-account').textContent=t.source_account;
+  document.getElementById('detail-platform').innerHTML=`<span style="display:inline-flex;align-items:center;gap:4px;">${platformIcon(t.platform)} ${t.platform}</span>`;
+  document.getElementById('detail-detected').textContent=timeAgo(t.detected_at);
+  document.getElementById('detail-content').textContent=t.content_preview;
+  const sc=document.getElementById('detail-score'); sc.textContent=`${t.risk_score}/100`; sc.style.color=scoreColor(t.risk_score);
+  document.getElementById('detail-confidence').textContent=`${Math.round(t.confidence*100)}%`;
+  const bot=document.getElementById('detail-bot'); if(t.bot_probability!=null){const p=Math.round(t.bot_probability*100);bot.textContent=p+'%';bot.style.color=p>=70?'#E24B4A':p>=40?'#BA7517':'#1D9E75';}else{bot.textContent='—';bot.style.color='rgba(12,20,40,.35)';}
+  const org=document.getElementById('detail-organized'); if(t.is_organized===true){org.textContent='감지됨';org.style.color='#BA7517';}else if(t.is_organized===false){org.textContent='감지되지 않음';org.style.color='#1D9E75';}else{org.textContent='—';org.style.color='rgba(12,20,40,.35)';}
+  const aw=document.getElementById('detail-analysis-wrap'); if(t.ai_analysis){document.getElementById('detail-analysis').textContent=t.ai_analysis;aw.style.display='';}else{aw.style.display='none';}
+  const sw=document.getElementById('detail-suggestion-wrap'); if(t.ai_response_suggestion){document.getElementById('detail-suggestion').textContent=t.ai_response_suggestion;sw.style.display='';}else{sw.style.display='none';}
+  const lu=document.getElementById('detail-url'); if(t.source_url){lu.href=t.source_url;lu.style.display='inline-flex';}else{lu.style.display='none';}
+  ['active','reviewing','resolved'].forEach(s=>{const b=document.getElementById(`status-${s}`);b.style.opacity=t.status===s?'1':'0.55';b.style.fontWeight=t.status===s?'800':'700';});
+  document.getElementById('detail-panel').style.transform='translateX(0)';
+  document.getElementById('panel-backdrop').style.display='block';
+  document.body.style.overflow='hidden';
+};
+async function handleStatus(s) {
+  if(!state.selected)return;
+  try { await api.updateStatus(state.selected.id,s); state.selected.status=s;
+    ['active','reviewing','resolved'].forEach(x=>{const b=document.getElementById(`status-${x}`);b.style.opacity=x===s?'1':'0.55';b.style.fontWeight=x===s?'800':'700';});
+    await loadThreats(); showToast({active:'활성',reviewing:'검토중',resolved:'해결됨'}[s]+' 처리 완료');
+  } catch(e){showToast('상태 변경 실패','error');}
+}
+function closePanel(){document.getElementById('detail-panel').style.transform='translateX(100%)';document.getElementById('panel-backdrop').style.display='none';document.body.style.overflow='';}
+document.addEventListener('DOMContentLoaded',()=>{
+  loadStats(); loadThreats();
+  document.querySelectorAll('.filter-btn').forEach(b=>b.addEventListener('click',()=>{state.filterSeverity=b.dataset.severity;state.page=1;document.querySelectorAll('.filter-btn').forEach(x=>x.classList.toggle('active',x===b));loadThreats();}));
+  document.querySelectorAll('.status-filter-btn').forEach(b=>b.addEventListener('click',()=>{state.filterStatus=b.dataset.status;state.page=1;document.querySelectorAll('.status-filter-btn').forEach(x=>x.classList.toggle('active',x===b));loadThreats();}));
+  document.getElementById('btn-prev').addEventListener('click',()=>{if(state.page>1){state.page--;loadThreats();}});
+  document.getElementById('btn-next').addEventListener('click',()=>{const tp=Math.ceil(state.total/state.pageSize);if(state.page<tp){state.page++;loadThreats();}});
+  document.getElementById('btn-close-panel').addEventListener('click',closePanel);
+  document.getElementById('panel-backdrop').addEventListener('click',closePanel);
+  document.getElementById('status-active').addEventListener('click',()=>handleStatus('active'));
+  document.getElementById('status-reviewing').addEventListener('click',()=>handleStatus('reviewing'));
+  document.getElementById('status-resolved').addEventListener('click',()=>handleStatus('resolved'));
+});
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded',function(){var t=document.getElementById('theme-toggle');if(t)t.addEventListener('click',function(){var n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('db-theme',n);});});
+</script>
+<script>
+  fetch('/auth/me').then(r=>{if(!r.ok){location.href='/login';return;}return r.json();}).then(user=>{if(!user)return;document.getElementById('user-name').textContent=user.name||user.email;document.getElementById('user-email').textContent=user.email;if(user.avatar_url){const i=document.getElementById('user-avatar');i.src=user.avatar_url;i.style.display='block';document.getElementById('user-avatar-fallback').style.display='none';}else{document.getElementById('user-avatar-fallback').textContent=(user.name||user.email||'?')[0].toUpperCase();}}).catch(()=>{location.href='/login';});
+</script>
+</body>
+</html>
