@@ -122,6 +122,30 @@ async def my_orgs(
     return [await _org_out(o, user["id"], db) for o in orgs]
 
 
+@router.patch("/{org_id}/settings")
+async def update_org_settings(
+    org_id: int,
+    data: dict,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    await _require_role(org_id, user["id"], ["owner", "admin"], db)
+    result = await db.execute(select(Organization).where(Organization.id == org_id))
+    org = result.scalar_one_or_none()
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    if "slack_webhook_url" in data:
+        org.slack_webhook_url = data["slack_webhook_url"] or None
+    if "white_label_enabled" in data:
+        org.white_label_enabled = bool(data["white_label_enabled"])
+    if "white_label_brand_name" in data:
+        org.white_label_brand_name = data["white_label_brand_name"] or None
+    if "white_label_color" in data:
+        org.white_label_color = data["white_label_color"] or None
+    await db.commit()
+    return {"ok": True}
+
+
 @router.post("/{org_id}/switch")
 async def switch_org(
     org_id: int,

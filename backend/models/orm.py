@@ -1,5 +1,5 @@
-from datetime import datetime
-from sqlalchemy import Integer, String, Float, Boolean, Text, DateTime, ForeignKey, JSON, UniqueConstraint
+from datetime import datetime, date
+from sqlalchemy import Integer, String, Float, Boolean, Text, DateTime, Date, ForeignKey, JSON, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from backend.db.database import Base
 
@@ -39,6 +39,11 @@ class Threat(Base):
     ai_response_suggestion: Mapped[str | None] = mapped_column(Text, nullable=True)
     bot_probability: Mapped[float | None] = mapped_column(Float, nullable=True)
     is_organized: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    sentiment: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    emotion: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    sentiment_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    reach_estimate: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    region: Mapped[str | None] = mapped_column(String(50), nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="active")
     post_published_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     engagements_per_hour: Mapped[float] = mapped_column(Float, default=0.0)
@@ -155,6 +160,11 @@ class Organization(Base):
     subscription_status: Mapped[str] = mapped_column(String(20), default="active")
     grace_period_ends_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     polar_subscription_id: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    slack_webhook_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    white_label_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    white_label_logo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    white_label_brand_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    white_label_color: Mapped[str | None] = mapped_column(String(7), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
@@ -185,4 +195,53 @@ class InviteCode(Base):
     max_uses: Mapped[int] = mapped_column(Integer, default=0)
     uses_count: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class CompetitorKeyword(Base):
+    __tablename__ = "competitor_keywords"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+    keyword: Mapped[str] = mapped_column(String(200))
+    competitor_name: Mapped[str] = mapped_column(String(200))
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class CompetitorMention(Base):
+    __tablename__ = "competitor_mentions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+    competitor_name: Mapped[str] = mapped_column(String(200))
+    platform: Mapped[str] = mapped_column(String(50))
+    sentiment: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    content_preview: Mapped[str] = mapped_column(Text)
+    source_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    detected_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class HashtagTrend(Base):
+    __tablename__ = "hashtag_trends"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+    hashtag: Mapped[str] = mapped_column(String(200))
+    platform: Mapped[str] = mapped_column(String(50))
+    mention_count: Mapped[int] = mapped_column(Integer, default=0)
+    sentiment: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    trend_date: Mapped[date] = mapped_column(Date)
+
+
+class OutboundWebhook(Base):
+    __tablename__ = "outbound_webhooks"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+    url: Mapped[str] = mapped_column(String(500))
+    description: Mapped[str] = mapped_column(String(200), default="")
+    events: Mapped[str] = mapped_column(Text, default="[]")
+    secret: Mapped[str] = mapped_column(String(64))
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

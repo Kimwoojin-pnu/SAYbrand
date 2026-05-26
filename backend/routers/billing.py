@@ -97,10 +97,18 @@ async def webhook(request: Request, db: AsyncSession = Depends(get_db)):
     )
     org = org_result.scalar_one_or_none()
 
+    def _resolve_tier(product_id: str) -> str:
+        if product_id and product_id == settings.polar_product_id_pro:
+            return "pro"
+        if product_id and product_id == settings.polar_product_id_starter:
+            return "starter"
+        return "starter"
+
     if event_type == "subscription.created":
+        product_id = data.get("product_id") or data.get("product", {}).get("id", "")
+        new_tier = _resolve_tier(product_id)
         user.subscription_status = "active"
         user.polar_customer_id = data.get("customer_id")
-        new_tier = data.get("product", {}).get("name", "starter").lower()
         user.subscription_tier = new_tier
         if org:
             org.subscription_status = "active"
@@ -112,7 +120,8 @@ async def webhook(request: Request, db: AsyncSession = Depends(get_db)):
             await handle_subscription_cancelled(org.id, db)
             return {"ok": True}
     elif event_type == "subscription.updated":
-        new_tier = data.get("product", {}).get("name", "starter").lower()
+        product_id = data.get("product_id") or data.get("product", {}).get("id", "")
+        new_tier = _resolve_tier(product_id)
         user.subscription_tier = new_tier
         if org:
             org.subscription_tier = new_tier

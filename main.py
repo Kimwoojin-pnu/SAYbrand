@@ -9,7 +9,7 @@ from backend.db.database import engine, Base
 from backend.db.seed import seed_mock_data
 from backend.middleware.rate_limiter import rate_limit_middleware
 from backend.routers import dashboard
-from backend.routers import auth, billing, orgs, profile, keywords, reports
+from backend.routers import auth, billing, orgs, profile, keywords, reports, assistant, webhooks, competitor_keywords
 
 
 @asynccontextmanager
@@ -42,6 +42,9 @@ app.include_router(profile.router)
 app.include_router(dashboard.router)
 app.include_router(keywords.router)
 app.include_router(reports.router)
+app.include_router(assistant.router)
+app.include_router(webhooks.router)
+app.include_router(competitor_keywords.router)
 
 
 @app.get("/saybrand-logo.png")

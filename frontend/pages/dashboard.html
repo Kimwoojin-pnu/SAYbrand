@@ -199,6 +199,24 @@
         </div>
       </div>
 
+      <!-- Sentiment Trend + Share of Voice -->
+      <div style="display:grid;grid-template-columns:1fr 300px;gap:14px;">
+        <div class="db-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <h3 style="font-weight:700;font-size:13px;letter-spacing:-.01em;">감성 트렌드 <span style="font-size:10px;font-weight:400;color:rgba(12,20,40,.4);">7일</span></h3>
+          </div>
+          <div style="height:160px;position:relative;">
+            <canvas id="sentimentChart"></canvas>
+          </div>
+        </div>
+        <div class="db-card">
+          <h3 style="font-weight:700;font-size:13px;letter-spacing:-.01em;margin-bottom:14px;">Share of Voice</h3>
+          <div id="sov-list" style="display:flex;flex-direction:column;gap:8px;">
+            <p style="font-size:12px;color:rgba(12,20,40,.38);text-align:center;padding:16px 0;">로딩 중...</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Risk Gauge + Alerts -->
       <div style="display:grid;grid-template-columns:280px 1fr;gap:14px;">
 
@@ -325,12 +343,13 @@
                 <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">플랫폼</th>
                 <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">계정</th>
                 <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">리스크</th>
+                <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">도달</th>
                 <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">탐지</th>
                 <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">상태</th>
               </tr>
             </thead>
             <tbody id="threat-tbody">
-              <tr><td colspan="7" style="padding:40px;text-align:center;color:rgba(12,20,40,.38);">로딩 중...</td></tr>
+              <tr><td colspan="8" style="padding:40px;text-align:center;color:rgba(12,20,40,.38);">로딩 중...</td></tr>
             </tbody>
           </table>
         </div>
@@ -475,6 +494,26 @@
 
     </div>
   </main>
+</div>
+
+<!-- ── AI Assistant Floating Button ──────────────────────────────────────── -->
+<button id="btn-assistant" onclick="toggleAssistant()" title="AI 어시스턴트" style="position:fixed;bottom:24px;right:24px;width:48px;height:48px;border-radius:50%;background:#1a6ef8;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(26,110,248,0.4);display:flex;align-items:center;justify-content:center;z-index:38;transition:transform .15s;">
+  <svg style="width:22px;height:22px;color:#fff;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+</button>
+
+<!-- ── AI Assistant Panel ──────────────────────────────────────────────────── -->
+<div id="assistant-panel" style="display:none;position:fixed;bottom:82px;right:24px;width:340px;background:var(--db-surface,#fff);border:1px solid rgba(0,0,0,.10);border-radius:12px;box-shadow:0 8px 32px rgba(12,20,40,.18);z-index:38;overflow:hidden;flex-direction:column;">
+  <div style="padding:12px 16px;border-bottom:1px solid rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between;">
+    <span style="font-size:13px;font-weight:700;">AI 위기 대응 어시스턴트</span>
+    <button onclick="toggleAssistant()" style="border:none;background:transparent;cursor:pointer;font-size:16px;color:rgba(12,20,40,.4);">✕</button>
+  </div>
+  <div id="assistant-messages" style="padding:12px;max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;font-size:12px;">
+    <div style="background:rgba(26,110,248,.08);border-radius:8px;padding:10px 12px;color:#0c1428;">안녕하세요! 브랜드 위기 대응, 커뮤니케이션 전략, 리스크 분석 등을 질문해보세요.</div>
+  </div>
+  <div style="padding:10px;border-top:1px solid rgba(0,0,0,.06);display:flex;gap:6px;">
+    <input id="assistant-input" type="text" placeholder="질문을 입력하세요..." style="flex:1;padding:7px 10px;border-radius:6px;border:1px solid rgba(0,0,0,.12);font-size:12px;font-family:'NanumSquare',sans-serif;outline:none;" onkeydown="if(event.key==='Enter')sendAssistantMessage()" />
+    <button onclick="sendAssistantMessage()" style="padding:7px 12px;border-radius:6px;background:#1a6ef8;border:none;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">전송</button>
+  </div>
 </div>
 
 <!-- ── Detail Panel ───────────────────────────────────────────────────────── -->

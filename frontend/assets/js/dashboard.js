@@ -1,4 +1,4 @@
-import { api } from "/assets/js/api.js";
+import { api, assistantApi } from "/assets/js/api.js";
 import { keywordApi } from "/assets/js/api.js";
 import { timeAgo, severityBadge, statusBadge, moduleBadge, platformIcon, scoreColor, levelLabel } from "/assets/js/utils.js";
 
@@ -81,14 +81,75 @@ function chartColors() {
   };
 }
 function applyChartTheme() {
-  if (!trendChart) return;
   const c = chartColors();
-  trendChart.options.scales.x.grid.color = c.grid;
-  trendChart.options.scales.x.ticks.color = c.tick;
-  trendChart.options.scales.y.grid.color = c.grid;
-  trendChart.options.scales.y.ticks.color = c.tick;
-  trendChart.options.plugins.legend.labels.color = c.legend;
-  trendChart.update('none');
+  [trendChart, sentimentChart].forEach(chart => {
+    if (!chart) return;
+    if (chart.options.scales?.x) {
+      chart.options.scales.x.grid.color = c.grid;
+      chart.options.scales.x.ticks.color = c.tick;
+      chart.options.scales.y.grid.color = c.grid;
+      chart.options.scales.y.ticks.color = c.tick;
+    }
+    if (chart.options.plugins?.legend) chart.options.plugins.legend.labels.color = c.legend;
+    chart.update('none');
+  });
+}
+
+// ── Sentiment Chart ───────────────────────────────────────────────────────────
+let sentimentChart = null;
+
+async function initSentimentChart() {
+  const ctx = document.getElementById("sentimentChart");
+  if (!ctx || !window.Chart) return;
+  const c = chartColors();
+  let data = { labels: [], negative: [], positive: [], neutral: [] };
+  try { data = await api.sentimentTrend(); } catch (_) {}
+
+  sentimentChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: data.labels,
+      datasets: [
+        { label: "부정", data: data.negative, borderColor: "#E24B4A", backgroundColor: "rgba(226,75,74,.08)", tension: .4, fill: true, pointRadius: 2, borderWidth: 2 },
+        { label: "긍정", data: data.positive, borderColor: "#1D9E75", backgroundColor: "rgba(29,158,117,.08)", tension: .4, fill: true, pointRadius: 2, borderWidth: 2 },
+        { label: "중립", data: data.neutral,  borderColor: "#94a3b8", backgroundColor: "rgba(148,163,184,.06)", tension: .4, fill: true, pointRadius: 2, borderWidth: 2 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: "top", labels: { font: { family: "'NanumSquare',sans-serif", size: 10 }, usePointStyle: true, padding: 10, color: c.legend } },
+        tooltip: { backgroundColor: "#0c1428", bodyFont: { family: "'NanumSquare',sans-serif", size: 11 }, padding: 8, cornerRadius: 5 },
+      },
+      scales: {
+        x: { grid: { color: c.grid }, ticks: { font: { size: 10 }, color: c.tick }, border: { display: false } },
+        y: { grid: { color: c.grid }, ticks: { font: { size: 10 }, color: c.tick }, border: { display: false }, beginAtZero: true },
+      },
+      interaction: { intersect: false, mode: "index" },
+    },
+  });
+}
+
+async function loadShareOfVoice() {
+  const el = document.getElementById("sov-list");
+  if (!el) return;
+  let data = { items: [], total: 0 };
+  try { data = await api.shareOfVoice(); } catch (_) {}
+  if (!data.items?.length) {
+    el.innerHTML = `<p style="font-size:11px;color:rgba(12,20,40,.35);text-align:center;padding:16px 0;">경쟁사 키워드 등록 후 표시됩니다.</p>`;
+    return;
+  }
+  const colors = ["#1a6ef8","#E24B4A","#BA7517","#1D9E75","#185FA5"];
+  el.innerHTML = data.items.map((item, i) => `
+    <div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;">
+        <span style="color:#0c1428;font-weight:600;">${item.name}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:rgba(12,20,40,.50);">${item.pct}%</span>
+      </div>
+      <div style="height:4px;background:rgba(0,0,0,.06);border-radius:2px;overflow:hidden;">
+        <div style="height:100%;width:${item.pct}%;background:${colors[i % colors.length]};border-radius:2px;transition:width 1s;"></div>
+      </div>
+    </div>`).join("");
 }
 
 // ── Trend Chart ───────────────────────────────────────────────────────────────
@@ -225,9 +286,11 @@ function renderThreats(data) {
   state.total = data.total;
   const tbody = document.getElementById("threat-tbody");
   if (!data.items.length) {
-    tbody.innerHTML = `<tr><td colspan="7" style="padding:36px;text-align:center;color:rgba(12,20,40,.35);">위협 없음</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="padding:36px;text-align:center;color:rgba(12,20,40,.35);">위협 없음</td></tr>`;
   } else {
-    tbody.innerHTML = data.items.map(t => `
+    tbody.innerHTML = data.items.map(t => {
+      const reach = t.reach_estimate ? _fmtReach(t.reach_estimate) : "—";
+      return `
       <tr style="cursor:pointer;transition:background .1s;border-bottom:1px solid rgba(0,0,0,.05);" onmouseover="this.style.background='rgba(0,0,0,.02)'" onmouseout="this.style.background='transparent'" data-id="${t.id}" onclick="window._openThreat(${t.id})">
         <td style="padding:10px 14px;">${severityBadge(t.severity)}</td>
         <td style="padding:10px 14px;">
@@ -242,12 +305,21 @@ function renderThreats(data) {
           </div>
         </td>
         <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(12,20,40,.60);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.source_account}</td>
-        <td style="padding:10px 14px;"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;" style="color:${scoreColor(t.risk_score)}">${t.risk_score}</span></td>
+        <td style="padding:10px 14px;"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${scoreColor(t.risk_score)}">${t.risk_score}</span></td>
+        <td style="padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:rgba(12,20,40,.45);">${reach}</td>
         <td style="padding:10px 14px;font-size:11px;color:rgba(12,20,40,.38);font-family:'JetBrains Mono',monospace;white-space:nowrap;">${timeAgo(t.detected_at)}</td>
         <td style="padding:10px 14px;">${statusBadge(t.status)}</td>
-      </tr>`).join("");
+      </tr>`;
+    }).join("");
   }
   renderPagination(data.total, data.page, data.page_size);
+}
+
+function _fmtReach(n) {
+  if (!n) return "—";
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
+  if (n >= 1_000) return (n / 1_000).toFixed(1) + "K";
+  return String(n);
 }
 
 function formatThreatType(type) {
@@ -375,9 +447,48 @@ async function initDashboard() {
     document.getElementById("last-updated").textContent = new Date().toLocaleTimeString("ko-KR");
     await initTrendChart();
     await renderPlatformStats();
+    await Promise.all([initSentimentChart(), loadShareOfVoice()]);
     startPolling();
   } catch (e) { console.error("Dashboard init failed:", e); }
 }
+
+// ── AI Assistant ──────────────────────────────────────────────────────────────
+window.toggleAssistant = function() {
+  const panel = document.getElementById("assistant-panel");
+  if (!panel) return;
+  const visible = panel.style.display === "flex";
+  panel.style.display = visible ? "none" : "flex";
+};
+
+window.sendAssistantMessage = async function() {
+  const input = document.getElementById("assistant-input");
+  const messages = document.getElementById("assistant-messages");
+  if (!input || !messages) return;
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = "";
+  const userBubble = document.createElement("div");
+  userBubble.style.cssText = "align-self:flex-end;background:#1a6ef8;color:#fff;border-radius:8px;padding:8px 12px;max-width:80%;font-size:12px;";
+  userBubble.textContent = text;
+  messages.appendChild(userBubble);
+  messages.scrollTop = messages.scrollHeight;
+
+  const loadingBubble = document.createElement("div");
+  loadingBubble.style.cssText = "background:rgba(26,110,248,.08);border-radius:8px;padding:8px 12px;font-size:12px;color:rgba(12,20,40,.5);";
+  loadingBubble.textContent = "분석 중...";
+  messages.appendChild(loadingBubble);
+  messages.scrollTop = messages.scrollHeight;
+
+  try {
+    const result = await assistantApi.chat(text);
+    loadingBubble.style.cssText = "background:rgba(26,110,248,.08);border-radius:8px;padding:10px 12px;font-size:12px;color:#0c1428;line-height:1.5;";
+    loadingBubble.textContent = result.reply;
+  } catch (e) {
+    loadingBubble.textContent = "오류가 발생했습니다. 다시 시도해주세요.";
+  }
+  messages.scrollTop = messages.scrollHeight;
+};
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {

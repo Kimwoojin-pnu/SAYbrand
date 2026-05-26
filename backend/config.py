@@ -71,6 +71,8 @@ class Settings(BaseSettings):
     polar_access_token: str = ""
     polar_webhook_secret: str = ""
     polar_product_id: str = ""
+    polar_product_id_starter: str = ""
+    polar_product_id_pro: str = ""
 
     # DART
     dart_api_key: str = ""
@@ -96,6 +98,6 @@ settings = Settings()
 TIER_LIMITS: dict[str, dict[str, int]] = {
     "free":       {"members": 1,   "keywords": 3,  "platforms": 1},
     "starter":    {"members": 3,   "keywords": 10, "platforms": 3},
-    "pro":        {"members": 10,  "keywords": 50, "platforms": 5},
+    "pro":        {"members": 10,  "keywords": 50, "platforms": -1},
     "enterprise": {"members": -1,  "keywords": -1, "platforms": -1},
 }

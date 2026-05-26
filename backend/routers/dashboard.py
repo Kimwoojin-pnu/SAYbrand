@@ -7,7 +7,7 @@ from sqlalchemy import select, func
 from backend.db.database import get_db
 from backend.middleware.auth import get_current_user
 from backend.middleware.org_context import optional_current_org, require_non_viewer
-from backend.models.orm import Keyword, Threat, Alert, User, Organization
+from backend.models.orm import CompetitorMention, HashtagTrend, Keyword, Threat, Alert, User, Organization
 from backend.models.schemas import (
     AlertResponse,
     ModuleScore,
@@ -325,6 +325,119 @@ async def post_scan_local(
 
     result = await run_scan(uid, keywords, body.platforms, db)
     return result
+
+
+@router.get("/sentiment-trend")
+async def get_sentiment_trend(
+    org: Organization | None = Depends(optional_current_org),
+    db: AsyncSession = Depends(get_db),
+):
+    """최근 7일 일별 감성 분포 (negative/positive/neutral 건수)."""
+    now = datetime.now(timezone.utc)
+    labels, negative, positive, neutral = [], [], [], []
+
+    for i in range(6, -1, -1):
+        day_start = (now - timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end = day_start + timedelta(days=1)
+        labels.append("오늘" if i == 0 else f"{i}일전")
+
+        for sentiment, lst in (("negative", negative), ("positive", positive), ("neutral", neutral)):
+            q = select(func.count(Threat.id)).where(
+                Threat.sentiment == sentiment,
+                Threat.detected_at >= day_start,
+                Threat.detected_at < day_end,
+            )
+            if org is not None:
+                q = q.where(Threat.org_id == org.id)
+            cnt = (await db.execute(q)).scalar() or 0
+            lst.append(cnt)
+
+    return {"labels": labels, "negative": negative, "positive": positive, "neutral": neutral}
+
+
+@router.get("/share-of-voice")
+async def get_share_of_voice(
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
+    """경쟁사 대비 언급량 점유율."""
+    brand_result = await db.execute(
+        select(func.count(Threat.id)).where(Threat.user_id == user["id"])
+    )
+    brand_count = brand_result.scalar() or 0
+
+    comp_result = await db.execute(
+        select(CompetitorMention.competitor_name, func.count(CompetitorMention.id))
+        .where(CompetitorMention.user_id == user["id"])
+        .group_by(CompetitorMention.competitor_name)
+    )
+    competitors = {row[0]: row[1] for row in comp_result}
+
+    total = brand_count + sum(competitors.values()) or 1
+    items = [{"name": "내 브랜드", "count": brand_count, "pct": round(brand_count / total * 100, 1)}]
+    for name, cnt in competitors.items():
+        items.append({"name": name, "count": cnt, "pct": round(cnt / total * 100, 1)})
+
+    return {"items": items, "total": total}
+
+
+@router.get("/hashtags")
+async def get_hashtag_trends(
+    limit: int = Query(10, ge=1, le=50),
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
+    """최근 해시태그 트렌드."""
+    result = await db.execute(
+        select(HashtagTrend)
+        .where(HashtagTrend.user_id == user["id"])
+        .order_by(HashtagTrend.mention_count.desc())
+        .limit(limit)
+    )
+    rows = result.scalars().all()
+    return [
+        {
+            "hashtag": r.hashtag,
+            "platform": r.platform,
+            "mention_count": r.mention_count,
+            "sentiment": r.sentiment,
+            "trend_date": r.trend_date.isoformat() if r.trend_date else None,
+        }
+        for r in rows
+    ]
+
+
+@router.get("/top-influencers")
+async def get_top_influencers(
+    limit: int = Query(10, ge=1, le=50),
+    org: Organization | None = Depends(optional_current_org),
+    db: AsyncSession = Depends(get_db),
+):
+    """위협 발생 계정 중 반복 등장 Top N."""
+    base_q = (
+        select(Threat.source_account, Threat.platform, func.count(Threat.id).label("mention_count"))
+        .where(Threat.source_account != "")
+        .group_by(Threat.source_account, Threat.platform)
+        .order_by(func.count(Threat.id).desc())
+        .limit(limit)
+    )
+    if org is not None:
+        base_q = base_q.where(Threat.org_id == org.id)
+    result = await db.execute(base_q)
+    return [
+        {"account": row[0], "platform": row[1], "mention_count": row[2]}
+        for row in result
+    ]
+
+
+@router.get("/anomaly")
+async def get_anomaly(
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
+    """1시간 위협 급증 이상 감지."""
+    from backend.services.anomaly_detector import detect_anomaly
+    return await detect_anomaly(user["id"], db)
 
 
 @router.get("/scan")

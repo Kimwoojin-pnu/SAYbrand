@@ -8,6 +8,52 @@
 
 <!-- 새 항목은 위에서부터 추가 (최신순) -->
 
+---
+## [#41] 2026-05-26
+**분류:** 통합 (미연결 서비스 파이프라인 연결)
+**파일:**
+- `backend/services/pipeline.py` (수정)
+- `backend/routers/dashboard.py` (수정)
+- `PROGRESS.md` (상태 업데이트)
+**변경 내용:**
+- **webhook_sender 통합**: `run_pipeline()`에서 critical·high 위협 저장 후 `_send_notifications()` 호출. 해당 user의 active OutboundWebhook을 조회해 이벤트(`threat.critical` / `threat.high`) 매칭 시 HMAC-SHA256 서명 포함 POST 전송.
+- **slack_notifier 통합**: 같은 `_send_notifications()` 내에서 user가 속한 org의 `slack_webhook_url`이 설정된 경우 Slack Block Kit 포맷으로 위협 알림 발송.
+- **anomaly_detector 엔드포인트**: `GET /api/dashboard/anomaly` 추가. 인증 사용자 기준 1시간 내 위협 건수 vs. 7일 평균 비교 → `is_anomaly`, `ratio` 반환.
+- **PROGRESS.md**: anomaly/slack/webhook 상태 🟡→✅ 업데이트.
+**Claude.ai 확인 필요:** NO
+---
+
+---
+## [#40] 2026-05-26
+**분류:** 버그 수정 + DB 재동기화
+**파일:**
+- `backend/middleware/auth.py` (수정)
+- `PROGRESS.md` (상태 재검토)
+**변경 내용:**
+- **require_login 추가**: `assistant.py`·`webhooks.py`·`competitor_keywords.py`가 import하는 `require_login`이 `auth.py`에 없어 서버 기동 시 ImportError 발생하던 버그 수정. `LoginUser` dataclass(id/name/email) 반환.
+- **brandguard.db 삭제**: ORM에 추가된 컬럼(`sentiment`, `emotion`, `sentiment_score`, `reach_estimate`, `region` 등)이 기존 DB에 없어 테스트 5개 실패. DB 삭제 후 테이블 재생성으로 46/46 복구.
+- **PROGRESS.md 재검토**: actions/brand-image/negative-mentions 페이지(🟡→✅), org 필터링/Viewer 제한(🟡→✅) 상태 정정. 신규 라우터(assistant/webhooks/competitor_keywords) 항목 추가.
+**Claude.ai 확인 필요:** NO
+---
+
+## [#39] 2026-05-26
+**분류:** 수정 (AI 비용 최적화)
+**파일:**
+- `backend/services/analyzers/l2_text.py` (수정)
+- `backend/services/analyzers/l3_deep.py` (수정)
+- `backend/services/pipeline.py` (수정)
+- `requirements.txt` (수정)
+**변경 내용:**
+- **L2 Gemini 모델 교체**: `gemini-1.5-flash` → `gemini-2.0-flash`. 경량 프롬프트(_GEMINI_COMPACT_PROMPT, ~100토큰) 도입. 콘텐츠 입력 500자 truncation. 응답 4필드(sentiment/threat_type/urgency/is_bot_likely)로 축소, max_output_tokens=150. 429(ResourceExhausted) 에러 → Mock 반환.
+- **L2 캐시 TTL**: 3600초 → 86400초 (24시간).
+- **L2 배치 처리**: `analyze_batch(posts, max_batch=10)` 추가. 최대 10건을 1 API 호출로 묶음 처리(_GEMINI_BATCH_PROMPT), JSON 배열 파싱.
+- **L3 모델 교체**: Claude Haiku → Gemini 2.5 Flash(`gemini-2.5-flash-preview-05-20`) 우선, 실패 시 Claude Haiku 폴백. 경량 프롬프트(_L3_ANALYSIS_PROMPT_TEMPLATE) 도입, max_output_tokens=300. 응답 5필드(threat_assessment/is_organized_attack/legal_action_required/analysis/response_suggestion).
+- **L3 캐시 추가**: TTL 43200초(12시간). 단건(`analyze`)·클러스터(`deep_analyze_cluster`) 양쪽 적용.
+- **L3 호출 조건 강화**: `L3_SCORE_THRESHOLD` 0.70→0.85. `need_l3` 조건 = risk_score≥85 OR auto_critical OR (임직원언급 AND critical). 기존 `severity == "high"` 조건 제거.
+- **requirements.txt**: `google-generativeai==0.8.3` → `>=0.8.3` (최신 호환 버전 허용). anthropic 유지(L3 폴백용).
+**Claude.ai 확인 필요:** NO
+---
+
 ## #31 — 2026-05-13: STACK_UPDATE — 고객 프로파일 데이터 전면 활용
 
 ### 신규 파일

@@ -795,8 +795,8 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 /* ── Pricing ────────────────────────────────────────────────────────── */
 .ld-pricing-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
   margin-top: 56px;
   align-items: start;
 }

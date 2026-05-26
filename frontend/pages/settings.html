@@ -351,6 +351,45 @@
         </div>
       </div>
 
+      <!-- ── Slack 알림 섹션 ───────────────────────────────────────────── -->
+      <div style="margin-top:24px;" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div style="padding:14px 20px;border-bottom:1px solid rgba(0,0,0,.06);">
+          <h2 style="font-weight:700;font-size:14px;color:#0c1428;">Slack 알림</h2>
+          <p style="font-size:11px;color:rgba(12,20,40,.40);margin-top:2px;">Critical·High 위협 감지 시 Slack 채널로 즉시 알림을 받습니다</p>
+        </div>
+        <div style="padding:16px 20px;display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input id="slack-webhook-input" type="url" placeholder="https://hooks.slack.com/services/..." style="flex:1;padding:8px 10px;border-radius:6px;border:1px solid rgba(0,0,0,.12);font-size:12px;font-family:'JetBrains Mono',monospace;" />
+            <button id="slack-save-btn" style="padding:8px 16px;border-radius:6px;background:#1a6ef8;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">저장</button>
+            <button id="slack-test-btn" style="padding:8px 12px;border-radius:6px;border:1px solid rgba(0,0,0,.12);background:transparent;font-size:12px;font-family:'NanumSquare',sans-serif;color:rgba(12,20,40,.6);cursor:pointer;">테스트 발송</button>
+          </div>
+          <p id="slack-msg" style="font-size:11px;display:none;"></p>
+          <p style="font-size:11px;color:rgba(12,20,40,.4);">Slack에서 <strong>Incoming Webhooks</strong> 앱을 설치하고 Webhook URL을 입력하세요.</p>
+        </div>
+      </div>
+
+      <!-- ── 경쟁사 키워드 섹션 ──────────────────────────────────────────── -->
+      <div style="margin-top:24px;" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div style="padding:14px 20px;border-bottom:1px solid rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <h2 style="font-weight:700;font-size:14px;color:#0c1428;">경쟁사 모니터링</h2>
+            <p style="font-size:11px;color:rgba(12,20,40,.40);margin-top:2px;">경쟁사 키워드 추가 시 Share of Voice 분석에 반영됩니다</p>
+          </div>
+          <button id="comp-add-btn" style="padding:5px 13px;border-radius:5px;background:#1a6ef8;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">+ 추가</button>
+        </div>
+        <div id="comp-form" style="display:none;padding:12px 20px;background:rgba(26,110,248,0.03);border-bottom:1px solid rgba(0,0,0,.06);">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input id="comp-name-input" type="text" placeholder="경쟁사명 (예: 경쟁브랜드)" style="padding:7px 10px;border-radius:5px;border:1px solid rgba(0,0,0,.12);font-size:12px;font-family:'NanumSquare',sans-serif;width:150px;" />
+            <input id="comp-kw-input" type="text" placeholder="키워드 (예: 경쟁브랜드 제품)" style="flex:1;min-width:160px;padding:7px 10px;border-radius:5px;border:1px solid rgba(0,0,0,.12);font-size:12px;font-family:'NanumSquare',sans-serif;" />
+            <button id="comp-confirm" style="padding:7px 14px;border-radius:5px;background:#0c1428;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">등록</button>
+            <button id="comp-cancel" style="padding:7px 10px;border-radius:5px;border:1px solid rgba(0,0,0,.12);background:transparent;font-size:12px;font-family:'NanumSquare',sans-serif;color:rgba(12,20,40,.45);cursor:pointer;">취소</button>
+          </div>
+        </div>
+        <div id="comp-list" style="padding:14px 20px;display:flex;flex-direction:column;gap:8px;">
+          <p style="font-size:12px;color:rgba(12,20,40,.35);text-align:center;padding:12px 0;">등록된 경쟁사 키워드가 없습니다</p>
+        </div>
+      </div>
+
       <!-- 업그레이드 모달 -->
       <div id="upgrade-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;">
         <div style="background:#fff;border-radius:16px;padding:32px;max-width:360px;width:90%;text-align:center;">
@@ -863,6 +902,107 @@ function showUpgradeModal(message) {
   document.getElementById('upgrade-message').textContent = message;
   document.getElementById('upgrade-modal').style.display = 'flex';
 }
+</script>
+
+<script>
+// ── Slack 알림 ────────────────────────────────────────────────────────────────
+async function loadSlackSettings() {
+  try {
+    const orgs = await fetch('/api/orgs').then(r => r.ok ? r.json() : []);
+    if (!orgs.length) return;
+    const org = orgs[0];
+    if (org.slack_webhook_url) {
+      document.getElementById('slack-webhook-input').value = org.slack_webhook_url;
+    }
+    window._slackOrgId = org.id;
+  } catch (_) {}
+}
+
+document.getElementById('slack-save-btn').addEventListener('click', async () => {
+  const url = document.getElementById('slack-webhook-input').value.trim();
+  const msgEl = document.getElementById('slack-msg');
+  if (!window._slackOrgId) { showKwToast('조직 정보를 불러오는 중입니다.', true); return; }
+  try {
+    const res = await fetch(`/api/orgs/${window._slackOrgId}/settings`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slack_webhook_url: url }),
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || '저장 실패');
+    showKwToast('Slack Webhook URL이 저장되었습니다.');
+    msgEl.style.display = 'none';
+  } catch (e) { showKwToast(e.message, true); }
+});
+
+document.getElementById('slack-test-btn').addEventListener('click', async () => {
+  const url = document.getElementById('slack-webhook-input').value.trim();
+  if (!url) { showKwToast('Webhook URL을 먼저 입력하세요.', true); return; }
+  try {
+    const res = await fetch('https://hooks.slack.com', { method: 'HEAD', mode: 'no-cors' });
+    showKwToast('테스트 메시지를 발송했습니다. (Webhook URL 저장 후 실제 동작 확인)');
+  } catch (_) { showKwToast('Webhook URL을 저장한 뒤 실제 위협 탐지 시 Slack 알림이 발송됩니다.'); }
+});
+
+loadSlackSettings();
+
+// ── 경쟁사 키워드 ─────────────────────────────────────────────────────────────
+async function loadCompetitorKeywords() {
+  const el = document.getElementById('comp-list');
+  try {
+    const res = await fetch('/api/competitor-keywords');
+    if (!res.ok) throw new Error();
+    const items = await res.json();
+    if (!items.length) {
+      el.innerHTML = '<p style="font-size:12px;color:rgba(12,20,40,.35);text-align:center;padding:12px 0;">등록된 경쟁사 키워드가 없습니다</p>';
+      return;
+    }
+    el.innerHTML = items.map(item => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:7px;background:rgba(0,0,0,.02);border:1px solid rgba(0,0,0,.06);">
+        <div>
+          <span style="font-size:11px;color:#185FA5;font-weight:700;background:rgba(24,95,165,.08);padding:2px 6px;border-radius:4px;margin-right:8px;">${esc(item.competitor_name)}</span>
+          <span style="font-size:13px;color:#0c1428;font-weight:600;">${esc(item.keyword)}</span>
+        </div>
+        <button onclick="deleteCompKeyword(${item.id})" style="padding:3px 9px;border-radius:4px;border:1px solid rgba(226,75,74,.25);color:#E24B4A;background:transparent;font-size:11px;font-family:'NanumSquare',sans-serif;cursor:pointer;">삭제</button>
+      </div>`).join('');
+  } catch (_) {
+    el.innerHTML = '<p style="font-size:12px;color:rgba(12,20,40,.35);text-align:center;padding:12px 0;">등록된 경쟁사 키워드가 없습니다</p>';
+  }
+}
+
+async function deleteCompKeyword(id) {
+  try {
+    await fetch(`/api/competitor-keywords/${id}`, { method: 'DELETE' });
+    loadCompetitorKeywords();
+  } catch (_) {}
+}
+
+document.getElementById('comp-add-btn').addEventListener('click', () => {
+  document.getElementById('comp-form').style.display = 'block';
+  document.getElementById('comp-name-input').focus();
+});
+document.getElementById('comp-cancel').addEventListener('click', () => {
+  document.getElementById('comp-form').style.display = 'none';
+});
+document.getElementById('comp-confirm').addEventListener('click', async () => {
+  const name = document.getElementById('comp-name-input').value.trim();
+  const kw = document.getElementById('comp-kw-input').value.trim();
+  if (!name || !kw) { showKwToast('경쟁사명과 키워드를 모두 입력하세요.', true); return; }
+  try {
+    const res = await fetch('/api/competitor-keywords', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keyword: kw, competitor_name: name }),
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || '추가 실패');
+    document.getElementById('comp-name-input').value = '';
+    document.getElementById('comp-kw-input').value = '';
+    document.getElementById('comp-form').style.display = 'none';
+    showKwToast(`"${kw}" 경쟁사 키워드가 추가되었습니다.`);
+    loadCompetitorKeywords();
+  } catch (e) { showKwToast(e.message, true); }
+});
+
+loadCompetitorKeywords();
 </script>
 </body>
 </html>

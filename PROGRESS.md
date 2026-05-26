@@ -1,6 +1,6 @@
 # SAYbrand 진행 상황
 
-**마지막 업데이트: 2026-05-21**
+**마지막 업데이트: 2026-05-26**
 **평가 기준: ✅ 실제 end-to-end 동작 / 🟡 Mock / ❌ 미구현 / ⚠️ 불안정**
 
 ---
@@ -114,9 +114,9 @@
 | `pages/threats.html` | 🟡 | 기본 목록 있음, CSV 내보내기 미구현 |
 | `pages/settings.html` | ✅ | 브랜드 프로파일 + 키워드 관리 탭 |
 | `pages/reports.html` | ✅ | 일간/주간 리포트, 빈 상태 안내 포함 |
-| `pages/actions.html` | 🟡 | UI만 있음, 백엔드 연결 미완 |
-| `pages/brand-image.html` | 🟡 | UI만 있음, 백엔드 연결 미완 |
-| `pages/negative-mentions.html` | 🟡 | UI만 있음, 백엔드 연결 미완 |
+| `pages/actions.html` | ✅ | 미처리 위협 큐, 상태 변경 동작 |
+| `pages/brand-image.html` | ✅ | 브랜드 건강도·모듈별 점수 실데이터 표시 |
+| `pages/negative-mentions.html` | ✅ | 부정 의견 필터·상세 패널·상태 변경 동작 |
 | `assets/js/dashboard.js` | ✅ | 실데이터 차트, 30초 폴링, 스캔 실행 |
 | `assets/js/api.js` | ✅ | keywords, scan, trend, platform-stats API 추가 |
 
@@ -175,8 +175,25 @@
 | `pages/org_create.html` 조직 생성 | ✅ | /orgs/new 경로 |
 | `pages/dashboard.html` 조직 셀렉터 | ✅ | 사이드바 조직 전환 드롭다운 |
 | `pages/settings.html` 팀 관리 섹션 | ✅ | 초대코드 발급, 멤버 승인/강퇴, 업그레이드 모달 |
-| Viewer 엔드포인트 제한 | 🟡 | 코드 구조 준비됨, 엔드포인트별 강제 미적용 |
-| Org 기반 keyword/profile 필터링 | 🟡 | dashboard만 적용, keywords/reports 라우터 미적용 |
+| Viewer 엔드포인트 제한 | ✅ | require_non_viewer — keywords/profile/orgs write 엔드포인트 적용 |
+| Org 기반 keyword/profile 필터링 | ✅ | dashboard/keywords/reports/profile 라우터 전체 적용 |
+
+---
+
+## 추가 구현 항목 (2026-05-26)
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| `routers/assistant.py` | ✅ | Gemini 브랜드 위기 대응 챗 (`/api/assistant/chat`) |
+| `routers/webhooks.py` | ✅ | 아웃바운드 웹훅 CRUD (`/api/webhooks`) |
+| `routers/competitor_keywords.py` | ✅ | 경쟁사 키워드 CRUD (`/api/competitor-keywords`) |
+| `services/ai/gemini_client.py` | ✅ | 공통 Gemini 클라이언트 (캐싱·429 재시도) |
+| `middleware/auth.py` require_login | ✅ | 속성 접근용 인증 의존성 — 버그 수정 (2026-05-26) |
+| `services/reach_calculator.py` | ✅ | 플랫폼별 바이럴 계수 도달 범위 추정 — pipeline.py에서 사용 |
+| `services/anomaly_detector.py` | ✅ | 7일 기준선 대비 급증 탐지 — `GET /api/dashboard/anomaly` 연결 |
+| `services/slack_notifier.py` | ✅ | Slack Block Kit 알림 — pipeline critical·high 위협 발생 시 org.slack_webhook_url로 자동 전송 |
+| `services/webhook_sender.py` | ✅ | HMAC-SHA256 서명 아웃바운드 웹훅 — pipeline critical·high 시 등록 웹훅에 자동 발송 |
+| `services/influencer_detector.py` | 🟡 | 인플루언서 영향력·티어 분류 — 코드만 있음, 수집기 팔로워 데이터 없어 미통합 |
 
 ---
 
@@ -187,4 +204,4 @@
 3. **Google OAuth** — GOOGLE_CLIENT_ID/SECRET 입력 필요 (DEMO_MODE=true로 우회 가능)
 4. **Polar.sh 결제** — 실계정 설정 필요
 5. **Vercel 실 배포 검증** — 로컬 기동만 검증됨
-6. **⚠️ ORM 변경 주의** — 기존 `brandguard.db` 삭제 후 재기동 필요 (테이블 재생성)
+6. **⚠️ ORM 변경 시** — `brandguard.db` 삭제 후 재기동 필요 (테이블 재생성)

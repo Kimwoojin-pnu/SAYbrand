@@ -1,6 +1,8 @@
-"""L3 심층 분석 — Claude Haiku 4.5 (고위협 5%만 호출)"""
+"""L3 심층 분석 — Gemini 2.5 Flash 우선, Claude Haiku 폴백"""
 from __future__ import annotations
 
+import asyncio
+import hashlib
 import json
 import logging
 import re
@@ -11,26 +13,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import settings
 from backend.models.orm import CustomerAlias, CustomerProfile, CustomerSocialAccount, Threat
+from backend.services.cache import cache
 
 logger = logging.getLogger(__name__)
 
-# ── 단건 분석 프롬프트 ──────────────────────────────────────────────
+_L3_CACHE_TTL = 43200  # 12시간
 
-_ANALYSIS_SYSTEM_PROMPT = """당신은 브랜드 리스크 분석 전문가입니다.
-주어진 콘텐츠가 고객 브랜드에 미치는 위협 수준을 분석하고
-구체적인 대응 방안을 제시하세요.
+# ── 단건 분석 프롬프트 (Gemini/Claude 공용, 경량화) ──────────────────────
+_L3_ANALYSIS_PROMPT_TEMPLATE = """브랜드 위협 분석 전문가. 고위협 콘텐츠 심층 분석.
 
 {customer_context}
 {account_history}
 
-분석 형식:
-1. 위협 분류 및 심각도 평가
-2. 핵심 위험 요소 3가지
-3. 즉각 대응 방안
-4. 장기 모니터링 권고사항"""
+JSON만 출력(설명·마크다운 없음):
+{{"threat_assessment":"위협평가한줄","is_organized_attack":false,"legal_action_required":false,"analysis":"100자이내분석","response_suggestion":["대응1(50자이내)","대응2(50자이내)","대응3(50자이내)"]}}"""
 
 # ── 클러스터 분석 프롬프트 ─────────────────────────────────────────
-
 _CLUSTER_SYSTEM_PROMPT = """당신은 브랜드 리스크 분석 전문가입니다.
 여러 게시물을 동시에 분석합니다.
 텍스트 유사성, 계정 패턴, 시간 간격을 종합해
@@ -85,7 +83,6 @@ async def _build_customer_context(profile_id: int | None, db: AsyncSession) -> s
 # ── 계정 히스토리 ────────────────────────────────────────────────────
 
 async def _build_account_history(source_account: str | None, db: AsyncSession | None) -> str:
-    """해당 계정의 과거 위협 3건을 프롬프트용 텍스트로 반환한다."""
     if not source_account or not db:
         return ""
 
@@ -109,14 +106,12 @@ async def _build_account_history(source_account: str | None, db: AsyncSession | 
 # ── JSON 추출 헬퍼 ────────────────────────────────────────────────────
 
 def _extract_json(text: str) -> dict | None:
-    # 마크다운 코드 블록 우선 시도
     match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
     if match:
         try:
             return json.loads(match.group(1))
         except json.JSONDecodeError:
             pass
-    # 직접 JSON 추출
     match = re.search(r"\{.*\}", text, re.DOTALL)
     if match:
         try:
@@ -126,37 +121,59 @@ def _extract_json(text: str) -> dict | None:
     return None
 
 
-# ── 단건 분석 ────────────────────────────────────────────────────────
+# ── Gemini 2.5 Flash — 단건 ──────────────────────────────────────────
 
-async def analyze(
+async def _call_gemini_l3(
     content: str,
     threat_type: str,
     severity: str,
-    profile_id: int | None = None,
-    db: AsyncSession | None = None,
-    source_account: str | None = None,
-) -> dict:
-    """
-    단건 위협을 심층 분석한다.
+    system_prompt: str,
+) -> dict | None:
+    if not settings.gemini_api_key:
+        return None
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=settings.gemini_api_key)
+        model = genai.GenerativeModel(
+            "gemini-2.5-flash-preview-05-20",
+            system_instruction=system_prompt,
+        )
+        user_msg = f"위협유형:{threat_type}\n심각도:{severity}\n\n{content[:500]}"
+        response = await asyncio.to_thread(
+            model.generate_content,
+            user_msg,
+            generation_config={"max_output_tokens": 300},
+        )
+        parsed = _extract_json(response.text)
+        if not parsed:
+            return None
+        return {
+            "ai_analysis": f"[{parsed.get('threat_assessment', '')}] {parsed.get('analysis', '')}",
+            "ai_response_suggestion": "\n".join(
+                f"{i + 1}. {s}" for i, s in enumerate(parsed.get("response_suggestion", []))
+            ),
+            "is_organized_attack": parsed.get("is_organized_attack", False),
+            "legal_action_required": parsed.get("legal_action_required", False),
+        }
+    except Exception as e:
+        err_str = f"{type(e).__name__}{e}"
+        if "ResourceExhausted" in err_str or "429" in str(e) or "quota" in str(e).lower():
+            logger.warning("Gemini L3 429 — Claude 폴백 시도")
+        else:
+            logger.warning("Gemini L3 호출 실패: %s", e)
+        return None
 
-    source_account 제공 시 해당 계정의 과거 위협 기록 3건을 프롬프트에 주입.
-    """
+
+# ── Claude Haiku 폴백 — 단건 ─────────────────────────────────────────
+
+async def _call_claude_l3(
+    content: str,
+    threat_type: str,
+    severity: str,
+    system_prompt: str,
+) -> dict | None:
     if not settings.anthropic_api_key:
-        return _mock_analysis(content, severity)
-
-    customer_context = ""
-    account_history = ""
-    if db:
-        if profile_id:
-            customer_context = await _build_customer_context(profile_id, db)
-        if source_account:
-            account_history = await _build_account_history(source_account, db)
-
-    system_prompt = _ANALYSIS_SYSTEM_PROMPT.format(
-        customer_context=customer_context,
-        account_history=account_history,
-    ).strip()
-
+        return None
     try:
         import anthropic
         client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
@@ -174,56 +191,65 @@ async def analyze(
             }],
         )
         text = message.content[0].text
+        parsed = _extract_json(text)
+        if parsed:
+            return {
+                "ai_analysis": f"[{parsed.get('threat_assessment', '')}] {parsed.get('analysis', '')}",
+                "ai_response_suggestion": "\n".join(
+                    f"{i + 1}. {s}" for i, s in enumerate(parsed.get("response_suggestion", []))
+                ),
+            }
         parts = text.split("3. 즉각 대응 방안", 1)
         analysis = parts[0].strip()
-        suggestion = ("3. 즉각 대응 방안" + parts[1]).strip() if len(parts) > 1 else ""
+        suggestion = ("3. 즉각 대응 방안" + parts[1]).strip() if len(parts) > 1 else text.strip()
         return {"ai_analysis": analysis, "ai_response_suggestion": suggestion}
     except Exception as e:
-        logger.warning("L3 단건 분석 실패: %s", e)
-        return _mock_analysis(content, severity)
+        logger.warning("Claude L3 호출 실패: %s", e)
+        return None
 
 
-# ── 클러스터 분석 ────────────────────────────────────────────────────
+# ── Gemini 2.5 Flash — 클러스터 ──────────────────────────────────────
 
-async def deep_analyze_cluster(
-    threats: list[dict],
-    profile_id: int,
-    db: AsyncSession,
-) -> dict:
-    """
-    연관 위협 묶음(최대 10건)을 한 번에 분석한다.
-    같은 봇 네트워크·공격 캠페인 여부 판단.
-    단건 개별 호출 대비 토큰 30%+ 절약 (10건 → 1 API call).
-
-    threats 각 항목 필드:
-        source_account, platform, content, detected_at (datetime|str, optional),
-        threat_type (optional)
-    """
-    if not threats:
-        return _mock_cluster([])
-
-    threats = threats[:10]
-
-    if not settings.anthropic_api_key:
-        return _mock_cluster(threats)
-
-    customer_context = await _build_customer_context(profile_id, db)
-    system_prompt = _CLUSTER_SYSTEM_PROMPT.format(customer_context=customer_context).strip()
-
-    # 위협 목록 compact 포맷 (토큰 절약)
-    lines: list[str] = []
-    for i, t in enumerate(threats, 1):
-        dt = t.get("detected_at", "")
-        if isinstance(dt, datetime):
-            dt = dt.strftime("%Y-%m-%d %H:%M")
-        lines.append(
-            f"[{i}] 계정:{t.get('source_account', '?')} "
-            f"플랫폼:{t.get('platform', '?')} "
-            f"시간:{dt}\n"
-            f"{t.get('content', '')[:200]}"
+async def _call_gemini_cluster(
+    user_message: str,
+    system_prompt: str,
+) -> dict | None:
+    if not settings.gemini_api_key:
+        return None
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=settings.gemini_api_key)
+        model = genai.GenerativeModel(
+            "gemini-2.5-flash-preview-05-20",
+            system_instruction=system_prompt,
         )
-    user_message = "\n---\n".join(lines)
+        response = await asyncio.to_thread(
+            model.generate_content,
+            user_message,
+            generation_config={"max_output_tokens": 400},
+        )
+        tokens_used = (
+            getattr(response.usage_metadata, "prompt_token_count", 0)
+            + getattr(response.usage_metadata, "candidates_token_count", 0)
+        )
+        parsed = _extract_json(response.text)
+        if parsed:
+            parsed["tokens_used"] = tokens_used
+            return parsed
+        return None
+    except Exception as e:
+        logger.warning("Gemini 클러스터 분석 실패: %s", e)
+        return None
 
+
+# ── Claude Haiku 폴백 — 클러스터 ─────────────────────────────────────
+
+async def _call_claude_cluster(
+    user_message: str,
+    system_prompt: str,
+) -> dict | None:
+    if not settings.anthropic_api_key:
+        return None
     try:
         import anthropic
         client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
@@ -238,11 +264,112 @@ async def deep_analyze_cluster(
         if parsed:
             parsed["tokens_used"] = tokens_used
             return parsed
-        logger.warning("클러스터 분석 JSON 파싱 실패 — Mock 반환")
-        return _mock_cluster(threats, tokens_used=tokens_used)
+        return None
     except Exception as e:
-        logger.warning("L3 클러스터 분석 실패: %s", e)
+        logger.warning("Claude 클러스터 분석 실패: %s", e)
+        return None
+
+
+# ── 단건 분석 ────────────────────────────────────────────────────────
+
+async def analyze(
+    content: str,
+    threat_type: str,
+    severity: str,
+    profile_id: int | None = None,
+    db: AsyncSession | None = None,
+    source_account: str | None = None,
+) -> dict:
+    """단건 위협 심층 분석. Gemini 2.5 Flash → Claude Haiku → Mock."""
+    cache_key = "l3:" + hashlib.sha256(
+        f"{profile_id}:{source_account}:{content[:200]}".encode()
+    ).hexdigest()[:32]
+
+    cached = await cache.get(cache_key)
+    if cached:
+        try:
+            result = json.loads(cached)
+            result["_cached"] = True
+            return result
+        except json.JSONDecodeError:
+            pass
+
+    customer_context = ""
+    account_history = ""
+    if db:
+        if profile_id:
+            customer_context = await _build_customer_context(profile_id, db)
+        if source_account:
+            account_history = await _build_account_history(source_account, db)
+
+    system_prompt = _L3_ANALYSIS_PROMPT_TEMPLATE.format(
+        customer_context=customer_context,
+        account_history=account_history,
+    ).strip()
+
+    result = await _call_gemini_l3(content, threat_type, severity, system_prompt)
+    if not result:
+        result = await _call_claude_l3(content, threat_type, severity, system_prompt)
+    if not result:
+        return _mock_analysis(content, severity)
+
+    await cache.setex(cache_key, _L3_CACHE_TTL, json.dumps(result))
+    return result
+
+
+# ── 클러스터 분석 ────────────────────────────────────────────────────
+
+async def deep_analyze_cluster(
+    threats: list[dict],
+    profile_id: int,
+    db: AsyncSession,
+) -> dict:
+    """연관 위협 묶음(최대 10건) 분석. Gemini 2.5 Flash → Claude Haiku → Mock."""
+    if not threats:
+        return _mock_cluster([])
+
+    threats = threats[:10]
+
+    cluster_key = "l3c:" + hashlib.sha256(
+        json.dumps(
+            [t.get("content", "")[:100] for t in threats],
+            ensure_ascii=False,
+        ).encode()
+    ).hexdigest()[:32]
+
+    cached = await cache.get(cluster_key)
+    if cached:
+        try:
+            result = json.loads(cached)
+            result["_cached"] = True
+            return result
+        except json.JSONDecodeError:
+            pass
+
+    customer_context = await _build_customer_context(profile_id, db)
+    system_prompt = _CLUSTER_SYSTEM_PROMPT.format(customer_context=customer_context).strip()
+
+    lines: list[str] = []
+    for i, t in enumerate(threats, 1):
+        dt = t.get("detected_at", "")
+        if isinstance(dt, datetime):
+            dt = dt.strftime("%Y-%m-%d %H:%M")
+        lines.append(
+            f"[{i}] 계정:{t.get('source_account', '?')} "
+            f"플랫폼:{t.get('platform', '?')} "
+            f"시간:{dt}\n"
+            f"{t.get('content', '')[:200]}"
+        )
+    user_message = "\n---\n".join(lines)
+
+    result = await _call_gemini_cluster(user_message, system_prompt)
+    if not result:
+        result = await _call_claude_cluster(user_message, system_prompt)
+    if not result:
         return _mock_cluster(threats)
+
+    await cache.setex(cluster_key, _L3_CACHE_TTL, json.dumps(result, default=str))
+    return result
 
 
 # ── 오탐 피드백 ──────────────────────────────────────────────────────
@@ -254,10 +381,6 @@ async def record_feedback(
     marked_by: int,
     db: AsyncSession,
 ) -> None:
-    """
-    위협 상태가 resolved로 변경될 때 오탐 피드백을 기록한다.
-    동일 패턴 재발 시 신뢰도 가중치 조정에 활용.
-    """
     from backend.models.orm import FeedbackLog
     log = FeedbackLog(
         threat_id=threat_id,
@@ -280,7 +403,7 @@ def _mock_analysis(content: str, severity: str) -> dict:
     return {
         "ai_analysis": (
             f"[Mock] 심각도 {severity} 위협이 탐지되었습니다. "
-            "실제 분석을 위해 ANTHROPIC_API_KEY를 설정하세요."
+            "실제 분석을 위해 GEMINI_API_KEY 또는 ANTHROPIC_API_KEY를 설정하세요."
         ),
         "ai_response_suggestion": (
             "1. 해당 게시물 모니터링 지속\n"
@@ -299,7 +422,7 @@ def _mock_cluster(threats: list[dict], tokens_used: int = 0) -> dict:
         "risk_level": "low",
         "ai_analysis": (
             f"[Mock] {len(threats)}건 위협 클러스터 분석. "
-            "ANTHROPIC_API_KEY 설정 시 실제 분석이 실행됩니다."
+            "GEMINI_API_KEY 설정 시 실제 분석이 실행됩니다."
         ),
         "ai_response_suggestion": (
             "1. 추가 모니터링 지속\n"
@@ -310,14 +433,9 @@ def _mock_cluster(threats: list[dict], tokens_used: int = 0) -> dict:
     }
 
 
-# ── 프로파일 컨텍스트 빌더 (STACK_UPDATE) ────────────────────────────
+# ── 프로파일 컨텍스트 빌더 ────────────────────────────────────────────
 
 def build_profile_context(profile, past_threats: list | None = None) -> str:
-    """
-    L3 시스템 프롬프트에 주입할 프로파일 컨텍스트 문자열을 생성한다.
-
-    profile: ProfileLoader.LoadedProfile
-    """
     aliases_str = ", ".join(
         f"{alias}(가중치:{weight:.1f})"
         for alias, weight in (profile.aliases or [])[:10]

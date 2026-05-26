@@ -13,6 +13,7 @@ from backend.models.orm import Keyword, Threat
 from backend.services.analyzers.l1_filter import l1_filter, l1_filter_with_profile
 from backend.services.analyzers.l2_text import analyze_text_with_cache
 from backend.services.profile_loader import profile_loader
+from backend.services.reach_calculator import estimate_reach
 from backend.services.risk_scorer import calculate_risk_score, classify_alert_threshold
 
 logger = logging.getLogger(__name__)
@@ -40,7 +41,7 @@ _CATEGORY_TO_THREAT_TYPE: dict[str, str] = {
     "CRITICAL_BYPASS":            "organized_rumor",
 }
 
-L3_SCORE_THRESHOLD = 0.70
+L3_SCORE_THRESHOLD = 0.85
 
 
 async def run_pipeline(
@@ -124,9 +125,8 @@ async def run_pipeline(
 
     need_l3 = (
         risk_score_raw >= int(L3_SCORE_THRESHOLD * 100)
-        or severity in ("critical", "high")
-        or bool(exec_mentioned)
         or l1.get("auto_critical", False)
+        or (bool(exec_mentioned) and severity == "critical")
     )
 
     if need_l3:
@@ -193,6 +193,8 @@ async def run_pipeline(
         is_mock = True
 
     # ── DB 저장 ──────────────────────────────────────────────────────
+    reach_estimate = estimate_reach(post["platform"])
+
     threat = Threat(
         user_id=user_id,
         module=module,
@@ -208,6 +210,10 @@ async def run_pipeline(
         ai_response_suggestion=ai_response_suggestion,
         bot_probability=None,
         is_organized=l2.get("is_organized", False),
+        sentiment=l2.get("sentiment"),
+        emotion=l2.get("emotion"),
+        sentiment_score=l2.get("sentiment_score"),
+        reach_estimate=reach_estimate,
         status="active",
         post_published_at=published,
         engagements_per_hour=0.0,
@@ -216,7 +222,70 @@ async def run_pipeline(
     )
     db.add(threat)
     await db.flush()
+
+    if final_severity in ("critical", "high"):
+        await _send_notifications(threat, user_id, db)
+
     return threat
+
+
+async def _send_notifications(threat: Threat, user_id: int, db: AsyncSession) -> None:
+    """critical·high 위협 발생 시 웹훅·Slack 알림 (실패해도 파이프라인 중단 없음)."""
+    import json as _json
+    from backend.models.orm import OutboundWebhook, OrganizationMember, Organization
+    from backend.services.webhook_sender import send_webhook
+    from backend.services.slack_notifier import send_slack_threat_alert
+
+    payload = {
+        "event": f"threat.{threat.severity}",
+        "threat_id": threat.id,
+        "severity": threat.severity,
+        "threat_type": threat.threat_type,
+        "platform": threat.platform,
+        "source_account": threat.source_account,
+        "content_preview": (threat.content_preview or "")[:200],
+        "risk_score": threat.risk_score,
+        "ai_analysis": threat.ai_analysis,
+    }
+
+    try:
+        wh_result = await db.execute(
+            select(OutboundWebhook).where(
+                OutboundWebhook.user_id == user_id,
+                OutboundWebhook.active.is_(True),
+            )
+        )
+        for wh in wh_result.scalars().all():
+            events = _json.loads(wh.events or "[]")
+            if f"threat.{threat.severity}" in events:
+                await send_webhook(wh.url, payload, wh.secret)
+    except Exception as e:
+        logger.warning("웹훅 알림 실패: %s", e)
+
+    try:
+        mem_result = await db.execute(
+            select(OrganizationMember).where(
+                OrganizationMember.user_id == user_id,
+                OrganizationMember.status == "active",
+            ).limit(1)
+        )
+        member = mem_result.scalar_one_or_none()
+        if member:
+            org_result = await db.execute(
+                select(Organization).where(Organization.id == member.org_id)
+            )
+            org = org_result.scalar_one_or_none()
+            if org and org.slack_webhook_url:
+                await send_slack_threat_alert(org.slack_webhook_url, {
+                    "severity": threat.severity,
+                    "platform": threat.platform,
+                    "source_account": threat.source_account,
+                    "content_preview": threat.content_preview,
+                    "threat_type": threat.threat_type,
+                    "ai_analysis": threat.ai_analysis,
+                })
+    except Exception as e:
+        logger.warning("Slack 알림 실패: %s", e)
 
 
 async def run_scan(

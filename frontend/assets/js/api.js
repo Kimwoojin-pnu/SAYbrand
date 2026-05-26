@@ -48,6 +48,28 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ keywords, platforms }),
     }),
+  sentimentTrend: () => apiFetch("/sentiment-trend"),
+  shareOfVoice: () => apiFetch("/share-of-voice"),
+  topInfluencers: (limit = 10) => apiFetch(`/top-influencers?limit=${limit}`),
+};
+
+async function assistantFetch(path, options = {}) {
+  const res = await fetch("/api/assistant" + path, {
+    headers: { "Content-Type": "application/json", ...options.headers },
+    ...options,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || "API Error");
+  }
+  return res.json();
+}
+
+export const assistantApi = {
+  chat: (message, context = "") => assistantFetch("/chat", {
+    method: "POST",
+    body: JSON.stringify({ message, context }),
+  }),
 };
 
 async function keywordFetch(path, options = {}) {
