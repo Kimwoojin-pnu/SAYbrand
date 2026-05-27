@@ -15,6 +15,19 @@ from backend.routers import auth, billing, orgs, profile, keywords, reports, ass
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    from backend.db.database import engine
+    if engine is not None:
+        db_url = os.environ.get("DATABASE_URL", "")
+        if "postgresql" in db_url or "postgres" in db_url:
+            from sqlalchemy import text
+            _migrations = [
+                "ALTER TABLE threats ADD COLUMN IF NOT EXISTS resolution_type VARCHAR(50)",
+                "ALTER TABLE threats ADD COLUMN IF NOT EXISTS resolution_method VARCHAR(200)",
+                "ALTER TABLE threats ADD COLUMN IF NOT EXISTS resolution_note TEXT",
+            ]
+            async with engine.begin() as conn:
+                for stmt in _migrations:
+                    await conn.execute(text(stmt))
     yield
 
 
