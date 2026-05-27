@@ -16,16 +16,19 @@ from backend.routers import auth, billing, orgs, profile, keywords, reports, ass
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    # 90일 초과 데이터 자동 삭제 (개인정보보호법)
-    try:
-        from backend.db.database import AsyncSessionLocal
-        from backend.services.data_retention import purge_expired_data
-        async with AsyncSessionLocal() as db:
-            await purge_expired_data(db)
-    except Exception:
-        pass  # 시작 실패가 서버 기동을 막지 않도록
+    # DB 초기화
+    db_url = os.environ.get("DATABASE_URL", "")
+    if db_url:
+        try:
+            from backend.db.database import engine, Base
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+            print("[STARTUP] DB 초기화 완료")
+        except Exception as e:
+            print(f"[STARTUP] DB 초기화 실패 (계속 진행): {e}")
+            # 실패해도 앱은 계속 실행
+    else:
+        print("[STARTUP] DATABASE_URL 없음 — DB 초기화 건너뜀")
     yield
 
 
