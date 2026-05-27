@@ -8,7 +8,6 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from backend.config import settings
-from backend.db.database import engine, Base
 from backend.middleware.rate_limiter import rate_limit_middleware
 from backend.routers import dashboard
 from backend.routers import auth, billing, orgs, profile, keywords, reports, assistant, webhooks, competitor_keywords
