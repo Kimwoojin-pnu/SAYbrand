@@ -35,17 +35,22 @@ async def checkout(
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             resp = await client.post(
-                f"{_POLAR_API}/checkouts/",
+                f"{_POLAR_API}/checkouts/custom/",
                 headers={"Authorization": f"Bearer {settings.polar_access_token}"},
                 json={
                     "product_id": product_id,
                     "customer_email": current_user["email"],
-                    "success_url": str(request.base_url),
+                    "success_url": str(request.base_url).rstrip("/") + "/dashboard",
                 },
             )
         if resp.status_code not in (200, 201):
-            raise HTTPException(status_code=502, detail="결제 페이지 생성 실패")
-        return RedirectResponse(resp.json()["url"])
+            detail = resp.json().get("detail", "결제 페이지 생성 실패") if resp.content else "결제 페이지 생성 실패"
+            raise HTTPException(status_code=502, detail=detail)
+        body = resp.json()
+        checkout_url = body.get("url") or body.get("checkout_url") or body.get("hosted_url")
+        if not checkout_url:
+            raise HTTPException(status_code=502, detail="결제 URL을 받지 못했습니다")
+        return RedirectResponse(checkout_url)
     except HTTPException:
         raise
     except Exception:

@@ -1,4 +1,4 @@
-"""리포트 생성 서비스 — 일간/주간 위협 요약 + PDF"""
+"""리포트 생성 서비스 — 일간/주간/월간 위협 요약 + PDF"""
 from __future__ import annotations
 
 import io
@@ -13,6 +13,20 @@ from backend.models.orm import Threat
 logger = logging.getLogger(__name__)
 
 
+def _period_range(period: str) -> tuple[datetime, str]:
+    now = datetime.now(timezone.utc)
+    if period == "daily":
+        since = now - timedelta(days=1)
+        label = f"{now.strftime('%Y년 %m월 %d일')} 일간 보고서"
+    elif period == "weekly":
+        since = now - timedelta(days=7)
+        label = f"{now.strftime('%Y년 %m월 %d일')} 기준 주간 보고서"
+    else:  # monthly
+        since = now - timedelta(days=30)
+        label = f"{now.strftime('%Y년 %m월')} 월간 보고서"
+    return since, label
+
+
 async def generate_report(
     user_id: int,
     period: str,
@@ -20,43 +34,125 @@ async def generate_report(
     org_id: int | None = None,
 ) -> dict:
     """
-    period: "daily" (24시간) | "weekly" (7일)
-    org_id: 조직 기준 필터링. None이면 user_id 기준.
+    period: "daily" (24h) | "weekly" (7일) | "monthly" (30일)
+    오탐(false_positive)은 통계에서 제외.
     """
     now = datetime.now(timezone.utc)
-    days = 1 if period == "daily" else 7
-    since = now - timedelta(days=days)
-    period_label = f"{since.strftime('%Y-%m-%d')} ~ {now.strftime('%Y-%m-%d')}"
+    since, label = _period_range(period)
 
     def _scope(q):
+        q = q.where(Threat.detected_at >= since)
         if org_id is not None:
-            return q.where(Threat.org_id == org_id, Threat.detected_at >= since)
-        return q.where(Threat.user_id == user_id, Threat.detected_at >= since)
+            return q.where(Threat.org_id == org_id)
+        return q.where(Threat.user_id == user_id)
 
-    total_result = await db.execute(_scope(select(func.count(Threat.id))))
+    def _scope_no_fp(q):
+        return _scope(q).where(
+            (Threat.resolution_type == None) | (Threat.resolution_type != "false_positive")
+        )
+
+    total_result = await db.execute(_scope_no_fp(select(func.count(Threat.id))))
     total = total_result.scalar() or 0
 
-    # 심각도별
     sev_result = await db.execute(
-        _scope(select(Threat.severity, func.count(Threat.id))).group_by(Threat.severity)
+        _scope_no_fp(select(Threat.severity, func.count(Threat.id))).group_by(Threat.severity)
     )
     by_severity = {row[0]: row[1] for row in sev_result}
 
-    # 플랫폼별
     plat_result = await db.execute(
-        _scope(select(Threat.platform, func.count(Threat.id))).group_by(Threat.platform)
+        _scope_no_fp(select(Threat.platform, func.count(Threat.id))).group_by(Threat.platform)
     )
     by_platform = {row[0]: row[1] for row in plat_result}
 
-    # 해결 완료
     resolved_result = await db.execute(
-        _scope(select(func.count(Threat.id))).where(Threat.status == "resolved")
+        _scope_no_fp(select(func.count(Threat.id))).where(Threat.status == "resolved")
     )
     resolved_count = resolved_result.scalar() or 0
 
-    # TOP 5 위협
+    # 미해결 위협 (active)
+    unresolved_result = await db.execute(
+        _scope_no_fp(select(func.count(Threat.id))).where(Threat.status == "active")
+    )
+    unresolved_count = unresolved_result.scalar() or 0
+
+    # 부정적 언급 수
+    negative_result = await db.execute(
+        _scope_no_fp(select(func.count(Threat.id))).where(Threat.sentiment == "negative")
+    )
+    negative_count = negative_result.scalar() or 0
+
+    # 브랜드 이미지 점수
+    brand_score = max(0.0, 100.0 - (negative_count / max(total, 1) * 100))
+
+    # 오탐 건수
+    fp_result = await db.execute(
+        _scope(select(func.count(Threat.id))).where(Threat.resolution_type == "false_positive")
+    )
+    false_positive_count = fp_result.scalar() or 0
+
+    # 실제 위협 해결 건수
+    real_resolved_result = await db.execute(
+        _scope(select(func.count(Threat.id))).where(Threat.resolution_type == "real_resolved")
+    )
+    real_resolved_count = real_resolved_result.scalar() or 0
+
+    # Top 10 미해결 위협
     top_result = await db.execute(
-        _scope(select(Threat)).order_by(Threat.risk_score.desc()).limit(5)
+        _scope_no_fp(select(Threat))
+        .where(Threat.status == "active")
+        .order_by(Threat.risk_score.desc())
+        .limit(10)
+    )
+    unresolved_threats = [
+        {
+            "id": t.id,
+            "severity": t.severity,
+            "platform": t.platform,
+            "source_account": t.source_account,
+            "content_preview": (t.content_preview or "")[:100],
+            "risk_score": t.risk_score,
+            "source_url": t.source_url,
+            "detected_at": t.detected_at.isoformat() if t.detected_at else None,
+        }
+        for t in top_result.scalars().all()
+    ]
+
+    # 해결 완료된 실제 위협 (보고서용)
+    real_res_result = await db.execute(
+        _scope(select(Threat))
+        .where(Threat.resolution_type == "real_resolved")
+        .order_by(Threat.updated_at.desc())
+        .limit(5)
+    )
+    resolved_threats = [
+        {
+            "id": t.id,
+            "platform": t.platform,
+            "resolution_method": t.resolution_method,
+            "note": t.resolution_note,
+        }
+        for t in real_res_result.scalars().all()
+    ]
+
+    # 부정적 언급 샘플
+    neg_result = await db.execute(
+        _scope_no_fp(select(Threat))
+        .where(Threat.sentiment == "negative")
+        .order_by(Threat.risk_score.desc())
+        .limit(5)
+    )
+    negative_samples = [
+        {
+            "platform": t.platform,
+            "content": (t.content_preview or "")[:80],
+            "reach": t.reach_estimate,
+        }
+        for t in neg_result.scalars().all()
+    ]
+
+    # 이전 기간 대비 (trend용 단순 집계)
+    top_all_result = await db.execute(
+        _scope_no_fp(select(Threat)).order_by(Threat.risk_score.desc()).limit(5)
     )
     top_threats = [
         {
@@ -69,16 +165,32 @@ async def generate_report(
             "status": t.status,
             "source_url": t.source_url,
         }
-        for t in top_result.scalars().all()
+        for t in top_all_result.scalars().all()
     ]
 
     return {
-        "period": period_label,
+        "label": label,
+        "period": f"{since.strftime('%Y-%m-%d')} ~ {now.strftime('%Y-%m-%d')}",
+        "period_type": period,
+        "generated_at": now.isoformat(),
+        "summary": {
+            "total_threats": total,
+            "unresolved_count": unresolved_count,
+            "resolved_count": resolved_count,
+            "negative_mentions": negative_count,
+            "brand_score": round(brand_score, 1),
+            "false_positive_count": false_positive_count,
+            "real_resolved_count": real_resolved_count,
+        },
+        # 하위 호환성
         "total_threats": total,
         "by_severity": by_severity,
         "by_platform": by_platform,
-        "top_threats": top_threats,
         "resolved_count": resolved_count,
+        "top_threats": top_threats,
+        "unresolved_threats": unresolved_threats,
+        "resolved_threats": resolved_threats,
+        "negative_samples": negative_samples,
         "is_mock": total == 0,
     }
 
@@ -95,62 +207,115 @@ async def generate_pdf_report(
         from reportlab.lib import colors
         from reportlab.lib.pagesizes import A4
         from reportlab.lib.styles import getSampleStyleSheet
-        from reportlab.lib.units import cm
-        from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+        from reportlab.lib.units import cm, mm
+        from reportlab.platypus import (
+            HRFlowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+        )
+
+        NAVY = colors.HexColor("#0c1428")
+        BLUE = colors.HexColor("#1d5fa8")
+        RED  = colors.HexColor("#E24B4A")
+        AMBER = colors.HexColor("#BA7517")
+        GRAY = colors.HexColor("#f5f6f8")
 
         buf = io.BytesIO()
-        doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=2*cm, rightMargin=2*cm,
-                                topMargin=2*cm, bottomMargin=2*cm)
+        doc = SimpleDocTemplate(buf, pagesize=A4,
+                                leftMargin=20*mm, rightMargin=20*mm,
+                                topMargin=20*mm, bottomMargin=20*mm)
         styles = getSampleStyleSheet()
         story = []
 
-        title_style = styles["Title"]
-        story.append(Paragraph("SAYbrand 위협 분석 리포트", title_style))
-        story.append(Paragraph(f"기간: {data['period']}", styles["Normal"]))
-        story.append(Spacer(1, 0.5*cm))
+        story.append(Paragraph(
+            f'<font color="#1d5fa8"><b>SAYbrand</b></font> 브랜드 보호 서비스',
+            styles["Normal"]
+        ))
+        story.append(Paragraph(data["label"], styles["Title"]))
+        story.append(Paragraph(
+            f"기간: {data['period']}   생성: {data['generated_at'][:10]}",
+            styles["Normal"]
+        ))
+        story.append(Spacer(1, 8*mm))
 
-        summary_data = [
-            ["총 위협", "Critical", "High", "Medium", "Low", "해결 완료"],
-            [
-                str(data["total_threats"]),
-                str(data["by_severity"].get("critical", 0)),
-                str(data["by_severity"].get("high", 0)),
-                str(data["by_severity"].get("medium", 0)),
-                str(data["by_severity"].get("low", 0)),
-                str(data["resolved_count"]),
-            ],
+        s = data["summary"]
+        kpi_data = [
+            ["항목", "수치"],
+            ["총 위협 건수 (오탐 제외)", str(s["total_threats"])],
+            ["미해결 위협", str(s["unresolved_count"])],
+            ["해결 완료 (실제 위협)", str(s["real_resolved_count"])],
+            ["부정적 언급", str(s["negative_mentions"])],
+            ["오탐 처리", str(s["false_positive_count"])],
+            ["브랜드 이미지 점수", f"{s['brand_score']}/100"],
         ]
-        tbl = Table(summary_data, hAlign="LEFT")
-        tbl.setStyle(TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1a6ef8")),
+        kpi_tbl = Table(kpi_data, colWidths=[100*mm, 70*mm])
+        kpi_tbl.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), NAVY),
             ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
             ("FONTSIZE", (0, 0), (-1, -1), 10),
             ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8fafc")]),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, GRAY]),
+            ("ALIGN", (1, 0), (1, -1), "CENTER"),
         ]))
-        story.append(tbl)
-        story.append(Spacer(1, 0.5*cm))
+        story.append(kpi_tbl)
+        story.append(Spacer(1, 8*mm))
 
-        if data["top_threats"]:
-            story.append(Paragraph("Top 위협 목록", styles["Heading2"]))
-            threat_rows = [["등급", "플랫폼", "계정", "리스크", "상태"]]
-            for t in data["top_threats"]:
-                threat_rows.append([
-                    t["severity"].upper(),
-                    t["platform"],
-                    (t["source_account"] or "")[:30],
-                    str(t["risk_score"]),
-                    t["status"],
-                ])
-            ttbl = Table(threat_rows, hAlign="LEFT", colWidths=[2*cm, 2.5*cm, 5*cm, 2*cm, 2.5*cm])
-            ttbl.setStyle(TableStyle([
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1a6ef8")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                ("FONTSIZE", (0, 0), (-1, -1), 9),
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8fafc")]),
-            ]))
-            story.append(ttbl)
+        # 심각도별 분포
+        by_s = data.get("by_severity", {})
+        if any(by_s.values()):
+            story.append(Paragraph("<b>심각도별 분포</b>", styles["Heading2"]))
+            sev_rows = [["심각도", "건수"]]
+            for sev in ("critical", "high", "medium", "low"):
+                if by_s.get(sev, 0):
+                    sev_rows.append([sev.upper(), str(by_s[sev])])
+            if len(sev_rows) > 1:
+                sev_tbl = Table(sev_rows, colWidths=[100*mm, 70*mm])
+                sev_tbl.setStyle(TableStyle([
+                    ("BACKGROUND", (0, 0), (-1, 0), BLUE),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 10),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, GRAY]),
+                ]))
+                story.append(sev_tbl)
+                story.append(Spacer(1, 6*mm))
+
+        # 미해결 위협
+        unresolved = data.get("unresolved_threats", [])
+        if unresolved:
+            story.append(Paragraph("<b>미해결 위협 (우선순위 순)</b>", styles["Heading2"]))
+            for th in unresolved:
+                sev_color = "#E24B4A" if th["severity"] in ("critical", "high") else "#BA7517"
+                story.append(Paragraph(
+                    f'<font color="{sev_color}">■</font> [{th["platform"]}] {th["content_preview"][:80]}',
+                    styles["Normal"]
+                ))
+                if th.get("source_url"):
+                    story.append(Paragraph(
+                        f'<link href="{th["source_url"]}">→ 원본 보기</link>',
+                        styles["Normal"]
+                    ))
+                story.append(Spacer(1, 2*mm))
+            story.append(Spacer(1, 4*mm))
+
+        # 해결된 실제 위협
+        resolved_threats = data.get("resolved_threats", [])
+        if resolved_threats:
+            story.append(Paragraph("<b>해결 완료된 위협</b>", styles["Heading2"]))
+            for t in resolved_threats:
+                story.append(Paragraph(
+                    f'[{t["platform"]}] 해결방법: {t["resolution_method"] or "기타"}'
+                    + (f' — {t["note"]}' if t.get("note") else ""),
+                    styles["Normal"]
+                ))
+            story.append(Spacer(1, 4*mm))
+
+        story.append(Spacer(1, 10*mm))
+        story.append(HRFlowable(width="100%", thickness=0.5, color=colors.grey))
+        story.append(Paragraph(
+            "SAYbrand AI 브랜드 보호 서비스 | 자동 생성 보고서",
+            styles["Normal"]
+        ))
 
         doc.build(story)
         return buf.getvalue()

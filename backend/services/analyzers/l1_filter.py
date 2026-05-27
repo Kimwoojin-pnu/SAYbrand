@@ -228,8 +228,8 @@ async def l1_filter_with_profile(
     # 7. 기존 KEYWORD_DATABASE 체크
     kw_result = _check_keyword_database(content, account_name, brand_mentioned)
 
-    # 8. 업종 임계값 (기본 0.3, 업종 multiplier로 낮아짐)
-    industry_threshold = 0.3 / profile.industry_config["risk_multiplier"]
+    # 8. 업종 임계값 (기본 0.15, 업종 multiplier로 낮아짐)
+    industry_threshold = 0.15 / profile.industry_config["risk_multiplier"]
 
     # 9. 최종 스코어 종합
     total_score = max(

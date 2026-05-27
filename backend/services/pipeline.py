@@ -70,6 +70,9 @@ async def run_pipeline(
         profile = await profile_loader.load_for_user(user_id, db)
 
     # ── L1 필터 ───────────────────────────────────────────────────────
+    content_preview = post["content"][:80].replace("\n", " ")
+    logger.info("[PIPELINE] 처리 시작 [%s/%s]: %s", post.get("platform", "?"), post.get("source_account", "?"), content_preview)
+
     if profile:
         l1 = await l1_filter_with_profile(
             content=post["content"],
@@ -84,7 +87,11 @@ async def run_pipeline(
         brand_keywords = [r[0] for r in kw_result.all()]
         l1 = l1_filter(post["content"], brand_keywords=brand_keywords or None)
 
+    logger.info("[L1] pass=%s score=%.4f severity=%s brand_mentioned=%s cats=%s",
+                l1["pass"], l1["score"], l1.get("severity"), l1.get("brand_mentioned"), l1.get("matched_categories"))
+
     if not l1["pass"]:
+        logger.info("[L1] 탈락: score=%.4f brand=%s neg_filter=%s", l1["score"], l1.get("brand_mentioned"), l1.get("negative_filter_applied"))
         return None
 
     # ── 위협 유형 / 모듈 결정 ─────────────────────────────────────────

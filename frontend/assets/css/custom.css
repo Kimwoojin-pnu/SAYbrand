@@ -243,3 +243,62 @@ body { font-family: 'NanumSquare', 'Noto Sans KR', sans-serif; }
   color: #e6edf3 !important;
   border-color: rgba(255,255,255,0.12) !important;
 }
+
+/* ── Toast notification ───────────────────────────────────────────── */
+.toast-notification {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #ffffff;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-left: 4px solid #1D9E75;
+  border-radius: 8px;
+  box-shadow: rgba(12,20,40,0.16) 0px 4px 16px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'NanumSquare', sans-serif;
+  font-size: 13px;
+  color: #0c1428;
+  z-index: 9999;
+  transform: translateX(120%);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  max-width: 340px;
+}
+.toast-notification.show { transform: translateX(0); }
+.toast-notification.critical { border-left-color: #E24B4A; }
+.toast-notification.high { border-left-color: #BA7517; }
+.toast-notification.info { border-left-color: #1a6ef8; }
+[data-theme="dark"] .toast-notification {
+  background: #1c2128;
+  border-color: rgba(255,255,255,0.12);
+  color: #e6edf3;
+  box-shadow: rgba(0,0,0,0.45) 0px 4px 20px;
+}
+
+/* ── Invite code button ───────────────────────────────────────────── */
+.btn-invite-code {
+  border: 1.5px solid rgba(29,95,168,0.5);
+  border-radius: 6px;
+  background: transparent;
+  color: #1d5fa8;
+  padding: 8px 16px;
+  font-family: 'NanumSquare', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-invite-code:hover {
+  border-color: #1d5fa8;
+  background: rgba(29,95,168,0.06);
+}
+[data-theme="dark"] .btn-invite-code {
+  color: #4fa3f5;
+  border-color: rgba(79,163,245,0.4);
+}
+[data-theme="dark"] .btn-invite-code:hover {
+  border-color: #4fa3f5;
+  background: rgba(79,163,245,0.08);
+}

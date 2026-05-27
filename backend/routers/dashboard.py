@@ -252,6 +252,36 @@ async def update_threat_status(
     return {"id": threat_id, "status": body.status}
 
 
+class ResolveRequest(BaseModel):
+    resolution_type: str   # "false_positive" | "real_resolved"
+    resolution_method: str = ""
+    resolution_note: str = ""
+
+
+@router.patch("/threats/{threat_id}/resolve")
+async def resolve_threat(
+    threat_id: int,
+    body: ResolveRequest,
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
+    if body.resolution_type not in ("false_positive", "real_resolved"):
+        raise HTTPException(status_code=400, detail="resolution_type must be false_positive or real_resolved")
+
+    result = await db.execute(select(Threat).where(Threat.id == threat_id))
+    threat = result.scalar_one_or_none()
+    if not threat:
+        raise HTTPException(status_code=404, detail="Threat not found")
+
+    threat.status = "resolved"
+    threat.resolution_type = body.resolution_type
+    threat.resolution_method = body.resolution_method
+    threat.resolution_note = body.resolution_note
+    threat.updated_at = datetime.utcnow()
+    await db.commit()
+    return {"id": threat_id, "status": "resolved", "resolution_type": body.resolution_type}
+
+
 _CATEGORY_TO_THREAT_TYPE: dict[str, str] = {
     "A1_impersonation_account":  "account_impersonation",
     "A2_ceo_impersonation":      "account_impersonation",
