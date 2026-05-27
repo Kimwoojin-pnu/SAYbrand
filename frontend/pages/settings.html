@@ -834,7 +834,13 @@ const ROLE_COLOR = { owner: '#1a6ef8', admin: '#7c3aed', member: '#0c1428', view
 async function loadTeam() {
   try {
     const orgs = await fetch('/api/orgs').then(r => r.ok ? r.json() : []);
-    if (!orgs.length) return;
+    if (!orgs.length) {
+      document.getElementById('member-list').innerHTML =
+        '<p style="font-size:12px;color:rgba(12,20,40,.35);text-align:center;padding:12px 0;">소속된 조직이 없습니다. 온보딩에서 조직을 만들거나 초대코드로 참여하세요.</p>';
+      document.getElementById('btn-gen-code').disabled = true;
+      document.getElementById('btn-gen-code').title = '조직이 없습니다';
+      return;
+    }
     const org = orgs.find(o => o.my_role === 'owner' || o.my_role === 'admin') || orgs[0];
     currentOrgId = org.id;
     myRole = org.my_role;
@@ -848,7 +854,10 @@ async function loadTeam() {
     }
 
     await renderMembers(org.id);
-  } catch (e) {}
+  } catch (e) {
+    document.getElementById('member-list').innerHTML =
+      '<p style="font-size:12px;color:#ef4444;text-align:center;padding:12px 0;">팀 정보를 불러오는 중 오류가 발생했습니다.</p>';
+  }
 }
 
 async function renderMembers(orgId) {

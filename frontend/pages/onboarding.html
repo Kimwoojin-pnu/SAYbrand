@@ -64,7 +64,7 @@
     <p style="font-size:13px;color:#64748b;margin-bottom:24px;line-height:1.6;">팀과 함께 쓸 수 있고, 나중에 언제든 바꿀 수 있어요.</p>
 
     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px;">
-      <button class="path-card" id="path-new-org" onclick="selectPath('new_org')">
+      <button class="path-card" id="path-new-org" onclick="selectPath('new-org')">
         <div style="display:flex;align-items:center;gap:12px;">
           <span style="font-size:22px;">🏢</span>
           <div>
@@ -73,7 +73,7 @@
           </div>
         </div>
       </button>
-      <button class="path-card" id="path-join-org" onclick="selectPath('join_org')">
+      <button class="path-card" id="path-join-org" onclick="selectPath('join-org')">
         <div style="display:flex;align-items:center;gap:12px;">
           <span style="font-size:22px;">🔗</span>
           <div>
@@ -199,7 +199,7 @@
   // ── 경로 선택 ────────────────────────────────────────────────
   function selectPath(path) {
     selectedPath = path;
-    ['new_org', 'join_org', 'solo'].forEach(p => {
+    ['new-org', 'join-org', 'solo'].forEach(p => {
       document.getElementById('path-' + p).classList.toggle('selected', p === path);
     });
     document.getElementById('btn-step1-next').disabled = false;
@@ -214,10 +214,10 @@
     if (!selectedPath) return;
     if (selectedPath === 'solo') {
       showStep('step-3');
-      updateProgress(2, false);
+      updateProgress(2, true);
       return;
     }
-    if (selectedPath === 'new_org') {
+    if (selectedPath === 'new-org') {
       showStep('step-2a');
     } else {
       showStep('step-2b');
