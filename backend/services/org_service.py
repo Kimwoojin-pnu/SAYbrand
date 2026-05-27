@@ -137,11 +137,13 @@ async def join_with_code(code: str, user_id: int, db: AsyncSession) -> dict:
         return {
             "success": True,
             "status": "active",
+            "org_id": invite.org_id,
             "message": f"{org.name} 조직에 참여했습니다.",
         }
     return {
         "success": True,
         "status": "pending",
+        "org_id": invite.org_id,
         "message": "가입 요청이 전송됐습니다. 관리자 승인을 기다려주세요.",
     }
 

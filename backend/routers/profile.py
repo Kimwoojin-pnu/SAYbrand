@@ -128,6 +128,19 @@ async def _post_profile_update(
     asyncio.create_task(_register_phash_background(profile_id, db))
 
 
+# ── Standalone DART lookup (온보딩용, 프로파일 불필요) ────────────────────────
+
+@router.get("/dart-lookup", response_model=DartLookupResult)
+async def dart_lookup_standalone(
+    code: str = Query(..., description="DART 기업코드 8자리"),
+    current_user: dict = Depends(get_current_user),
+):
+    result = await enrich_from_dart(code)
+    if not result:
+        raise HTTPException(status_code=502, detail="DART 조회 실패 또는 해당 코드를 찾을 수 없습니다")
+    return result
+
+
 # ── Profile CRUD ──────────────────────────────────────────────────────────────
 
 @router.post("", response_model=CustomerProfileOut, status_code=201)

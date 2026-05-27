@@ -104,8 +104,8 @@ class Settings(BaseSettings):
 settings = Settings()
 
 TIER_LIMITS: dict[str, dict[str, int]] = {
-    "free":       {"members": 1,   "keywords": 3,  "platforms": 1},
-    "starter":    {"members": 3,   "keywords": 10, "platforms": 3},
-    "pro":        {"members": 10,  "keywords": 50, "platforms": -1},
-    "enterprise": {"members": -1,  "keywords": -1, "platforms": -1},
+    "free":       {"orgs": 1,  "members": 1,   "keywords": 3,  "platforms": 1},
+    "starter":    {"orgs": 3,  "members": 3,   "keywords": 10, "platforms": 3},
+    "pro":        {"orgs": 5,  "members": 10,  "keywords": 50, "platforms": -1},
+    "enterprise": {"orgs": -1, "members": -1,  "keywords": -1, "platforms": -1},
 }

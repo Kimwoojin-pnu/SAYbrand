@@ -3,13 +3,15 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.config import TIER_LIMITS
 from backend.db.database import get_db
 from backend.middleware.auth import get_current_user
 from backend.middleware.org_context import optional_current_org, require_non_viewer
-from backend.models.orm import Keyword, Organization
+from backend.models.orm import Keyword, Organization, User
+from backend.services.org_service import get_effective_tier
 
 router = APIRouter(prefix="/api/keywords", tags=["keywords"])
 
@@ -60,6 +62,32 @@ async def create_keyword(
     )
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=409, detail="이미 등록된 키워드입니다")
+
+    if org is not None:
+        tier = get_effective_tier(org)
+        kw_count = (await db.execute(
+            select(func.count()).select_from(Keyword).where(
+                Keyword.org_id == org.id, Keyword.active.is_(True)
+            )
+        )).scalar() or 0
+    else:
+        db_user = (await db.execute(select(User).where(User.id == user["id"]))).scalar_one_or_none()
+        tier = (db_user.subscription_tier or "free") if db_user else "free"
+        if tier not in TIER_LIMITS:
+            tier = "free"
+        kw_count = (await db.execute(
+            select(func.count()).select_from(Keyword).where(
+                Keyword.user_id == user["id"],
+                Keyword.org_id.is_(None),
+                Keyword.active.is_(True),
+            )
+        )).scalar() or 0
+    kw_limit = TIER_LIMITS[tier]["keywords"]
+    if kw_limit != -1 and kw_count >= kw_limit:
+        raise HTTPException(
+            403,
+            detail=f"현재 플랜에서는 키워드를 {kw_limit}개까지 등록할 수 있습니다. 플랜을 업그레이드해 주세요.",
+        )
 
     kw = Keyword(
         user_id=user["id"],

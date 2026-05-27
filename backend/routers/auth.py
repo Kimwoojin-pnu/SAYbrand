@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from authlib.integrations.starlette_client import OAuth
-from sqlalchemy import select, delete
+from sqlalchemy import func, select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.config import settings
 from backend.db.database import get_db
@@ -152,10 +152,32 @@ async def delete_account(request: Request, db: AsyncSession = Depends(get_db)):
     await db.execute(delete(OutboundWebhook).where(OutboundWebhook.user_id == user_id))
     await db.execute(delete(UsageLog).where(UsageLog.user_id == user_id))
 
-    # 6. 조직 처리 — 소유 조직은 초대코드·멤버·조직 순으로 삭제
-    owned_org_ids = (
-        await db.execute(select(Organization.id).where(Organization.owner_user_id == user_id))
+    # 6. 소유 조직에 다른 활성 멤버가 있으면 탈퇴 차단
+    owned_orgs = (
+        await db.execute(select(Organization).where(Organization.owner_user_id == user_id))
     ).scalars().all()
+    blocked_orgs = []
+    for org in owned_orgs:
+        other_members = (
+            await db.execute(
+                select(func.count()).select_from(OrganizationMember).where(
+                    OrganizationMember.org_id == org.id,
+                    OrganizationMember.user_id != user_id,
+                    OrganizationMember.status == "active",
+                )
+            )
+        ).scalar() or 0
+        if other_members > 0:
+            blocked_orgs.append(org.name)
+    if blocked_orgs:
+        org_list = ", ".join(f'"{n}"' for n in blocked_orgs)
+        raise HTTPException(
+            status_code=400,
+            detail=f"소유 중인 조직({org_list})에 활성 멤버가 있습니다. "
+                   f"소유권을 다른 멤버에게 이전하거나 조직을 해산한 후 탈퇴해 주세요.",
+        )
+
+    owned_org_ids = [o.id for o in owned_orgs]
     if owned_org_ids:
         await db.execute(delete(InviteCode).where(InviteCode.org_id.in_(owned_org_ids)))
         await db.execute(delete(OrganizationMember).where(OrganizationMember.org_id.in_(owned_org_ids)))

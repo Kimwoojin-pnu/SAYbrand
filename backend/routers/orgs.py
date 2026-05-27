@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import TIER_LIMITS
@@ -72,6 +72,25 @@ async def create_org(
     user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    db_user = (await db.execute(select(User).where(User.id == user["id"]))).scalar_one_or_none()
+    user_tier = (db_user.subscription_tier or "free") if db_user else "free"
+    if user_tier not in TIER_LIMITS:
+        user_tier = "free"
+
+    owned_count = (await db.execute(
+        select(func.count()).select_from(OrganizationMember).where(
+            OrganizationMember.user_id == user["id"],
+            OrganizationMember.role == "owner",
+            OrganizationMember.status == "active",
+        )
+    )).scalar() or 0
+    org_limit = TIER_LIMITS[user_tier]["orgs"]
+    if org_limit != -1 and owned_count >= org_limit:
+        raise HTTPException(
+            403,
+            detail=f"현재 플랜에서는 조직을 {org_limit}개까지 만들 수 있습니다. 플랜을 업그레이드해 주세요.",
+        )
+
     base_slug = make_slug(data.name)
     slug = base_slug
     i = 1
@@ -344,6 +363,51 @@ async def remove_member(
         raise HTTPException(400, detail="Owner는 강퇴할 수 없습니다.")
 
     await db.delete(member)
+    await db.commit()
+    return {"success": True}
+
+
+@router.patch("/{org_id}/transfer-ownership")
+async def transfer_ownership(
+    org_id: int,
+    target_user_id: int,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """소유권을 다른 활성 멤버에게 이전한다. 기존 owner는 admin으로 강등."""
+    if target_user_id == user["id"]:
+        raise HTTPException(400, detail="자신에게 소유권을 이전할 수 없습니다.")
+
+    await _require_role(org_id, user["id"], ["owner"], db)
+
+    org = await db.get(Organization, org_id)
+    if not org:
+        raise HTTPException(404)
+
+    target_result = await db.execute(
+        select(OrganizationMember).where(
+            OrganizationMember.org_id == org_id,
+            OrganizationMember.user_id == target_user_id,
+            OrganizationMember.status == "active",
+        )
+    )
+    target_member = target_result.scalar_one_or_none()
+    if not target_member:
+        raise HTTPException(404, detail="이전할 멤버를 찾을 수 없습니다.")
+
+    current_owner_result = await db.execute(
+        select(OrganizationMember).where(
+            OrganizationMember.org_id == org_id,
+            OrganizationMember.user_id == user["id"],
+        )
+    )
+    current_owner_member = current_owner_result.scalar_one_or_none()
+
+    org.owner_user_id = target_user_id
+    target_member.role = "owner"
+    if current_owner_member:
+        current_owner_member.role = "admin"
+
     await db.commit()
     return {"success": True}
 

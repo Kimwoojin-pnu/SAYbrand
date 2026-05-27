@@ -826,6 +826,7 @@ loadTeam();
 <script>
 // ── 팀 관리 ───────────────────────────────────────────────────────────────────
 let currentOrgId = null;
+let myRole = null;
 
 const ROLE_KR = { owner: 'Owner', admin: 'Admin', member: 'Member', viewer: 'Viewer (보기 전용)' };
 const ROLE_COLOR = { owner: '#1a6ef8', admin: '#7c3aed', member: '#0c1428', viewer: '#6b7280' };
@@ -836,6 +837,7 @@ async function loadTeam() {
     if (!orgs.length) return;
     const org = orgs.find(o => o.my_role === 'owner' || o.my_role === 'admin') || orgs[0];
     currentOrgId = org.id;
+    myRole = org.my_role;
 
     document.getElementById('team-org-name').textContent = org.name;
     const limit = org.member_limit === -1 ? '∞' : org.member_limit;
@@ -887,6 +889,7 @@ async function renderMembers(orgId) {
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(26,110,248,0.08);color:${ROLE_COLOR[m.role]||'#0c1428'};">${ROLE_KR[m.role]||m.role}</span>
+          ${m.role !== 'owner' && myRole === 'owner' ? `<button onclick="transferOwnership(${m.user_id},'${m.name.replace(/'/g,'\\\'')}')" style="padding:3px 8px;border-radius:4px;border:1px solid #1a6ef8;background:transparent;font-size:10px;color:#1a6ef8;cursor:pointer;font-family:'NanumSquare',sans-serif;">소유권 이전</button>` : ''}
           ${m.role !== 'owner' ? `<button onclick="removeMember(${m.user_id})" style="padding:3px 8px;border-radius:4px;border:1px solid rgba(0,0,0,.1);background:transparent;font-size:10px;color:rgba(12,20,40,.4);cursor:pointer;font-family:'NanumSquare',sans-serif;">강퇴</button>` : ''}
         </div>
       </div>
@@ -927,6 +930,20 @@ async function removeMember(userId) {
     const res = await fetch(`/api/orgs/${currentOrgId}/members/${userId}`, { method: 'DELETE' });
     if (res.ok) { await renderMembers(currentOrgId); await loadTeam(); }
     else { const d = await res.json(); alert(d.detail || '처리 실패'); }
+  } catch (e) {}
+}
+
+async function transferOwnership(userId, userName) {
+  if (!confirm(`"${userName}"에게 소유권을 이전하시겠습니까?\n\n이전 후 회원님은 Admin으로 변경됩니다. 이 작업은 되돌릴 수 없습니다.`)) return;
+  try {
+    const res = await fetch(`/api/orgs/${currentOrgId}/transfer-ownership?target_user_id=${userId}`, { method: 'PATCH' });
+    if (res.ok) {
+      alert(`소유권이 "${userName}"에게 이전되었습니다.`);
+      await loadTeam();
+    } else {
+      const d = await res.json();
+      alert(d.detail || '소유권 이전 실패');
+    }
   } catch (e) {}
 }
 
