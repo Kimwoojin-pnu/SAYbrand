@@ -9,14 +9,16 @@ Base = declarative_base()
 
 _DB_URL = os.environ.get("DATABASE_URL", "")
 
-# postgresql:// → postgresql+asyncpg:// 변환
-if _DB_URL.startswith("postgresql://"):
-    _DB_URL = _DB_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+# postgres:// 또는 postgresql:// → postgresql+asyncpg://
+if _DB_URL.startswith("postgres://"):
+    _DB_URL = "postgresql+asyncpg://" + _DB_URL[len("postgres://"):]
+elif _DB_URL.startswith("postgresql://"):
+    _DB_URL = "postgresql+asyncpg://" + _DB_URL[len("postgresql://"):]
 
 print(f"[DB] URL: {_DB_URL[:40] if _DB_URL else 'NOT SET'}")
 
-# DATABASE_URL 없으면 engine=None (SQLite fallback 없음)
-if _DB_URL and "postgresql" in _DB_URL:
+# asyncpg URL이 있을 때만 engine 생성, 없으면 None
+if _DB_URL.startswith("postgresql+asyncpg://"):
     engine = create_async_engine(_DB_URL, poolclass=NullPool)
     AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 else:

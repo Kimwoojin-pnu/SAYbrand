@@ -15,19 +15,6 @@ from backend.routers import auth, billing, orgs, profile, keywords, reports, ass
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    import os
-    db_url = os.environ.get("DATABASE_URL", "")
-    print(f"[STARTUP] DB URL: {db_url[:30] if db_url else 'EMPTY'}")
-    if db_url and "postgresql" in db_url:
-        try:
-            from backend.db.database import engine, Base
-            async with engine.begin() as conn:
-                await conn.run_sync(Base.metadata.create_all)
-            print("[STARTUP] PostgreSQL 초기화 완료")
-        except Exception as e:
-            print(f"[STARTUP] DB 초기화 실패 (계속 진행): {e}")
-    else:
-        print("[STARTUP] PostgreSQL URL 없음 - DB 초기화 건너뜀")
     yield
 
 
