@@ -9,6 +9,72 @@
 <!-- 새 항목은 위에서부터 추가 (최신순) -->
 
 ---
+## [#43] 2026-05-27
+**분류:** 수정 (L1 디버그 + 위협 해결 분류 + 보고서 전면 재작성 + 사이드바 통일 + DB 수정)
+**파일:**
+- `backend/services/analyzers/l1_filter.py` (수정)
+- `backend/services/pipeline.py` (수정)
+- `backend/models/orm.py` (수정 — DB 마이그레이션 필요)
+- `backend/routers/dashboard.py` (수정)
+- `backend/services/report_generator.py` (전면 재작성)
+- `backend/routers/reports.py` (전면 재작성)
+- `backend/db/database.py` (버그 수정)
+- `frontend/pages/threats.html` (수정)
+- `frontend/pages/actions.html` (수정)
+- `frontend/pages/brand-image.html` (수정)
+- `frontend/pages/negative-mentions.html` (수정)
+- `frontend/pages/dashboard.html` (수정)
+- `frontend/pages/reports.html` (수정)
+- `frontend/pages/settings.html` (수정)
+- `frontend/assets/css/custom.css` (수정)
+
+**변경 내용:**
+
+### 1. L1 필터 임계값 완화 + 디버그 로깅
+- `l1_filter.py`: `industry_threshold` 0.30 → 0.15 (삼성 등 대형 브랜드 0건 문제 수정)
+- `pipeline.py`: INFO 레벨 로깅 추가 — 파이프라인 진입, L1 pass/fail 결과(score/severity/brand_mentioned/matched_categories) 출력
+
+### 2. 위협 해결 분류 시스템 신규
+- `orm.py`: Threat 모델에 3 컬럼 추가
+  - `resolution_type: str | None` — `"false_positive"` | `"real_resolved"`
+  - `resolution_method: str | None` — 처리 방법
+  - `resolution_note: str | None` — 처리 메모
+- `dashboard.py`: `PATCH /api/dashboard/threats/{threat_id}/resolve` 엔드포인트 추가
+  - `ResolveRequest` Pydantic 모델(resolution_type, resolution_method, resolution_note)
+  - status → "resolved" + resolution_* 필드 일괄 저장
+- ⚠️ **DB 마이그레이션 필요**: `brandguard.db` 삭제 후 서버 재기동
+
+### 3. report_generator.py 전면 재작성
+- `_period_range(period)` — daily/weekly/monthly 기간 계산 헬퍼
+- false_positive 제외 필터: `resolution_type != "false_positive"` 조건 적용
+- 반환 구조: `summary` / `unresolved_threats`(활성 TOP 10) / `resolved_threats`(real_resolved) / `negative_samples`
+- PDF: ReportLab — KPI 테이블 + 미처리 위협 섹션 + 해결 위협 섹션
+- 하위 호환 키 유지: `total_threats` / `by_severity` / `by_platform` / `resolved_count` / `top_threats`
+
+### 4. reports.py 전면 재작성
+- 유효 기간: `{"daily", "weekly", "monthly"}`
+- `GET /{period}` / `GET /{period}/pdf` 메인 라우트 (먼저 정의)
+- PDF 파일명: `saybrand_{period}_report_{YYYYMMDD}.pdf`
+
+### 5. database.py SQLite 폴백 버그 수정 (스캔 오류 근본 원인)
+- 기존: `os.environ.get("DATABASE_URL", "")` → DATABASE_URL 미설정 시 engine=None → 모든 API 500 에러
+- 수정: `os.environ.get("DATABASE_URL", "sqlite+aiosqlite:///./brandguard.db")` — 로컬 SQLite 자동 폴백
+
+### 6. 사이드바 통일 — 보고서 탭 + 설정 위치 고정
+- **모든 페이지 공통**: 메인 nav 6항목(대시보드/현재위협/처리사항/브랜드이미지/부정적언급/**보고서**), 하단 섹션(아바타+이름+이메일+**설정**+로그아웃)
+- `threats.html` / `actions.html` / `brand-image.html` / `negative-mentions.html`: 보고서 링크 추가 (nav 마지막)
+- `dashboard.html`: 보고서 링크 추가
+- `reports.html`: 사이드바 보고서 `db-nav-active` 표기, 월간 탭 + PDF 다운로드 버튼, JS `_currentPeriod`/`downloadPDF()` 추가
+- `settings.html`: 설정 nav 항목 제거 → 보고서 추가, 하단 섹션에 설정(active) + 로그아웃 구조
+
+### 7. custom.css 추가
+- `.toast-notification` — `.show` / `.critical` / `.high` / `.info` 변형 + 다크모드
+- `.btn-invite-code` — hover + 다크모드
+
+**Claude.ai 확인 필요:** NO
+---
+
+---
 ## [#42] 2026-05-26
 **분류:** 실제 동작 검증 (API 키 연동 end-to-end 테스트)
 **파일:**
