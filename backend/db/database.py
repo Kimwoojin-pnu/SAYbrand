@@ -1,44 +1,42 @@
 import os
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.ext.asyncio import (
+    create_async_engine, AsyncSession, async_sessionmaker
+)
 from sqlalchemy.pool import NullPool
+from sqlalchemy.orm import declarative_base
 
-DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite+aiosqlite:///./saybrand.db")
+Base = declarative_base()
 
-if DATABASE_URL.startswith("postgresql://"):
-    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+# 환경변수에서 직접 읽기
+_DB_URL = os.environ.get("DATABASE_URL", "")
 
-# Vercel 서버리스에서는 NullPool 필수
-# 커넥션 풀링이 serverless 환경과 충돌함
-if "sqlite" in DATABASE_URL:
+# postgresql:// → postgresql+asyncpg:// 변환
+if _DB_URL.startswith("postgresql://"):
+    _DB_URL = _DB_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+# DATABASE_URL 없으면 /tmp SQLite 사용
+if not _DB_URL:
+    _DB_URL = "sqlite+aiosqlite:////tmp/saybrand.db"
+
+print(f"[DB] Using: {_DB_URL[:40]}...")
+
+# 엔진 생성
+if "sqlite" in _DB_URL:
     engine = create_async_engine(
-        DATABASE_URL,
+        _DB_URL,
         connect_args={"check_same_thread": False},
     )
 else:
     engine = create_async_engine(
-        DATABASE_URL,
-        poolclass=NullPool,  # ← 핵심 수정
-        connect_args={
-            "ssl": "require",      # Railway는 SSL 필요
-            "server_settings": {
-                "application_name": "saybrand_vercel",
-            }
-        }
+        _DB_URL,
+        poolclass=NullPool,
     )
 
-AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-
-class Base(DeclarativeBase):
-    pass
+AsyncSessionLocal = async_sessionmaker(
+    engine, expire_on_commit=False
+)
 
 
 async def get_db():
     async with AsyncSessionLocal() as session:
         yield session
-
-
-async def init_db():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
