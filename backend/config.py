@@ -1,11 +1,19 @@
 import os
 from pydantic_settings import BaseSettings
 
+# 환경변수에서 직접 읽기 — DATABASE_URL이 있으면 항상 우선
+DATABASE_URL = os.environ.get(
+    "DATABASE_URL",
+    "sqlite+aiosqlite:///./brandguard.db"
+)
+
+# postgresql:// → postgresql+asyncpg:// 자동 변환
+if DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+
 
 def _db_url() -> str:
-    if os.environ.get("VERCEL"):
-        return "sqlite+aiosqlite:////tmp/brandguard.db"
-    return os.environ.get("DATABASE_URL", "sqlite+aiosqlite:///./brandguard.db")
+    return DATABASE_URL
 
 
 class Settings(BaseSettings):

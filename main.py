@@ -1,3 +1,6 @@
+import os
+print(f"[STARTUP] DATABASE_URL prefix: {os.environ.get('DATABASE_URL', 'NOT SET')[:30]}")
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, RedirectResponse, Response
