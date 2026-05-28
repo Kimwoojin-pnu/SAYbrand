@@ -35,6 +35,13 @@ def _parse_naver_date(postdate: str) -> datetime:
         return datetime.now(timezone.utc)
 
 
+def _to_utc(dt: datetime) -> datetime:
+    """naive datetime은 UTC로 간주, aware datetime은 UTC로 변환."""
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
 def _parse_rfc822(pubdate: str) -> datetime:
     """RFC 822 pubDate → datetime."""
     try:
@@ -129,6 +136,6 @@ class NaverCollector(BaseCollector):
         # days_back 기준으로 날짜 필터링 (Naver API는 날짜 파라미터 미지원)
         from datetime import timedelta
         cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
-        posts = [p for p in posts if p["published_at"].replace(tzinfo=timezone.utc) >= cutoff]
+        posts = [p for p in posts if _to_utc(p["published_at"]) >= cutoff]
 
         return posts[:limit]

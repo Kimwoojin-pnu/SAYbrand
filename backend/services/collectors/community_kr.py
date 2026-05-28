@@ -1,18 +1,20 @@
 """
 한국 커뮤니티 경량 크롤러 (httpx + BeautifulSoup)
 
-사이트별 법적 상태 (수집 전 robots.txt 자동 확인):
+실제 동작하는 사이트 (2026-05 검증):
+✅ 클리앙  (clien.net)   — div.list_item / .subject_fixed
 
-✅ 에펨코리아 (fmkorea.com)     — 공개 게시판, 검색 허용
-✅ 더쿠 (theqoo.net)           — 공개 게시판
-✅ 인스티즈 (instiz.net)        — 공개 게시판
-✅ 클리앙 (clien.net)           — 공개 게시판
-✅ 루리웹 (ruliweb.com)         — 공개 게시판
-✅ 나무위키 (namu.wiki)          — CC BY-NC-SA 라이선스, 명시적 허용
+robots.txt 차단 (selector 정의는 유지, 수집 시 자동 스킵):
+⚠️ 루리웹  (ruliweb.com) — robots.txt Disallow: /search
 
-⚠️ DC인사이드 (dcinside.com)   — robots.txt Disallow: * → robots_checker가 자동 차단
-⚠️ 블라인드 (blind.so)          — 로그인 필수 → 수집 불가
-⚠️ 네이버 카페                  — 로그인 필요 → Naver Search API 사용
+검증 결과 동작 불가 사이트:
+❌ 에펨코리아 (fmkorea.com) — 검색 결과 JS 렌더링
+❌ 더쿠       (theqoo.net)  — 검색 URL 404
+❌ 인스티즈   (instiz.net)  — JS 렌더링
+❌ 나무위키   (namu.wiki)   — SPA, 정적 HTML 없음
+
+⚠️ DC인사이드 (dcinside.com) — robots.txt Disallow: *
+⚠️ 블라인드   (blind.so)    — 로그인 필수
 """
 from __future__ import annotations
 
@@ -35,59 +37,23 @@ logger = logging.getLogger(__name__)
 class KoreanCommunityCollector(BaseCollector):
 
     SITES = {
-        "fmkorea": {
-            "base_url": "https://www.fmkorea.com",
-            "search_url": "https://www.fmkorea.com/search.php?mid=home&act=IS&is_keyword={keyword}&x=0&y=0",
-            "post_selector": "li.li_best2_pic, li.post_item, .bd_lst_tb tr",
-            "title_selector": ".title a, td.subject a",
-            "link_selector": ".title a, td.subject a",
-            "date_selector": ".date, td.time",
-            "platform_name": "에펨코리아",
-        },
-        "theqoo": {
-            "base_url": "https://theqoo.net",
-            "search_url": "https://theqoo.net/search?keyword={keyword}",
-            "post_selector": ".list_item, tr.notice, tr:not(.notice)",
-            "title_selector": "a.title, .subject a",
-            "link_selector": "a.title, .subject a",
-            "date_selector": ".date, .time",
-            "platform_name": "더쿠",
-        },
         "clien": {
             "base_url": "https://www.clien.net",
             "search_url": "https://www.clien.net/service/search?q={keyword}&sort=recency",
-            "post_selector": ".list_item, .list-board-item",
-            "title_selector": ".list_subject a, .subject_fixed a",
-            "link_selector": ".list_subject a",
-            "date_selector": ".list_time, span.timestamp",
+            "post_selector": "div.list_item",
+            "title_selector": ".subject_fixed",
+            "link_selector": ".subject_fixed",
+            "date_selector": ".list_time",
             "platform_name": "클리앙",
         },
         "ruliweb": {
             "base_url": "https://bbs.ruliweb.com",
             "search_url": "https://bbs.ruliweb.com/search?q={keyword}&search_type=subject_content",
-            "post_selector": "tr.table_body, .board_list tr",
-            "title_selector": "a.deco, .title a",
-            "link_selector": "a.deco, .title a",
-            "date_selector": "td.time, .date",
+            "post_selector": ".search_result_item",
+            "title_selector": "a.title",
+            "link_selector": "a.title",
+            "date_selector": "span.time",
             "platform_name": "루리웹",
-        },
-        "instiz": {
-            "base_url": "https://www.instiz.net",
-            "search_url": "https://www.instiz.net/pt?k={keyword}",
-            "post_selector": ".list_table tr, .feed_list li",
-            "title_selector": ".subject a, .title a",
-            "link_selector": ".subject a, .title a",
-            "date_selector": ".date, .time",
-            "platform_name": "인스티즈",
-        },
-        "namu": {
-            "base_url": "https://namu.wiki",
-            "search_url": "https://namu.wiki/Search?q={keyword}",
-            "post_selector": ".search-result, .wiki-result",
-            "title_selector": "a.result-title, h4 a",
-            "link_selector": "a.result-title, h4 a",
-            "date_selector": None,
-            "platform_name": "나무위키",
         },
     }
 
@@ -98,10 +64,6 @@ class KoreanCommunityCollector(BaseCollector):
         days_back: int = 7,
         sites: list[str] | None = None,
     ) -> list[dict]:
-        """
-        지정된 커뮤니티에서 키워드 검색.
-        robots.txt 차단된 URL은 자동 건너뜀.
-        """
         target_sites = sites or list(self.SITES.keys())
         results: list[dict] = []
 
@@ -122,7 +84,6 @@ class KoreanCommunityCollector(BaseCollector):
                 site = self.SITES[site_key]
                 search_url = site["search_url"].format(keyword=quote(keyword))
 
-                # robots.txt 체크 — 차단이면 건너뜀
                 if not await robots_checker.is_allowed(search_url):
                     logger.info(
                         "[SKIP] %s: robots.txt 차단 — %s",
@@ -130,13 +91,15 @@ class KoreanCommunityCollector(BaseCollector):
                     )
                     continue
 
-                # Rate Limiting
                 domain = urlparse(search_url).netloc
                 await rate_limiter.wait(domain)
 
                 try:
                     resp = await client.get(search_url)
                     if resp.status_code != 200:
+                        logger.warning(
+                            "%s HTTP %s", site["platform_name"], resp.status_code
+                        )
                         continue
 
                     per_site_limit = limit // len(target_sites) + 1
@@ -145,6 +108,9 @@ class KoreanCommunityCollector(BaseCollector):
                         base_url=site["base_url"],
                         platform=site["platform_name"],
                         limit=per_site_limit,
+                    )
+                    logger.info(
+                        "%s: %d건 파싱 (키워드=%r)", site["platform_name"], len(posts), keyword
                     )
                     results.extend(posts)
 
@@ -168,33 +134,50 @@ class KoreanCommunityCollector(BaseCollector):
         posts: list[dict] = []
 
         items = soup.select(site["post_selector"])
-        for item in items[:30]:
+        for item in items[:50]:
             if len(posts) >= limit:
                 break
             try:
                 title_el = item.select_one(site["title_selector"])
                 link_el = item.select_one(site["link_selector"])
-                date_el = item.select_one(site["date_selector"]) \
-                          if site["date_selector"] else None
+                date_el = (
+                    item.select_one(site["date_selector"])
+                    if site.get("date_selector")
+                    else None
+                )
 
                 if not title_el or not link_el:
                     continue
 
                 title = title_el.get_text(strip=True)
-                href = link_el.get("href", "")
-                post_url = urljoin(base_url, href) if href else ""
-
-                # 키워드 포함 여부 확인
-                if keyword.lower() not in title.lower():
+                if not title:
                     continue
 
-                # PII 제거
-                clean_title = remove_pii(title)
+                # link_el이 <a> 태그인 경우 href 직접 추출, 아니면 하위 <a> 탐색
+                if link_el.name == "a":
+                    href = link_el.get("href", "")
+                else:
+                    a_tag = link_el.find("a")
+                    href = a_tag.get("href", "") if a_tag else ""
+
+                post_url = urljoin(base_url, href) if href else ""
+
+                # excerpt: 제목 외 본문 일부 포함
+                excerpt = ""
+                for desc_sel in [".inline_block", ".list_desc", ".description", "p"]:
+                    desc_el = item.select_one(desc_sel)
+                    if desc_el:
+                        excerpt = desc_el.get_text(" ", strip=True)[:200]
+                        break
+
+                content = remove_pii(
+                    (title + (" " + excerpt if excerpt else "")).strip()
+                )
 
                 posts.append(make_post(
                     platform=platform,
                     source_account=platform,
-                    content=clean_title,
+                    content=content,
                     post_url=post_url,
                     published_at=self._parse_date(
                         date_el.get_text(strip=True) if date_el else ""
@@ -207,7 +190,6 @@ class KoreanCommunityCollector(BaseCollector):
         return posts
 
     def _parse_date(self, date_str: str) -> datetime:
-        """날짜 문자열 파싱 — 실패 시 현재 시각"""
         import re
         patterns = [
             r"(\d{4})[.\-/](\d{2})[.\-/](\d{2})",
@@ -226,13 +208,12 @@ class KoreanCommunityCollector(BaseCollector):
         return datetime.now(timezone.utc)
 
     def _mock_posts(self, keyword: str, limit: int) -> list[dict]:
-        """테스트 시 Mock 반환"""
         return [
             make_post(
-                platform="에펨코리아[MOCK]",
-                source_account="에펨코리아",
+                platform="클리앙[MOCK]",
+                source_account="클리앙",
                 content=f"[데모] {keyword} 관련 게시물 — 실제 수집 시 교체됩니다",
-                post_url=f"https://www.fmkorea.com/search?keyword={keyword}",
+                post_url=f"https://www.clien.net/service/search?q={keyword}",
                 published_at=datetime.now(timezone.utc),
                 is_mock=True,
             )

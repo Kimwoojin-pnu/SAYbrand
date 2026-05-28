@@ -190,10 +190,15 @@ async def l1_filter_with_profile(
                 "category": "B",
             }
 
-    # 3. alias 가중치 매칭
+    # 3. alias 가중치 매칭 (display_name이 aliases에 없으면 weight=1.0으로 추가)
     brand_score = 0.0
     matched_aliases: list[str] = []
-    for alias, weight in profile.aliases:
+    all_names: list[tuple[str, float]] = list(profile.aliases)
+    if profile.display_name and not any(
+        a.lower() == profile.display_name.lower() for a, _ in profile.aliases
+    ):
+        all_names = [(profile.display_name, 1.0)] + all_names
+    for alias, weight in all_names:
         if alias.lower() in text_lower:
             brand_score += weight
             matched_aliases.append(alias)
