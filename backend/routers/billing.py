@@ -2,8 +2,6 @@ import hashlib
 import hmac
 import json
 import logging
-import urllib.error
-import urllib.request
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
@@ -18,81 +16,33 @@ from backend.models.orm import User
 router = APIRouter(prefix="/billing", tags=["billing"])
 logger = logging.getLogger(__name__)
 
-_POLAR_API = "https://sandbox.api.polar.sh/v1"
-
-
-def _polar_post(url: str, token: str, payload: dict) -> tuple[int, dict]:
-    """표준 라이브러리 urllib — httpx TCP 충돌 회피"""
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        url,
-        data=data,
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json",
-        },
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            return resp.status, json.loads(resp.read())
-    except urllib.error.HTTPError as e:
-        body = e.read()
-        try:
-            return e.code, json.loads(body)
-        except Exception:
-            return e.code, {"detail": body.decode("utf-8", errors="replace")[:300]}
-
 
 @router.get("/checkout")
 async def checkout(
-    request: Request,
     plan: str = "starter",
     current_user: dict = Depends(get_current_user),
 ):
+    """
+    Polar Checkout Link(정적 URL)으로 직접 리다이렉트.
+    Vercel Python 서버리스는 외부 HTTP 불가 → API 호출 없이 미리 생성된 링크 사용.
+    POLAR_CHECKOUT_URL_STARTER / POLAR_CHECKOUT_URL_PRO 환경변수에 설정.
+    """
     if plan == "pro":
-        product_id = settings.polar_product_id_pro
+        checkout_url = settings.polar_checkout_url_pro
     else:
-        product_id = settings.polar_product_id_starter
+        checkout_url = settings.polar_checkout_url_starter
 
-    logger.info("[BILLING] checkout 요청: plan=%s product_id=%s email=%s",
-                plan, product_id, current_user.get("email"))
+    logger.info("[BILLING] checkout 요청: plan=%s url=%s email=%s",
+                plan, checkout_url, current_user.get("email"))
 
-    if not settings.polar_access_token or not product_id:
-        logger.error("[BILLING] 환경변수 누락: token=%s product_id=%s",
-                     bool(settings.polar_access_token), bool(product_id))
-        raise HTTPException(status_code=503, detail="결제 서비스가 설정되지 않았습니다")
+    if not checkout_url:
+        logger.error("[BILLING] 환경변수 누락: POLAR_CHECKOUT_URL_%s", plan.upper())
+        raise HTTPException(
+            status_code=503,
+            detail="결제 서비스가 설정되지 않았습니다. 관리자에게 문의하세요.",
+        )
 
-    payload = {
-        "product_id": product_id,
-        "customer_email": current_user["email"],
-        "success_url": str(request.base_url).rstrip("/") + "/dashboard",
-    }
-    logger.info("[BILLING] Polar API 호출: %s", payload)
-
-    try:
-        status_code, body = _polar_post(f"{_POLAR_API}/checkouts",
-                                        settings.polar_access_token, payload)
-        logger.info("[BILLING] Polar 응답: status=%s body=%s", status_code, str(body)[:500])
-
-        if status_code not in (200, 201):
-            detail = body.get("detail") or body.get("message") or str(body)
-            logger.error("[BILLING ERROR] Polar %s: %s", status_code, detail)
-            raise HTTPException(status_code=502, detail=f"Polar API {status_code}: {detail}")
-
-        checkout_url = body.get("url") or body.get("checkout_url") or body.get("hosted_url")
-        if not checkout_url:
-            logger.error("[BILLING ERROR] checkout URL 없음. 응답 keys: %s", list(body.keys()))
-            raise HTTPException(status_code=502, detail=f"결제 URL 없음. 응답: {list(body.keys())}")
-
-        logger.info("[BILLING] 리다이렉트: %s", checkout_url)
-        return RedirectResponse(checkout_url)
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error("[BILLING ERROR] %s: %s", type(e).__name__, e, exc_info=True)
-        raise HTTPException(status_code=502, detail=f"결제 서비스 연결 실패: {type(e).__name__}: {e}")
+    return RedirectResponse(checkout_url)
 
 
 @router.post("/webhook")
