@@ -328,6 +328,17 @@ async def run_scan(
         merged = list(dict.fromkeys(keywords + profile.search_keywords))
         keywords = merged
 
+    # 브랜드명 + 부정어 조합 검색 추가 — 부정 콘텐츠 수집 감도 향상
+    _NEGATIVE_COMBOS = ["불만", "불매", "최악", "실망", "별로", "환불거부", "항의"]
+    brand_names = (profile.search_keywords[:2] if profile else keywords[:2])
+    negative_combos = [
+        f"{b} {n}"
+        for b in brand_names[:2]
+        for n in _NEGATIVE_COMBOS[:4]
+        if f"{b} {n}" not in keywords
+    ]
+    keywords = list(dict.fromkeys(keywords + negative_combos))
+
     collectors = []
     if platforms in ("naver", "all"):
         collectors.append(NaverCollector())
@@ -339,7 +350,7 @@ async def run_scan(
         collectors.append(KoreanCommunityCollector())
 
     posts: list[dict] = []
-    for kw in keywords[:10]:  # 최대 10개 키워드로 제한
+    for kw in keywords[:14]:  # 부정어 조합 포함 최대 14개
         for collector in collectors:
             try:
                 results = await collector.search(kw, limit=25, days_back=7)

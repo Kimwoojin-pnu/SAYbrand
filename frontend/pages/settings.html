@@ -329,11 +329,12 @@
               <option value="30">30일 유효</option>
             </select>
             <button id="btn-gen-code" style="padding:6px 14px;border-radius:5px;background:#0c1428;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">초대코드 발급</button>
-          </div>
-          <div id="code-display" style="display:none;margin-top:10px;padding:10px 14px;background:rgba(26,110,248,0.06);border:1px solid rgba(26,110,248,0.15);border-radius:7px;display:none;align-items:center;gap:10px;">
-            <span id="code-value" style="font-size:18px;font-family:'JetBrains Mono',monospace;font-weight:700;color:#1a6ef8;letter-spacing:0.12em;"></span>
-            <span id="code-expires" style="font-size:11px;color:rgba(12,20,40,.4);"></span>
-            <button onclick="copyCode()" style="margin-left:auto;padding:4px 10px;border-radius:4px;border:1px solid rgba(26,110,248,0.3);background:transparent;font-size:11px;color:#1a6ef8;cursor:pointer;font-family:'NanumSquare',sans-serif;">복사</button>
+            <!-- 코드 발급 후 버튼 옆에 바로 표시 -->
+            <div id="code-display" style="display:none;align-items:center;gap:8px;background:rgba(26,110,248,0.07);border:1px solid rgba(26,110,248,0.2);border-radius:6px;padding:5px 12px;">
+              <span id="code-value" style="font-size:15px;font-family:'JetBrains Mono',monospace;font-weight:700;color:#1a6ef8;letter-spacing:0.12em;"></span>
+              <span id="code-expires" style="font-size:11px;color:rgba(12,20,40,.4);"></span>
+              <button onclick="copyCode()" style="padding:3px 9px;border-radius:4px;border:1px solid rgba(26,110,248,0.3);background:transparent;font-size:11px;color:#1a6ef8;cursor:pointer;font-family:'NanumSquare',sans-serif;">복사</button>
+            </div>
           </div>
         </div>
 

@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import json
+import logging
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -14,6 +15,7 @@ from backend.middleware.auth import get_current_user
 from backend.models.orm import User
 
 router = APIRouter(prefix="/billing", tags=["billing"])
+logger = logging.getLogger(__name__)
 
 _POLAR_API = "https://api.polar.sh/v1"
 
@@ -29,32 +31,54 @@ async def checkout(
     else:
         product_id = settings.polar_product_id_starter
 
+    logger.info("[BILLING] checkout 요청: plan=%s product_id=%s email=%s",
+                plan, product_id, current_user.get("email"))
+
     if not settings.polar_access_token or not product_id:
+        logger.error("[BILLING] 환경변수 누락: token=%s product_id=%s",
+                     bool(settings.polar_access_token), bool(product_id))
         raise HTTPException(status_code=503, detail="결제 서비스가 설정되지 않았습니다")
+
+    payload = {
+        "product_id": product_id,
+        "customer_email": current_user["email"],
+        "success_url": str(request.base_url).rstrip("/") + "/dashboard",
+    }
+    logger.info("[BILLING] Polar API 호출: POST %s/checkouts payload=%s", _POLAR_API, payload)
 
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             resp = await client.post(
-                f"{_POLAR_API}/checkouts/custom/",
-                headers={"Authorization": f"Bearer {settings.polar_access_token}"},
-                json={
-                    "product_id": product_id,
-                    "customer_email": current_user["email"],
-                    "success_url": str(request.base_url).rstrip("/") + "/dashboard",
-                },
+                f"{_POLAR_API}/checkouts",
+                headers={"Authorization": f"Bearer {settings.polar_access_token}",
+                         "Content-Type": "application/json"},
+                json=payload,
             )
+        logger.info("[BILLING] Polar 응답: status=%s body=%s", resp.status_code, resp.text[:500])
+
         if resp.status_code not in (200, 201):
-            detail = resp.json().get("detail", "결제 페이지 생성 실패") if resp.content else "결제 페이지 생성 실패"
-            raise HTTPException(status_code=502, detail=detail)
+            try:
+                err_body = resp.json()
+                detail = err_body.get("detail") or err_body.get("message") or str(err_body)
+            except Exception:
+                detail = resp.text[:200] or "결제 페이지 생성 실패"
+            logger.error("[BILLING ERROR] Polar %s: %s", resp.status_code, detail)
+            raise HTTPException(status_code=502, detail=f"Polar API {resp.status_code}: {detail}")
+
         body = resp.json()
         checkout_url = body.get("url") or body.get("checkout_url") or body.get("hosted_url")
         if not checkout_url:
-            raise HTTPException(status_code=502, detail="결제 URL을 받지 못했습니다")
+            logger.error("[BILLING ERROR] checkout URL 없음. 응답 keys: %s", list(body.keys()))
+            raise HTTPException(status_code=502, detail=f"결제 URL 없음. 응답: {list(body.keys())}")
+
+        logger.info("[BILLING] 리다이렉트: %s", checkout_url)
         return RedirectResponse(checkout_url)
+
     except HTTPException:
         raise
-    except Exception:
-        raise HTTPException(status_code=502, detail="결제 서비스 연결 실패")
+    except Exception as e:
+        logger.error("[BILLING ERROR] %s: %s", type(e).__name__, e, exc_info=True)
+        raise HTTPException(status_code=502, detail=f"결제 서비스 연결 실패: {type(e).__name__}: {e}")
 
 
 @router.post("/webhook")

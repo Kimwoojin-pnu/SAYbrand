@@ -9,7 +9,7 @@ from backend.services.analyzers.keyword_database import (
     CRITICAL_BYPASS,
 )
 
-_PASS_THRESHOLD = 0.10  # 이 점수 이상이면 L2로 전달
+_PASS_THRESHOLD = 0.05  # 이 점수 이상이면 L2로 전달
 
 
 def _has_brand(text_lower: str, brand_keywords: list[str]) -> bool:
@@ -202,7 +202,7 @@ async def l1_filter_with_profile(
         if alias.lower() in text_lower:
             brand_score += weight
             matched_aliases.append(alias)
-    brand_mentioned = brand_score >= 0.5
+    brand_mentioned = brand_score >= 0.3
 
     # 4. 임직원 이름 언급 (Module C)
     executive_mentioned: list[dict] = []
@@ -234,7 +234,7 @@ async def l1_filter_with_profile(
     kw_result = _check_keyword_database(content, account_name, brand_mentioned)
 
     # 8. 업종 임계값 (기본 0.15, 업종 multiplier로 낮아짐)
-    industry_threshold = 0.15 / profile.industry_config["risk_multiplier"]
+    industry_threshold = 0.08 / profile.industry_config["risk_multiplier"]
 
     # 9. 최종 스코어 종합
     total_score = max(

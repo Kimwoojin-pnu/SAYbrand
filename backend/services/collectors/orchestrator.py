@@ -21,6 +21,21 @@ youtube_collector   = YouTubeCollector()
 community_collector = KoreanCommunityCollector()
 
 
+_NEGATIVE_COMBOS = ["불만", "불매", "최악", "실망", "별로", "환불거부", "항의"]
+
+
+def _build_negative_keywords(profile: LoadedProfile) -> list[str]:
+    """브랜드명 + 부정어 조합 검색 키워드 생성"""
+    brand_names = profile.search_keywords[:2]
+    combos = [
+        f"{b} {n}"
+        for b in brand_names
+        for n in _NEGATIVE_COMBOS[:4]
+        if f"{b} {n}" not in profile.search_keywords
+    ]
+    return combos
+
+
 async def collect_for_profile(
     profile: LoadedProfile,
     limit_per_keyword: int = 10,
@@ -29,8 +44,10 @@ async def collect_for_profile(
     프로파일의 모든 검색 키워드로 전 플랫폼 수집.
     최대 10개 동시 실행 세마포어로 과부하 방지.
     """
+    all_keywords = list(profile.search_keywords) + _build_negative_keywords(profile)
+
     tasks = []
-    for keyword in profile.search_keywords:
+    for keyword in all_keywords:
         tasks.extend([
             naver_collector.search(keyword, limit_per_keyword),
             x_collector.search(keyword, limit_per_keyword),

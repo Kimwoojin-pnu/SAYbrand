@@ -196,16 +196,8 @@ async def issue_invite_code(
 ):
     await _require_role(org_id, user["id"], ["owner", "admin"], db)
 
-    if role_to_assign != "viewer":
-        org = await db.get(Organization, org_id)
-        if not org:
-            raise HTTPException(404)
-        can_add = await can_add_member(org, db)
-        if not can_add["allowed"]:
-            raise HTTPException(
-                402,
-                detail={"message": can_add["message"], "upgrade_required": True},
-            )
+    # 멤버 한도 체크는 실제 join 시점(join_with_code)에서 수행
+    # 코드 발급 자체는 항상 허용 (발급된 코드로 가입 시 한도 초과 시 거부)
 
     invite = await create_invite_code(
         org_id, user["id"], role_to_assign, expires_days, max_uses, db
