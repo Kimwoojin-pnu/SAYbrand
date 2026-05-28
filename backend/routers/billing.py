@@ -1,11 +1,10 @@
-import asyncio
-import functools
 import hashlib
 import hmac
 import json
 import logging
+import urllib.error
+import urllib.request
 
-import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
@@ -22,15 +21,27 @@ logger = logging.getLogger(__name__)
 _POLAR_API = "https://sandbox.api.polar.sh/v1"
 
 
-def _polar_post_sync(url: str, token: str, payload: dict) -> httpx.Response:
-    """동기 HTTP 호출 — Vercel 서버리스 SSL 충돌 회피"""
-    with httpx.Client(timeout=15) as client:
-        return client.post(
-            url,
-            headers={"Authorization": f"Bearer {token}",
-                     "Content-Type": "application/json"},
-            json=payload,
-        )
+def _polar_post(url: str, token: str, payload: dict) -> tuple[int, dict]:
+    """표준 라이브러리 urllib — httpx TCP 충돌 회피"""
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(
+        url,
+        data=data,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            return resp.status, json.loads(resp.read())
+    except urllib.error.HTTPError as e:
+        body = e.read()
+        try:
+            return e.code, json.loads(body)
+        except Exception:
+            return e.code, {"detail": body.decode("utf-8", errors="replace")[:300]}
 
 
 @router.get("/checkout")
@@ -57,27 +68,18 @@ async def checkout(
         "customer_email": current_user["email"],
         "success_url": str(request.base_url).rstrip("/") + "/dashboard",
     }
-    logger.info("[BILLING] Polar API 호출: POST %s/checkouts payload=%s", _POLAR_API, payload)
+    logger.info("[BILLING] Polar API 호출: %s", payload)
 
     try:
-        loop = asyncio.get_event_loop()
-        resp = await loop.run_in_executor(
-            None,
-            functools.partial(_polar_post_sync, f"{_POLAR_API}/checkouts",
-                              settings.polar_access_token, payload),
-        )
-        logger.info("[BILLING] Polar 응답: status=%s body=%s", resp.status_code, resp.text[:500])
+        status_code, body = _polar_post(f"{_POLAR_API}/checkouts",
+                                        settings.polar_access_token, payload)
+        logger.info("[BILLING] Polar 응답: status=%s body=%s", status_code, str(body)[:500])
 
-        if resp.status_code not in (200, 201):
-            try:
-                err_body = resp.json()
-                detail = err_body.get("detail") or err_body.get("message") or str(err_body)
-            except Exception:
-                detail = resp.text[:200] or "결제 페이지 생성 실패"
-            logger.error("[BILLING ERROR] Polar %s: %s", resp.status_code, detail)
-            raise HTTPException(status_code=502, detail=f"Polar API {resp.status_code}: {detail}")
+        if status_code not in (200, 201):
+            detail = body.get("detail") or body.get("message") or str(body)
+            logger.error("[BILLING ERROR] Polar %s: %s", status_code, detail)
+            raise HTTPException(status_code=502, detail=f"Polar API {status_code}: {detail}")
 
-        body = resp.json()
         checkout_url = body.get("url") or body.get("checkout_url") or body.get("hosted_url")
         if not checkout_url:
             logger.error("[BILLING ERROR] checkout URL 없음. 응답 keys: %s", list(body.keys()))
