@@ -1,3 +1,5 @@
+import asyncio
+import functools
 import hashlib
 import hmac
 import json
@@ -18,6 +20,17 @@ router = APIRouter(prefix="/billing", tags=["billing"])
 logger = logging.getLogger(__name__)
 
 _POLAR_API = "https://sandbox.api.polar.sh/v1"
+
+
+def _polar_post_sync(url: str, token: str, payload: dict) -> httpx.Response:
+    """동기 HTTP 호출 — Vercel 서버리스 SSL 충돌 회피"""
+    with httpx.Client(timeout=15) as client:
+        return client.post(
+            url,
+            headers={"Authorization": f"Bearer {token}",
+                     "Content-Type": "application/json"},
+            json=payload,
+        )
 
 
 @router.get("/checkout")
@@ -47,13 +60,12 @@ async def checkout(
     logger.info("[BILLING] Polar API 호출: POST %s/checkouts payload=%s", _POLAR_API, payload)
 
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            resp = await client.post(
-                f"{_POLAR_API}/checkouts",
-                headers={"Authorization": f"Bearer {settings.polar_access_token}",
-                         "Content-Type": "application/json"},
-                json=payload,
-            )
+        loop = asyncio.get_event_loop()
+        resp = await loop.run_in_executor(
+            None,
+            functools.partial(_polar_post_sync, f"{_POLAR_API}/checkouts",
+                              settings.polar_access_token, payload),
+        )
         logger.info("[BILLING] Polar 응답: status=%s body=%s", resp.status_code, resp.text[:500])
 
         if resp.status_code not in (200, 201):
