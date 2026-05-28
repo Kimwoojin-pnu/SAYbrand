@@ -624,8 +624,17 @@ async def manual_scan(
     now = datetime.now(timezone.utc)
     threats_created = 0
 
+    # 브랜드 키워드 자동 확장: "삼성전자" → ["삼성전자", "삼성", "samsung"]
+    _KR_SUFFIXES = ("전자", "전기", "그룹", "코리아", "홀딩스", "씨앤씨", "인터내셔널")
+    brand_kws = [keyword]
+    for sfx in _KR_SUFFIXES:
+        if keyword.endswith(sfx) and len(keyword) > len(sfx) + 1:
+            brand_kws.append(keyword[: -len(sfx)])
+            break
+    brand_kws.append(keyword.lower())
+
     for post in posts:
-        result = l1_filter(post["content"], brand_keywords=[keyword])
+        result = l1_filter(post["content"], brand_keywords=brand_kws)
         if not result["pass"]:
             continue
 

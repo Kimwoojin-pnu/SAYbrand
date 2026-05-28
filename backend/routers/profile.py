@@ -211,6 +211,35 @@ async def update_profile(
     return await _load_full_profile(profile, db)
 
 
+@router.delete("/{profile_id}", status_code=204)
+async def delete_profile(
+    profile_id: int,
+    current_user: dict = Depends(get_current_user),
+    org: Organization | None = Depends(optional_current_org),
+    _: None = Depends(require_non_viewer),
+    db: AsyncSession = Depends(get_db),
+):
+    profile = await _get_profile_or_404(
+        profile_id, current_user["id"], db, org_id=org.id if org else None
+    )
+    # 연관 데이터 삭제
+    for alias in (await db.execute(select(CustomerAlias).where(CustomerAlias.profile_id == profile_id))).scalars().all():
+        await db.delete(alias)
+    for acct in (await db.execute(select(CustomerSocialAccount).where(CustomerSocialAccount.profile_id == profile_id))).scalars().all():
+        await db.delete(acct)
+    for exec_ in (await db.execute(select(CustomerExecutive).where(CustomerExecutive.profile_id == profile_id))).scalars().all():
+        await db.delete(exec_)
+    # profile_id 기반 키워드 삭제
+    kw_result = await db.execute(
+        select(Keyword).where(Keyword.profile_id == profile_id)
+    )
+    for kw in kw_result.scalars().all():
+        await db.delete(kw)
+    await db.delete(profile)
+    await db.commit()
+    profile_loader.invalidate(profile_id)
+
+
 # ── Aliases ───────────────────────────────────────────────────────────────────
 
 @router.post("/{profile_id}/aliases", response_model=CustomerAliasOut, status_code=201)

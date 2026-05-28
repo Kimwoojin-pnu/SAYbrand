@@ -518,7 +518,10 @@ async function loadProfiles() {
             <p class="text-xs text-slate-400">${p.profile_type === 'company' ? '기업' : '개인'} · 별칭 ${p.aliases.length}개 · 계정 ${p.social_accounts.length}개</p>
           </div>
         </div>
-        <span class="text-xs text-brand-500 font-medium">편집 →</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="text-xs text-brand-500 font-medium">편집 →</span>
+          <button onclick="event.stopPropagation();deleteProfile(${p.id},'${p.display_name.replace(/'/g,String.fromCharCode(39))}')" style="padding:4px 10px;border-radius:5px;border:1px solid rgba(220,38,38,.3);background:transparent;color:#dc2626;font-size:11px;font-family:'NanumSquare',sans-serif;cursor:pointer;" onmouseover="this.style.background='rgba(220,38,38,.06)'" onmouseout="this.style.background='transparent'">삭제</button>
+        </div>
       </div>
     `).join('');
     document.querySelectorAll('.profile-card').forEach(card => {
@@ -649,6 +652,18 @@ document.getElementById('btn-add-alias').addEventListener('click', async () => {
     renderAliases(p.aliases);
   } catch (e) { alert(e.message); }
 });
+
+async function deleteProfile(profileId, displayName) {
+  if (!confirm(`"${displayName}" 프로파일을 삭제하시겠습니까?\n별칭, 공식계정, 임직원 정보가 모두 삭제되며 복구할 수 없습니다.`)) return;
+  try {
+    await apiFetch(`/${profileId}`, { method: 'DELETE' });
+    if (currentProfileId === profileId) {
+      currentProfileId = null;
+      document.getElementById('profile-editor').classList.add('hidden');
+    }
+    await loadProfiles();
+  } catch (e) { alert('삭제 실패: ' + e.message); }
+}
 
 async function deleteAlias(aliasId) {
   if (!currentProfileId) return;
