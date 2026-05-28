@@ -17,7 +17,7 @@ from backend.models.orm import User
 router = APIRouter(prefix="/billing", tags=["billing"])
 logger = logging.getLogger(__name__)
 
-_POLAR_API = "https://api.polar.sh/v1"
+_POLAR_API = "https://sandbox.api.polar.sh/v1"
 
 
 @router.get("/checkout")
