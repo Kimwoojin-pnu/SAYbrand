@@ -203,17 +203,25 @@ async def l1_filter_with_profile(
         if alias.lower() in text_lower:
             brand_score += weight
             matched_aliases.append(alias)
-    brand_mentioned = brand_score >= 0.3
+    brand_mentioned = brand_score >= 0.1  # 0.3→0.1: 민감도 향상
 
-    # 검색 키워드 자체가 별칭과 일치하면 brand_mentioned 강제 활성화
-    # (수집 시 해당 키워드로 찾은 콘텐츠이므로 브랜드 관련 콘텐츠로 간주)
+    # 검색 키워드와 alias 간 양방향 포함 관계 확인
+    # "삼성전자 불만" 검색 → alias "삼성전자" 포함 OR
+    # "갤럭시" 검색 → alias "갤럭시S24" 에 포함
     if not brand_mentioned and search_keyword:
         sk_lower = search_keyword.lower()
         for alias, _ in all_names:
-            if alias.lower() in sk_lower:
+            a_lower = alias.lower()
+            if a_lower in sk_lower or sk_lower in a_lower:
                 brand_mentioned = True
                 matched_aliases.append(alias)
                 break
+        # 프로파일에 등록된 search_keywords 중 하나와 일치하면 brand_mentioned 강제 활성화
+        if not brand_mentioned and hasattr(profile, "search_keywords"):
+            for pk in profile.search_keywords:
+                if pk and (pk.lower() in sk_lower or sk_lower in pk.lower()):
+                    brand_mentioned = True
+                    break
 
     # 4. 임직원 이름 언급 (Module C)
     executive_mentioned: list[dict] = []

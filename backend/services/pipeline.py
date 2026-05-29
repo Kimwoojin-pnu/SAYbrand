@@ -3,6 +3,7 @@
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import datetime, timezone
 
@@ -44,12 +45,20 @@ _CATEGORY_TO_THREAT_TYPE: dict[str, str] = {
 L3_SCORE_THRESHOLD = 0.85
 
 
+_L2_MOCK = {
+    "threat_detected": False, "severity": "none", "confidence": 0.0,
+    "summary": "", "is_organized": False, "sentiment": "neutral",
+    "emotion": "중립", "sentiment_score": 0.0, "is_mock": True,
+}
+
+
 async def run_pipeline(
     post: dict,
     user_id: int,
     db: AsyncSession,
     profile_id: int | None = None,
     org_id: int | None = None,
+    include_l2: bool = True,
 ) -> Threat | None:
     """
     단일 포스트를 L1→L2→L3 파이프라인으로 분석하고 DB에 저장한다.
@@ -107,7 +116,16 @@ async def run_pipeline(
     threat_type = _CATEGORY_TO_THREAT_TYPE.get(cats[0], "keyword_match") if cats else "keyword_match"
 
     # ── L2 텍스트 분석 ────────────────────────────────────────────────
-    l2 = await analyze_text_with_cache(post["content"], profile_id)
+    if not include_l2:
+        l2 = _L2_MOCK
+    else:
+        try:
+            l2 = await asyncio.wait_for(
+                analyze_text_with_cache(post["content"], profile_id),
+                timeout=5.0,
+            )
+        except Exception:
+            l2 = _L2_MOCK
 
     # L2 severity로 보정
     severity_order = {"critical": 4, "high": 3, "medium": 2, "low": 1, "none": 0}
@@ -368,11 +386,24 @@ async def run_scan(
             except Exception as e:
                 logger.warning("수집 실패 (%s / %s): %s", collector.__class__.__name__, kw, e)
 
-    scanned = len(posts)
+    scanned_raw = len(posts)
     # API 키 없을 때 수집기가 반환하는 mock 포스트는 DB에 저장하지 않는다
     real_posts = [p for p in posts if not p.get("is_mock")]
-    mock_count = scanned - len(real_posts)
-    posts = real_posts
+    mock_count = scanned_raw - len(real_posts)
+
+    # URL 기준 중복 제거 후 최대 100건으로 제한 (Vercel 타임아웃 방지)
+    seen_urls: set[str] = set()
+    deduped: list[dict] = []
+    for p in real_posts:
+        key = p.get("post_url") or p["content"][:80]
+        if key not in seen_urls:
+            seen_urls.add(key)
+            deduped.append(p)
+    posts = deduped[:100]
+
+    scanned = len(posts)
+    print(f"[SCAN 수집] raw={scanned_raw} mock={mock_count} real={len(real_posts)} dedup={scanned}")
+
     threats_created = 0
     l1_pass = 0
     l1_fail = 0
@@ -382,7 +413,8 @@ async def run_scan(
 
     for post in posts:
         try:
-            threat = await run_pipeline(post, user_id, db, pid, org_id=org_id)
+            # Vercel 타임아웃 방지: 배치 스캔에서는 L2(Gemini) 스킵
+            threat = await run_pipeline(post, user_id, db, pid, org_id=org_id, include_l2=False)
             if threat:
                 threats_created += 1
                 l1_pass += 1
