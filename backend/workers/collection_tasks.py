@@ -37,17 +37,25 @@ async def _collect_all_profiles_async():
                 raw_posts = await collect_for_profile(profile)
 
                 new_threats = 0
+                critical_ids: list[int] = []
                 for post in raw_posts:
                     threat = await run_pipeline(
                         raw_post=post,
                         user_id=profile_orm.user_id,
                         db=db,
+                        profile_id=profile_orm.id,
+                        org_id=profile_orm.org_id,
                     )
                     if threat:
                         new_threats += 1
                         if threat.severity == "critical":
-                            from backend.workers.alert_tasks import send_immediate_alert
-                            send_immediate_alert.delay(threat.id)
+                            critical_ids.append(threat.id)
+
+                if new_threats:
+                    await db.commit()
+                    for tid in critical_ids:
+                        from backend.workers.alert_tasks import send_immediate_alert
+                        send_immediate_alert.delay(tid)
 
                 logger.info(
                     f"[{profile.display_name}] "
@@ -65,18 +73,36 @@ def collect_single_profile(profile_id: int, user_id: int):
 
 
 async def _collect_single_async(profile_id: int, user_id: int):
+    from sqlalchemy import select
     from backend.services.collectors.orchestrator import collect_for_profile
     from backend.services.profile_loader import ProfileLoader
     from backend.services.pipeline import run_pipeline
+    from backend.models.orm import CustomerProfile
 
     async with AsyncSessionLocal() as db:
+        cp_result = await db.execute(
+            select(CustomerProfile).where(CustomerProfile.id == profile_id)
+        )
+        profile_orm = cp_result.scalar_one_or_none()
+        org_id = profile_orm.org_id if profile_orm else None
+
         profile = await ProfileLoader().load(profile_id, db)
+        if not profile:
+            logger.warning("collect_single_async: profile_id=%s 없음", profile_id)
+            return {"collected": 0, "threats": 0}
+
         raw_posts = await collect_for_profile(profile)
         new_threats = 0
         for post in raw_posts:
-            threat = await run_pipeline(post, user_id, db)
+            threat = await run_pipeline(post, user_id, db, profile_id=profile_id, org_id=org_id)
             if threat:
                 new_threats += 1
+
+        if new_threats:
+            await db.commit()
+
+        logger.info("[collect_single] profile_id=%s 수집 %d건 → 위협 %d건",
+                    profile_id, len(raw_posts), new_threats)
         return {"collected": len(raw_posts), "threats": new_threats}
 
 

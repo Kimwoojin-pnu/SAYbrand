@@ -381,41 +381,9 @@ async def post_scan(
     org: Organization | None = Depends(optional_current_org),
     _: None = Depends(require_non_viewer),
 ):
-    """
-    Vercel: Celery 워커(Railway)에 태스크 발행.
-    로컬: Celery 없으면 직접 실행 fallback.
-    """
-    from backend.config import settings
-    from backend.models.orm import CustomerProfile
+    from backend.services.pipeline import run_scan
 
     uid = user["id"]
-
-    if settings.is_vercel:
-        # Vercel 환경: Railway 워커에 태스크 발행
-        profile_result = await db.execute(
-            select(CustomerProfile).where(CustomerProfile.user_id == uid)
-        )
-        profile = profile_result.scalar_one_or_none()
-        if not profile:
-            return {"success": False, "message": "프로파일을 먼저 등록해주세요."}
-
-        try:
-            from backend.workers.collection_tasks import collect_single_profile
-            task = collect_single_profile.delay(profile.id, uid)
-            return {
-                "success": True,
-                "task_id": task.id,
-                "message": "수집을 시작했습니다. 30초 후 새로고침하세요.",
-                "is_async": True,
-            }
-        except Exception as e:
-            return {
-                "success": False,
-                "message": f"워커 서버에 연결할 수 없습니다: {str(e)}",
-            }
-
-    # 로컬 환경: 직접 실행
-    from backend.services.pipeline import run_scan
 
     keywords = body.keywords
     if not keywords:
