@@ -287,6 +287,24 @@ async def l1_filter_with_profile(
     else:
         severity = None
 
+    # 브랜드 언급됐지만 위협 패턴 미매칭 → "feedback" 등급으로 저장
+    # (피드백 탭에서 표시 — 위협 탭에는 안 나옴)
+    if brand_mentioned and total_score < industry_threshold:
+        return {
+            "pass": True,
+            "score": total_score,
+            "severity": "feedback",
+            "auto_critical": False,
+            "matched_categories": kw_result["flags"],
+            "negative_filter_applied": kw_result["negative_filter_applied"],
+            "brand_mentioned": True,
+            "matched_aliases": matched_aliases,
+            "executive_mentioned": executive_mentioned,
+            "impersonation_score": impersonation_score,
+            "industry_flags": industry_flags,
+            "category": category,
+        }
+
     return {
         "pass": total_score >= industry_threshold,
         "score": total_score,

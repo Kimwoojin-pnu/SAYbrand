@@ -69,7 +69,8 @@ async def run_pipeline(
     Returns:
         저장된 Threat 객체. L1 탈락 시 None.
     """
-    now = datetime.now(timezone.utc)
+    # DB DateTime 컬럼은 naive UTC — timezone.utc 사용 시 asyncpg DataError
+    now = datetime.utcnow()
 
     # ── 프로파일 로드 ─────────────────────────────────────────────────
     profile = None
@@ -214,12 +215,17 @@ async def run_pipeline(
         ai_analysis = l2["summary"]
 
     # ── 업종 기반 최종 severity 재분류 ───────────────────────────────
-    final_severity = classify_alert_threshold(risk_score_raw, profile)
+    # "feedback" 등급은 브랜드 언급은 됐으나 위협 패턴 미매칭 — 재분류 대상 아님
+    if severity == "feedback":
+        final_severity = "feedback"
+    else:
+        final_severity = classify_alert_threshold(risk_score_raw, profile)
 
     # ── 날짜 처리 ────────────────────────────────────────────────────
     published = post.get("published_at") or now
-    if hasattr(published, "tzinfo") and published.tzinfo is None:
-        published = published.replace(tzinfo=timezone.utc)
+    # DB는 naive UTC — tz-aware datetime이면 UTC 변환 후 tzinfo 제거
+    if hasattr(published, "tzinfo") and published.tzinfo is not None:
+        published = published.astimezone(timezone.utc).replace(tzinfo=None)
 
     is_mock = post.get("is_mock", False)
     if l2.get("is_mock"):
