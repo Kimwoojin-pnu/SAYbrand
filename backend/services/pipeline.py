@@ -71,9 +71,12 @@ async def run_pipeline(
 
     # ── L1 필터 ───────────────────────────────────────────────────────
     content_preview = post["content"][:80].replace("\n", " ")
+    print(f"[PIPELINE 시작] {post.get('platform','?')}/{post.get('source_account','?')}: {content_preview}")
     logger.info("[PIPELINE] 처리 시작 [%s/%s]: %s", post.get("platform", "?"), post.get("source_account", "?"), content_preview)
 
     if profile:
+        aliases_preview = [a for a, _ in profile.aliases[:5]]
+        print(f"[PROFILE] display_name={profile.display_name!r} aliases={aliases_preview} search_kw={profile.search_keywords[:3]}")
         l1 = await l1_filter_with_profile(
             content=post["content"],
             account_name=post.get("source_account", ""),
@@ -86,12 +89,15 @@ async def run_pipeline(
             select(Keyword.keyword).where(Keyword.user_id == user_id, Keyword.active.is_(True))
         )
         brand_keywords = [r[0] for r in kw_result.all()]
+        print(f"[PROFILE] 없음 — 키워드 폴백: {brand_keywords}")
         l1 = l1_filter(post["content"], brand_keywords=brand_keywords or None)
 
+    print(f"[L1] pass={l1['pass']} score={l1['score']:.4f} severity={l1.get('severity')} brand={l1.get('brand_mentioned')} cats={l1.get('matched_categories')}")
     logger.info("[L1] pass=%s score=%.4f severity=%s brand_mentioned=%s cats=%s",
                 l1["pass"], l1["score"], l1.get("severity"), l1.get("brand_mentioned"), l1.get("matched_categories"))
 
     if not l1["pass"]:
+        print(f"[L1 탈락] score={l1['score']:.4f} brand={l1.get('brand_mentioned')} neg_filter={l1.get('negative_filter_applied')} reason={l1.get('reason','')}")
         logger.info("[L1] 탈락: score=%.4f brand=%s neg_filter=%s", l1["score"], l1.get("brand_mentioned"), l1.get("negative_filter_applied"))
         return None
 
@@ -232,6 +238,7 @@ async def run_pipeline(
     )
     db.add(threat)
     await db.flush()
+    print(f"[PIPELINE 완료] threat.id={threat.id} severity={final_severity} risk={risk_score_raw} mock={is_mock}")
 
     if final_severity in ("critical", "high"):
         await _send_notifications(threat, user_id, db)

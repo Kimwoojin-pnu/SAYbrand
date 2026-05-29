@@ -317,29 +317,32 @@ async def get_trend(
     if not user_id:
         return _mock_trend()
 
-    now = datetime.now(timezone.utc)
-    labels = []
-    module_a, module_b, module_c = [], [], []
+    try:
+        now = datetime.utcnow()  # naive UTC — DB의 DateTime(naive) 컬럼과 타입 일치
+        labels = []
+        module_a, module_b, module_c = [], [], []
 
-    for i in range(6, -1, -1):
-        day_start = (now - timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
-        day_end   = day_start + timedelta(days=1)
-        labels.append("오늘" if i == 0 else f"{i}일전")
+        for i in range(6, -1, -1):
+            day_start = (now - timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
+            day_end   = day_start + timedelta(days=1)
+            labels.append("오늘" if i == 0 else f"{i}일전")
 
-        for module, lst in (("A", module_a), ("B", module_b), ("C", module_c)):
-            base_q = select(func.count(Threat.id)).where(
-                Threat.module == module,
-                Threat.detected_at >= day_start,
-                Threat.detected_at < day_end,
-            )
-            if org is not None:
-                base_q = base_q.where(Threat.org_id == org.id)
-            elif user_id:
-                base_q = base_q.where(Threat.user_id == user_id)
-            cnt = (await db.execute(base_q)).scalar() or 0
-            lst.append(cnt)
+            for module, lst in (("A", module_a), ("B", module_b), ("C", module_c)):
+                base_q = select(func.count(Threat.id)).where(
+                    Threat.module == module,
+                    Threat.detected_at >= day_start,
+                    Threat.detected_at < day_end,
+                )
+                if org is not None:
+                    base_q = base_q.where(Threat.org_id == org.id)
+                elif user_id:
+                    base_q = base_q.where(Threat.user_id == user_id)
+                cnt = (await db.execute(base_q)).scalar() or 0
+                lst.append(cnt)
 
-    return {"labels": labels, "module_a": module_a, "module_b": module_b, "module_c": module_c}
+        return {"labels": labels, "module_a": module_a, "module_b": module_b, "module_c": module_c}
+    except Exception:
+        return {"labels": [], "module_a": [], "module_b": [], "module_c": []}
 
 
 @router.get("/platform-stats")
@@ -517,28 +520,31 @@ async def get_sentiment_trend(
         labels = [f"{i}일전" for i in range(6, 0, -1)] + ["오늘"]
         return {"labels": labels, "negative": [3,2,4,3,5,4,3], "positive": [2,3,2,4,3,2,3], "neutral": [1,1,1,2,1,1,2]}
 
-    now = datetime.now(timezone.utc)
-    labels, negative, positive, neutral = [], [], [], []
+    try:
+        now = datetime.utcnow()  # naive UTC — DB의 DateTime(naive) 컬럼과 타입 일치
+        labels, negative, positive, neutral = [], [], [], []
 
-    for i in range(6, -1, -1):
-        day_start = (now - timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
-        day_end = day_start + timedelta(days=1)
-        labels.append("오늘" if i == 0 else f"{i}일전")
+        for i in range(6, -1, -1):
+            day_start = (now - timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
+            day_end = day_start + timedelta(days=1)
+            labels.append("오늘" if i == 0 else f"{i}일전")
 
-        for sentiment, lst in (("negative", negative), ("positive", positive), ("neutral", neutral)):
-            q = select(func.count(Threat.id)).where(
-                Threat.sentiment == sentiment,
-                Threat.detected_at >= day_start,
-                Threat.detected_at < day_end,
-            )
-            if org is not None:
-                q = q.where(Threat.org_id == org.id)
-            elif user_id:
-                q = q.where(Threat.user_id == user_id)
-            cnt = (await db.execute(q)).scalar() or 0
-            lst.append(cnt)
+            for sentiment, lst in (("negative", negative), ("positive", positive), ("neutral", neutral)):
+                q = select(func.count(Threat.id)).where(
+                    Threat.sentiment == sentiment,
+                    Threat.detected_at >= day_start,
+                    Threat.detected_at < day_end,
+                )
+                if org is not None:
+                    q = q.where(Threat.org_id == org.id)
+                elif user_id:
+                    q = q.where(Threat.user_id == user_id)
+                cnt = (await db.execute(q)).scalar() or 0
+                lst.append(cnt)
 
-    return {"labels": labels, "negative": negative, "positive": positive, "neutral": neutral}
+        return {"labels": labels, "negative": negative, "positive": positive, "neutral": neutral}
+    except Exception:
+        return {"labels": [], "negative": [], "positive": [], "neutral": []}
 
 
 @router.get("/share-of-voice")
