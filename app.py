@@ -1,4 +1,7 @@
 import os
+import sys
+os.environ["PYTHONUNBUFFERED"] = "1"  # Vercel stdout 즉시 flush
+sys.stdout.reconfigure(line_buffering=True)
 print(f"[STARTUP] DATABASE_URL prefix: {os.environ.get('DATABASE_URL', 'NOT SET')[:30]}")
 
 from contextlib import asynccontextmanager
