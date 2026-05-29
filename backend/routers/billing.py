@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import json
 import logging
+import os
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
@@ -20,29 +21,16 @@ logger = logging.getLogger(__name__)
 @router.get("/checkout")
 async def checkout(
     plan: str = "starter",
-    current_user: dict = Depends(get_current_user),
+    user=Depends(get_current_user),
 ):
-    """
-    Polar Checkout Link(정적 URL)으로 직접 리다이렉트.
-    Vercel Python 서버리스는 외부 HTTP 불가 → API 호출 없이 미리 생성된 링크 사용.
-    POLAR_CHECKOUT_URL_STARTER / POLAR_CHECKOUT_URL_PRO 환경변수에 설정.
-    """
-    if plan == "pro":
-        checkout_url = settings.polar_checkout_url_pro
-    else:
-        checkout_url = settings.polar_checkout_url_starter
-
-    logger.info("[BILLING] checkout 요청: plan=%s url=%s email=%s",
-                plan, checkout_url, current_user.get("email"))
-
-    if not checkout_url:
-        logger.error("[BILLING] 환경변수 누락: POLAR_CHECKOUT_URL_%s", plan.upper())
-        raise HTTPException(
-            status_code=503,
-            detail="결제 서비스가 설정되지 않았습니다. 관리자에게 문의하세요.",
-        )
-
-    return RedirectResponse(checkout_url)
+    urls = {
+        "starter": os.environ.get("POLAR_CHECKOUT_URL_STARTER", ""),
+        "pro": os.environ.get("POLAR_CHECKOUT_URL_PRO", ""),
+    }
+    url = urls.get(plan, urls["starter"])
+    if not url:
+        raise HTTPException(404, "결제 링크가 설정되지 않았습니다.")
+    return RedirectResponse(url)
 
 
 @router.post("/webhook")
