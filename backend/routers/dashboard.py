@@ -399,6 +399,79 @@ async def post_scan(
     return result
 
 
+@router.get("/scan-debug")
+async def get_scan_debug(
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
+    """수집 → L1 진단: 실제 포스트 5건에 대해 단계별 결과 반환 (DB 저장 없음)."""
+    from backend.services.collectors.naver import NaverCollector
+    from backend.services.profile_loader import profile_loader
+    from backend.services.analyzers.l1_filter import l1_filter_with_profile, l1_filter
+
+    uid = user["id"]
+    profile = await profile_loader.load_for_user(uid, db)
+
+    kw_result = await db.execute(
+        select(Keyword.keyword).where(Keyword.user_id == uid, Keyword.active.is_(True))
+    )
+    keywords = [r[0] for r in kw_result.all()]
+
+    if not keywords and profile:
+        keywords = profile.search_keywords[:3]
+
+    if not keywords:
+        return {"error": "등록된 키워드 없음", "profile": None}
+
+    collector = NaverCollector()
+    sample_posts = []
+    for kw in keywords[:2]:
+        try:
+            posts = await collector.search(kw, limit=5, days_back=30)
+            for p in posts:
+                p["_search_keyword"] = kw
+            sample_posts.extend(posts)
+        except Exception as e:
+            sample_posts.append({"error": str(e), "_search_keyword": kw})
+
+    results = []
+    for post in sample_posts[:10]:
+        if "error" in post:
+            results.append(post)
+            continue
+        try:
+            if profile:
+                l1 = await l1_filter_with_profile(
+                    content=post["content"],
+                    account_name=post.get("source_account", ""),
+                    profile=profile,
+                    search_keyword=post.get("_search_keyword", ""),
+                )
+            else:
+                l1 = l1_filter(post["content"], brand_keywords=keywords)
+            results.append({
+                "keyword": post.get("_search_keyword"),
+                "platform": post.get("platform"),
+                "is_mock": post.get("is_mock", False),
+                "content_preview": post["content"][:120],
+                "l1_pass": l1["pass"],
+                "l1_score": l1["score"],
+                "l1_severity": l1.get("severity"),
+                "brand_mentioned": l1.get("brand_mentioned"),
+                "matched_categories": l1.get("matched_categories", []),
+            })
+        except Exception as e:
+            results.append({"error": str(e), "content": post.get("content", "")[:80]})
+
+    return {
+        "profile_display_name": profile.display_name if profile else None,
+        "profile_aliases": [a for a, _ in profile.aliases] if profile else [],
+        "keywords_used": keywords[:4],
+        "posts_sampled": len(results),
+        "results": results,
+    }
+
+
 @router.post("/scan-local")
 async def post_scan_local(
     body: ScanRequest,

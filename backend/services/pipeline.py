@@ -78,6 +78,7 @@ async def run_pipeline(
             content=post["content"],
             account_name=post.get("source_account", ""),
             profile=profile,
+            search_keyword=post.get("_search_keyword", ""),
         )
     else:
         # 프로파일 없으면 키워드 기반 폴백
@@ -354,6 +355,8 @@ async def run_scan(
         for collector in collectors:
             try:
                 results = await collector.search(kw, limit=25, days_back=7)
+                for post in results:
+                    post["_search_keyword"] = kw  # L1 brand 감지 힌트
                 posts.extend(results)
             except Exception as e:
                 logger.warning("수집 실패 (%s / %s): %s", collector.__class__.__name__, kw, e)
@@ -364,6 +367,9 @@ async def run_scan(
     mock_count = scanned - len(real_posts)
     posts = real_posts
     threats_created = 0
+    l1_pass = 0
+    l1_fail = 0
+    errors = 0
 
     pid = profile.profile_id if profile else None
 
@@ -372,15 +378,26 @@ async def run_scan(
             threat = await run_pipeline(post, user_id, db, pid, org_id=org_id)
             if threat:
                 threats_created += 1
+                l1_pass += 1
+            else:
+                l1_fail += 1
         except Exception as e:
+            errors += 1
             logger.warning("파이프라인 실패 (계속 진행): %s", e)
 
     if threats_created:
         await db.commit()
 
+    logger.info("[SCAN] scanned=%d real=%d mock=%d l1_pass=%d l1_fail=%d errors=%d threats=%d",
+                scanned, len(posts) + errors, mock_count, l1_pass, l1_fail, errors, threats_created)
+
     return {
         "scanned": scanned,
-        "new_threats": threats_created,
+        "real": len(real_posts),
         "mock_count": mock_count,
-        "is_mock": mock_count > 0 and len(posts) == 0,
+        "l1_pass": l1_pass,
+        "l1_fail": l1_fail,
+        "errors": errors,
+        "new_threats": threats_created,
+        "is_mock": mock_count > 0 and len(real_posts) == 0,
     }

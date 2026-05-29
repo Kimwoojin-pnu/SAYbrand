@@ -140,6 +140,7 @@ async def l1_filter_with_profile(
     content: str,
     account_name: str,
     profile,  # ProfileLoader.LoadedProfile
+    search_keyword: str = "",
 ) -> dict:
     """
     프로파일 정보를 완전 주입한 강화 L1 필터.
@@ -203,6 +204,16 @@ async def l1_filter_with_profile(
             brand_score += weight
             matched_aliases.append(alias)
     brand_mentioned = brand_score >= 0.3
+
+    # 검색 키워드 자체가 별칭과 일치하면 brand_mentioned 강제 활성화
+    # (수집 시 해당 키워드로 찾은 콘텐츠이므로 브랜드 관련 콘텐츠로 간주)
+    if not brand_mentioned and search_keyword:
+        sk_lower = search_keyword.lower()
+        for alias, _ in all_names:
+            if alias.lower() in sk_lower:
+                brand_mentioned = True
+                matched_aliases.append(alias)
+                break
 
     # 4. 임직원 이름 언급 (Module C)
     executive_mentioned: list[dict] = []
