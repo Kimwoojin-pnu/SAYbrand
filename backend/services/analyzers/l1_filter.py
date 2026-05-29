@@ -248,11 +248,14 @@ async def l1_filter_with_profile(
     industry_threshold = 0.08 / profile.industry_config["risk_multiplier"]
 
     # 9. 최종 스코어 종합
+    # brand_mentioned=True 포스트는 최소 industry_threshold 보장 → L2에서 실제 판단
+    brand_base = industry_threshold if brand_mentioned else 0.0
     total_score = max(
         kw_result["score"],
         impersonation_score,
         0.6 if executive_mentioned and brand_mentioned else 0.0,
         0.5 if industry_flags and brand_mentioned else 0.0,
+        brand_base,
     )
     total_score = round(min(total_score, 1.0), 4)
 
