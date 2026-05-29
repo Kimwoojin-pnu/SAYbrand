@@ -395,8 +395,7 @@ async def run_scan(
     if threats_created:
         await db.commit()
 
-    logger.info("[SCAN] scanned=%d real=%d mock=%d l1_pass=%d l1_fail=%d errors=%d threats=%d",
-                scanned, len(posts) + errors, mock_count, l1_pass, l1_fail, errors, threats_created)
+    print(f"[SCAN 완료] scanned={scanned} real={len(posts)+errors} mock={mock_count} l1_pass={l1_pass} l1_fail={l1_fail} errors={errors} new_threats={threats_created}")
 
     return {
         "scanned": scanned,

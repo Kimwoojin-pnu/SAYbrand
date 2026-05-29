@@ -2,7 +2,8 @@ import os
 import sys
 os.environ["PYTHONUNBUFFERED"] = "1"  # Vercel stdout 즉시 flush
 sys.stdout.reconfigure(line_buffering=True)
-print(f"[STARTUP] DATABASE_URL prefix: {os.environ.get('DATABASE_URL', 'NOT SET')[:30]}")
+from backend.version import VERSION, BUILD_DATE
+print(f"[STARTUP] SAYbrand {VERSION} ({BUILD_DATE}) | DB: {os.environ.get('DATABASE_URL', 'NOT SET')[:30]}")
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request

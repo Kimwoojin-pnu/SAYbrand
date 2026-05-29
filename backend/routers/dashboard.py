@@ -19,7 +19,14 @@ from backend.models.schemas import (
 )
 from backend.db.seed import _THREATS as _SEED_THREATS
 
+from backend.version import VERSION, BUILD_DATE
+
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
+
+
+@router.get("/version")
+async def get_version():
+    return {"version": VERSION, "build_date": BUILD_DATE}
 
 
 # ── 비로그인 UI 미리보기용 정적 Mock 응답 ──────────────────────────────────────
