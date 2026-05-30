@@ -335,3 +335,28 @@ body { font-family: 'NanumSquare', 'Noto Sans KR', sans-serif; }
   border-color: #4fa3f5;
   background: rgba(79,163,245,0.08);
 }
+
+/* ── Settings: modal backgrounds (inline background:#fff 커버) ──────── */
+[data-theme="dark"] #activity-log-modal > div {
+  background: #1c2128 !important;
+  border: 1px solid rgba(255,255,255,0.09) !important;
+}
+[data-theme="dark"] #upgrade-modal > div {
+  background: #1c2128 !important;
+  border: 1px solid rgba(255,255,255,0.09) !important;
+}
+
+/* ── Settings: 누락된 색상 커버 ─────────────────────────────────────── */
+/* rgba(12,20,40,.05) 배경 — 멤버 수 뱃지 등 */
+[data-theme="dark"] [style*="background:rgba(12,20,40,.05)"],
+[data-theme="dark"] [style*="background:rgba(12,20,40,0.05)"] { background: rgba(255,255,255,0.05) !important; }
+[data-theme="dark"] [style*="background:rgba(12,20,40,.06)"],
+[data-theme="dark"] [style*="background:rgba(12,20,40,0.06)"] { background: rgba(255,255,255,0.06) !important; }
+
+/* rgba(12,20,40,.5) 텍스트 (단축형) */
+[data-theme="dark"] [style*="color:rgba(12,20,40,.5)"]  { color: rgba(230,237,243,0.50) !important; }
+[data-theme="dark"] [style*="color:rgba(12,20,40,0.5)"] { color: rgba(230,237,243,0.50) !important; }
+
+/* rgba(0,0,0,.04) 구분선 */
+[data-theme="dark"] [style*="border-bottom:1px solid rgba(0,0,0,.04)"],
+[data-theme="dark"] [style*="border-bottom:1px solid rgba(0,0,0,0.04)"] { border-bottom-color: rgba(255,255,255,0.04) !important; }
