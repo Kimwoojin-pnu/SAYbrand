@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.models.orm import Keyword, Threat
+from backend.models.orm import DismissedUrl, Keyword, Threat
 from backend.services.analyzers.l1_filter import l1_filter, l1_filter_with_profile
 from backend.services.analyzers.l2_text import analyze_text_with_cache, analyze_batch
 from backend.services.collectors.compliance import is_news_domain
@@ -76,6 +76,18 @@ async def run_pipeline(
 
     content_preview = post["content"][:80].replace("\n", " ")
     print(f"[PIPELINE 시작] {post.get('platform','?')}/{post.get('source_account','?')}: {content_preview}")
+
+    # ── dismissed URL 체크 — 경미 처리된 콘텐츠 재스캔 차단 ────────────
+    import hashlib as _hashlib
+    _content_hash = _hashlib.sha256((post.get("content", "")).encode()).hexdigest()[:32]
+    _url = post.get("post_url") or post.get("source_url") or ""
+    _dismissed_q = select(DismissedUrl.id).where(
+        DismissedUrl.user_id == user_id,
+        (DismissedUrl.content_hash == _content_hash) | ((_url != "") & (DismissedUrl.source_url == _url)),
+    ).limit(1)
+    if (await db.execute(_dismissed_q)).scalar():
+        print(f"[DISMISSED] 건너뜀 (경미 처리됨): {_url or _content_hash}")
+        return None
 
     # ── 프로파일 로드 ─────────────────────────────────────────────────
     profile = None

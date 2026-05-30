@@ -151,6 +151,40 @@
 </div>
 <div id="toast-wrap" style="position:fixed;bottom:20px;right:20px;z-index:100;display:flex;flex-direction:column;gap:8px;pointer-events:none;"></div>
 
+<!-- Resolve Modal -->
+<div id="resolve-modal" style="display:none;position:fixed;inset:0;background:rgba(12,20,40,0.5);z-index:60;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+  <div style="background:#fff;border-radius:12px;padding:24px;width:460px;max-width:calc(100vw - 40px);box-shadow:rgba(12,20,40,.22) 0 20px 60px;">
+    <h3 style="font-weight:800;font-size:15px;color:#0c1428;margin-bottom:4px;">위협 처리 방법 선택</h3>
+    <p style="font-size:12px;color:rgba(12,20,40,.40);margin-bottom:18px;">처리 방식에 따라 데이터 보관 여부가 달라집니다.</p>
+    <div id="opt-dismiss" onclick="selectResolveOpt('dismiss')" style="padding:13px 15px;border-radius:8px;border:2px solid transparent;background:rgba(0,0,0,.03);cursor:pointer;margin-bottom:9px;transition:all .15s;">
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:4px;">
+        <div id="dot-dismiss" style="width:15px;height:15px;border-radius:50%;border:2px solid #d1d5db;flex-shrink:0;transition:all .15s;"></div>
+        <span style="font-weight:700;font-size:13px;color:#0c1428;">경미 처리 (오탐·무시)</span>
+        <span style="font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(100,116,139,.10);color:#64748b;font-weight:700;margin-left:auto;">즉시 삭제</span>
+      </div>
+      <p style="font-size:11px;color:rgba(12,20,40,.45);padding-left:24px;line-height:1.5;">DB에서 즉시 삭제하고 동일 콘텐츠는 재스캔하지 않습니다.</p>
+    </div>
+    <div id="opt-archive" onclick="selectResolveOpt('archive')" style="padding:13px 15px;border-radius:8px;border:2px solid transparent;background:rgba(0,0,0,.03);cursor:pointer;margin-bottom:16px;transition:all .15s;">
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:4px;">
+        <div id="dot-archive" style="width:15px;height:15px;border-radius:50%;border:2px solid #d1d5db;flex-shrink:0;transition:all .15s;"></div>
+        <span style="font-weight:700;font-size:13px;color:#0c1428;">조치 완료 (보고서 기록)</span>
+        <span style="font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(29,158,117,.10);color:#1D9E75;font-weight:700;margin-left:auto;">30일 보관</span>
+      </div>
+      <p style="font-size:11px;color:rgba(12,20,40,.45);padding-left:24px;line-height:1.5;">실제 대응을 완료한 경우. 조치 내용을 보고서에 기록합니다.</p>
+    </div>
+    <div id="archive-form" style="display:none;margin-bottom:16px;">
+      <label style="font-size:11px;font-weight:700;color:rgba(12,20,40,.55);display:block;margin-bottom:5px;">어떤 조치를 취하셨나요? <span style="color:#E24B4A;">*</span></label>
+      <textarea id="action-taken-input" rows="3" placeholder="예: 플랫폼 신고 완료 / 법적 조치 시작 / 내부 공지 발송 등" style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid rgba(0,0,0,.12);font-size:12px;font-family:'NanumSquare',sans-serif;resize:none;outline:none;box-sizing:border-box;color:#0c1428;"></textarea>
+      <label style="font-size:11px;font-weight:700;color:rgba(12,20,40,.55);display:block;margin-top:9px;margin-bottom:5px;">비고 (선택)</label>
+      <input id="resolution-note-input" type="text" placeholder="추가 메모" style="width:100%;padding:7px 11px;border-radius:7px;border:1px solid rgba(0,0,0,.12);font-size:12px;font-family:'NanumSquare',sans-serif;outline:none;box-sizing:border-box;color:#0c1428;" />
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button onclick="closeResolveModal()" style="padding:8px 18px;border-radius:6px;border:1px solid rgba(0,0,0,.12);background:transparent;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;color:rgba(12,20,40,.55);">취소</button>
+      <button id="btn-confirm-resolve" onclick="confirmResolve()" disabled style="padding:8px 18px;border-radius:6px;border:none;background:#1D9E75;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;opacity:0.5;">처리하기</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { api } from "/assets/js/api.js";
 import { timeAgo, severityBadge, statusBadge, moduleBadge, platformIcon, scoreColor } from "/assets/js/utils.js";
@@ -232,8 +266,62 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('panel-backdrop').addEventListener('click',closePanel);
   document.getElementById('status-active').addEventListener('click',()=>handleStatus('active'));
   document.getElementById('status-reviewing').addEventListener('click',()=>handleStatus('reviewing'));
-  document.getElementById('status-resolved').addEventListener('click',()=>handleStatus('resolved'));
+  document.getElementById('status-resolved').addEventListener('click', openResolveModal);
 });
+
+/* ── Resolve Modal ─────────────────────────────────────────────── */
+let _resolveOpt = null;
+function openResolveModal() {
+  if (!state.selected) return;
+  _resolveOpt = null;
+  ['dismiss','archive'].forEach(o => {
+    document.getElementById(`opt-${o}`).style.borderColor = 'transparent';
+    document.getElementById(`opt-${o}`).style.background = 'rgba(0,0,0,.03)';
+    document.getElementById(`dot-${o}`).style.background = 'transparent';
+    document.getElementById(`dot-${o}`).style.borderColor = '#d1d5db';
+  });
+  document.getElementById('archive-form').style.display = 'none';
+  document.getElementById('action-taken-input').value = '';
+  document.getElementById('resolution-note-input').value = '';
+  document.getElementById('btn-confirm-resolve').disabled = true;
+  document.getElementById('btn-confirm-resolve').style.opacity = '0.5';
+  document.getElementById('resolve-modal').style.display = 'flex';
+}
+window.closeResolveModal = function() { document.getElementById('resolve-modal').style.display = 'none'; };
+window.selectResolveOpt = function(opt) {
+  _resolveOpt = opt;
+  const colors = { dismiss:'#64748b', archive:'#1D9E75' };
+  ['dismiss','archive'].forEach(o => {
+    const sel = o === opt;
+    document.getElementById(`opt-${o}`).style.borderColor = sel ? colors[o] : 'transparent';
+    document.getElementById(`opt-${o}`).style.background = sel ? (o==='dismiss'?'rgba(100,116,139,.06)':'rgba(29,158,117,.06)') : 'rgba(0,0,0,.03)';
+    document.getElementById(`dot-${o}`).style.background = sel ? colors[o] : 'transparent';
+    document.getElementById(`dot-${o}`).style.borderColor = sel ? colors[o] : '#d1d5db';
+  });
+  document.getElementById('archive-form').style.display = opt === 'archive' ? 'block' : 'none';
+  document.getElementById('btn-confirm-resolve').disabled = false;
+  document.getElementById('btn-confirm-resolve').style.opacity = '1';
+};
+window.confirmResolve = async function() {
+  if (!_resolveOpt || !state.selected) return;
+  const id = state.selected.id;
+  const btn = document.getElementById('btn-confirm-resolve');
+  btn.disabled = true; btn.textContent = '처리 중...';
+  try {
+    if (_resolveOpt === 'dismiss') {
+      await fetch(`/api/dashboard/threats/${id}/resolve`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ resolution_type:'false_positive', action_taken:'', resolution_note:'' }) });
+      closeResolveModal(); closePanel();
+      showToast('경미 처리 완료 — 재스캔 차단됩니다.');
+    } else {
+      const actionTaken = document.getElementById('action-taken-input').value.trim();
+      if (!actionTaken) { showToast('조치 내용을 입력해주세요.', 'error'); btn.disabled=false; btn.textContent='처리하기'; return; }
+      await fetch(`/api/dashboard/threats/${id}/resolve`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ resolution_type:'real_resolved', action_taken: actionTaken, resolution_note: document.getElementById('resolution-note-input').value.trim(), resolution_method:'직접 처리' }) });
+      closeResolveModal(); closePanel();
+      showToast('조치 완료 기록 — 보고서에서 확인하세요.');
+    }
+    await loadThreats();
+  } catch(e) { showToast('처리 실패','error'); btn.disabled=false; btn.textContent='처리하기'; }
+};
 </script>
 <script>
   document.addEventListener('DOMContentLoaded',function(){var t=document.getElementById('theme-toggle');if(t)t.addEventListener('click',function(){var n=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('db-theme',n);});});

@@ -248,3 +248,54 @@ class OutboundWebhook(Base):
     secret: Mapped[str] = mapped_column(String(64))
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class DismissedUrl(Base):
+    """경미 처리된 콘텐츠 — 재스캔 차단용"""
+    __tablename__ = "dismissed_urls"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+    org_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("organizations.id"), nullable=True)
+    source_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    content_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    dismissed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class ArchivedThreat(Base):
+    """조치완료 위협 보관 — 최대 30일"""
+    __tablename__ = "archived_threats"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    org_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("organizations.id"), nullable=True)
+    original_threat_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    resolved_by_user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+    resolved_by_name: Mapped[str] = mapped_column(String(200), default="")
+    severity: Mapped[str] = mapped_column(String(20))
+    threat_type: Mapped[str] = mapped_column(String(100))
+    platform: Mapped[str] = mapped_column(String(50))
+    source_account: Mapped[str] = mapped_column(String(200))
+    source_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    content_preview: Mapped[str] = mapped_column(Text)
+    risk_score: Mapped[int] = mapped_column(Integer)
+    action_taken: Mapped[str | None] = mapped_column(Text, nullable=True)
+    resolution_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    original_detected_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    archived_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    expires_at: Mapped[datetime] = mapped_column(DateTime)
+
+
+class ActivityLog(Base):
+    """팀 활동 내역 — 최대 7일, 오너만 삭제 가능"""
+    __tablename__ = "activity_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    org_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("organizations.id"), nullable=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+    user_name: Mapped[str] = mapped_column(String(200), default="")
+    action_type: Mapped[str] = mapped_column(String(50))
+    action_detail: Mapped[str] = mapped_column(Text)
+    target_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    target_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    expires_at: Mapped[datetime] = mapped_column(DateTime)

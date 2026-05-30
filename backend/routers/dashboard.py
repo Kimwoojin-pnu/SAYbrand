@@ -7,7 +7,7 @@ from sqlalchemy import select, func
 from backend.db.database import get_db
 from backend.middleware.auth import get_current_user
 from backend.middleware.org_context import optional_current_org, require_non_viewer
-from backend.models.orm import CompetitorMention, HashtagTrend, Keyword, Threat, Alert, User, Organization
+from backend.models.orm import ActivityLog, ArchivedThreat, CompetitorMention, DismissedUrl, HashtagTrend, Keyword, Threat, Alert, User, Organization
 from backend.models.schemas import (
     AlertResponse,
     ModuleScore,
@@ -263,6 +263,7 @@ class ResolveRequest(BaseModel):
     resolution_type: str   # "false_positive" | "real_resolved"
     resolution_method: str = ""
     resolution_note: str = ""
+    action_taken: str = ""  # 조치완료 시 취한 조치 내용
 
 
 @router.patch("/threats/{threat_id}/resolve")
@@ -271,7 +272,10 @@ async def resolve_threat(
     body: ResolveRequest,
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
+    org: Organization | None = Depends(optional_current_org),
 ):
+    import hashlib
+
     if body.resolution_type not in ("false_positive", "real_resolved"):
         raise HTTPException(status_code=400, detail="resolution_type must be false_positive or real_resolved")
 
@@ -280,13 +284,62 @@ async def resolve_threat(
     if not threat:
         raise HTTPException(status_code=404, detail="Threat not found")
 
-    threat.status = "resolved"
-    threat.resolution_type = body.resolution_type
-    threat.resolution_method = body.resolution_method
-    threat.resolution_note = body.resolution_note
-    threat.updated_at = datetime.utcnow()
-    await db.commit()
-    return {"id": threat_id, "status": "resolved", "resolution_type": body.resolution_type}
+    now = datetime.utcnow()
+    org_id = org.id if org else threat.org_id
+    user_name = user.get("name") or user.get("email", "")
+
+    if body.resolution_type == "false_positive":
+        # 경미 처리: DB 삭제 + dismissed_urls 등록 + 활동 로그
+        content_hash = hashlib.sha256((threat.content_preview or "").encode()).hexdigest()[:32]
+        db.add(DismissedUrl(
+            user_id=user["id"], org_id=org_id,
+            source_url=threat.source_url or None,
+            content_hash=content_hash,
+        ))
+        db.add(ActivityLog(
+            org_id=org_id, user_id=user["id"], user_name=user_name,
+            action_type="dismiss",
+            action_detail=f"{threat.platform} / {threat.source_account}: 경미 처리 (삭제)",
+            target_id=threat_id, target_type="threat",
+            created_at=now, expires_at=now + timedelta(days=7),
+        ))
+        await db.delete(threat)
+        await db.commit()
+        return {"id": threat_id, "status": "dismissed", "resolution_type": "false_positive"}
+
+    else:  # real_resolved — 아카이브 보관 + 활동 로그
+        db.add(ArchivedThreat(
+            org_id=org_id,
+            original_threat_id=threat_id,
+            resolved_by_user_id=user["id"],
+            resolved_by_name=user_name,
+            severity=threat.severity,
+            threat_type=threat.threat_type,
+            platform=threat.platform,
+            source_account=threat.source_account,
+            source_url=threat.source_url,
+            content_preview=threat.content_preview,
+            risk_score=threat.risk_score,
+            action_taken=body.action_taken,
+            resolution_note=body.resolution_note,
+            original_detected_at=threat.detected_at,
+            archived_at=now,
+            expires_at=now + timedelta(days=30),
+        ))
+        db.add(ActivityLog(
+            org_id=org_id, user_id=user["id"], user_name=user_name,
+            action_type="archive",
+            action_detail=f"{threat.platform} / {threat.source_account}: 조치 완료 아카이브",
+            target_id=threat_id, target_type="threat",
+            created_at=now, expires_at=now + timedelta(days=7),
+        ))
+        threat.status = "resolved"
+        threat.resolution_type = body.resolution_type
+        threat.resolution_method = body.resolution_method
+        threat.resolution_note = body.resolution_note
+        threat.updated_at = now
+        await db.commit()
+        return {"id": threat_id, "status": "resolved", "resolution_type": body.resolution_type}
 
 
 _CATEGORY_TO_THREAT_TYPE: dict[str, str] = {

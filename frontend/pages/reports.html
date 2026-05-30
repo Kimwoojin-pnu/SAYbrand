@@ -48,6 +48,8 @@
         <button onclick="loadReport('daily')" id="btn-daily" style="padding:5px 12px;border-radius:5px;background:#1a6ef8;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">일간</button>
         <button onclick="loadReport('weekly')" id="btn-weekly" style="padding:5px 12px;border-radius:5px;background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.10);color:rgba(12,20,40,0.55);font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">주간</button>
         <button onclick="loadReport('monthly')" id="btn-monthly" style="padding:5px 12px;border-radius:5px;background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.10);color:rgba(12,20,40,0.55);font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">월간</button>
+        <div style="width:1px;height:20px;background:rgba(0,0,0,.10);flex-shrink:0;"></div>
+        <button onclick="showArchiveTab()" id="btn-archive" style="padding:5px 12px;border-radius:5px;background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.10);color:rgba(12,20,40,0.55);font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">조치완료 기록</button>
         <button onclick="downloadPDF()" style="padding:5px 12px;border-radius:5px;background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.10);color:rgba(12,20,40,0.65);font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;display:flex;align-items:center;gap:5px;"><svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>PDF 다운로드</button>
         <button class="db-theme-toggle" id="theme-toggle" aria-label="다크모드 전환">
           <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -112,6 +114,23 @@
         </div>
         <div id="top-threats" style="padding:14px 18px;">
           <p style="font-size:12px;color:rgba(12,20,40,.35);text-align:center;padding:24px;">로딩 중...</p>
+        </div>
+      </div>
+
+      <!-- 조치완료 기록 패널 (기본 숨김) -->
+      <div id="archive-panel" style="display:none;flex-direction:column;gap:14px;">
+        <div class="db-card" style="padding:16px 20px;">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <span style="font-size:12px;font-weight:700;color:rgba(12,20,40,.55);">기간 필터</span>
+            <input type="date" id="arc-from" style="padding:5px 9px;border-radius:5px;border:1px solid rgba(0,0,0,.12);font-size:12px;font-family:'NanumSquare',sans-serif;color:#0c1428;" />
+            <span style="font-size:11px;color:rgba(12,20,40,.35);">~</span>
+            <input type="date" id="arc-to" style="padding:5px 9px;border-radius:5px;border:1px solid rgba(0,0,0,.12);font-size:12px;font-family:'NanumSquare',sans-serif;color:#0c1428;" />
+            <button onclick="loadArchives()" style="padding:5px 14px;border-radius:5px;background:#1a6ef8;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">조회</button>
+            <span id="arc-count" style="font-size:11px;color:rgba(12,20,40,.40);font-family:'JetBrains Mono',monospace;margin-left:auto;"></span>
+          </div>
+        </div>
+        <div id="archive-list" class="db-card" style="padding:0;overflow:hidden;">
+          <p style="padding:32px;text-align:center;font-size:12px;color:rgba(12,20,40,.35);">조회 버튼을 눌러 기록을 불러오세요.</p>
         </div>
       </div>
 
@@ -238,6 +257,91 @@ function downloadPDF() {
 }
 
 loadReport('daily');
+
+const _reportSection = document.querySelector('.p-6, [style*="padding:20px"]') || document.getElementById('archive-panel')?.parentElement;
+const _reportCards = () => document.querySelectorAll('#archive-panel ~ *, .db-card:not(#archive-panel *)');
+
+let _inArchive = false;
+function _setReportVisible(v) {
+  ['report-title','report-period','mock-tag'].forEach(id => { const el=document.getElementById(id); if(el) el.closest('.db-card') && (el.closest('.db-card').style.display = v?'':'none'); });
+  const mainCards = document.querySelectorAll('main > div > .db-card, main > div > div[style*="grid"]');
+  mainCards.forEach(el => { if(!el.id||el.id!=='archive-panel') el.style.display = v?'':el.dataset.originalDisplay||'none'; });
+}
+
+window.showArchiveTab = function() {
+  _inArchive = true;
+  document.getElementById('archive-panel').style.display = 'flex';
+  ['daily','weekly','monthly'].forEach(t => {
+    const b = document.getElementById('btn-'+t);
+    if(b) { b.style.background='rgba(0,0,0,0.05)'; b.style.color='rgba(12,20,40,0.55)'; b.style.border='1px solid rgba(0,0,0,0.10)'; }
+  });
+  document.getElementById('btn-archive').style.background = '#1a6ef8';
+  document.getElementById('btn-archive').style.color = '#fff';
+  document.getElementById('btn-archive').style.border = 'none';
+  document.querySelectorAll('main > div > *:not(#archive-panel)').forEach(el => { el.style.display = 'none'; });
+  document.getElementById('archive-panel').style.display = 'flex';
+};
+
+const _origLoad = loadReport;
+window.loadReport = function(type) {
+  _inArchive = false;
+  document.getElementById('archive-panel').style.display = 'none';
+  document.querySelectorAll('main > div > *:not(#archive-panel)').forEach(el => { el.style.display = ''; });
+  document.getElementById('btn-archive').style.background = 'rgba(0,0,0,0.05)';
+  document.getElementById('btn-archive').style.color = 'rgba(12,20,40,0.55)';
+  document.getElementById('btn-archive').style.border = '1px solid rgba(0,0,0,0.10)';
+  _origLoad(type);
+};
+
+async function loadArchives() {
+  const from = document.getElementById('arc-from').value;
+  const to = document.getElementById('arc-to').value;
+  const list = document.getElementById('archive-list');
+  list.innerHTML = '<p style="padding:32px;text-align:center;font-size:12px;color:rgba(12,20,40,.35);">로딩 중...</p>';
+  try {
+    let url = '/api/reports/archives?page_size=50';
+    if (from) url += `&date_from=${from}`;
+    if (to) url += `&date_to=${to}T23:59:59`;
+    const res = await fetch(url);
+    const data = await res.json();
+    document.getElementById('arc-count').textContent = `총 ${data.total}건`;
+    if (!data.items.length) { list.innerHTML = '<p style="padding:32px;text-align:center;font-size:12px;color:rgba(12,20,40,.35);">해당 기간에 기록된 조치 완료 내역이 없습니다.</p>'; return; }
+    const SEV = {critical:'#E24B4A',high:'#BA7517',medium:'#185FA5',low:'#1D9E75',feedback:'#64748b'};
+    list.innerHTML = `<table style="width:100%;font-size:12px;border-collapse:collapse;">
+      <thead><tr style="background:rgba(0,0,0,.02);border-bottom:1px solid rgba(0,0,0,.06);">
+        <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">처리일</th>
+        <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">처리자</th>
+        <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">심각도</th>
+        <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">계정</th>
+        <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">조치 내용</th>
+        <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">만료</th>
+        <th style="padding:9px 14px;"></th>
+      </tr></thead>
+      <tbody>${data.items.map(a => {
+        const d = new Date(a.archived_at);
+        const exp = new Date(a.expires_at);
+        const sev = a.severity || 'low';
+        const daysLeft = Math.max(0, Math.ceil((exp - Date.now()) / 86400000));
+        return `<tr style="border-bottom:1px solid rgba(0,0,0,.05);">
+          <td style="padding:10px 14px;font-size:11px;color:rgba(12,20,40,.50);font-family:'JetBrains Mono',monospace;white-space:nowrap;">${d.toLocaleDateString('ko-KR')}</td>
+          <td style="padding:10px 14px;font-size:12px;font-weight:700;color:#0c1428;">${a.resolved_by_name||'—'}</td>
+          <td style="padding:10px 14px;"><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:${SEV[sev]}18;color:${SEV[sev]};">${sev.toUpperCase()}</span></td>
+          <td style="padding:10px 14px;font-size:11px;font-family:'JetBrains Mono',monospace;color:rgba(12,20,40,.60);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.source_account}</td>
+          <td style="padding:10px 14px;font-size:11px;color:#0c1428;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${(a.action_taken||'').replace(/"/g,'&quot;')}">${a.action_taken||'—'}</td>
+          <td style="padding:10px 14px;font-size:11px;color:${daysLeft<=3?'#E24B4A':'rgba(12,20,40,.40)'};font-family:'JetBrains Mono',monospace;">${daysLeft}일</td>
+          <td style="padding:10px 14px;"><button onclick="deleteArchive(${a.id})" style="padding:4px 10px;border-radius:4px;border:1px solid rgba(226,75,74,.25);color:#E24B4A;background:transparent;font-size:11px;font-weight:700;cursor:pointer;font-family:'NanumSquare',sans-serif;">삭제</button></td>
+        </tr>`;
+      }).join('')}</tbody></table>`;
+  } catch(e) { list.innerHTML = `<p style="padding:32px;text-align:center;font-size:12px;color:#E24B4A;">로드 실패: ${e.message}</p>`; }
+}
+
+window.deleteArchive = async function(id) {
+  if (!confirm('이 기록을 삭제하시겠습니까?')) return;
+  try {
+    await fetch(`/api/reports/archives/${id}`, { method:'DELETE' });
+    loadArchives();
+  } catch(e) { alert('삭제 실패'); }
+};
 </script>
 </body>
 </html>
