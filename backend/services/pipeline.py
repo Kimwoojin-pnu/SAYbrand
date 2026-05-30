@@ -136,6 +136,11 @@ async def run_pipeline(
     cats = l1.get("matched_categories", [])
     threat_type = _CATEGORY_TO_THREAT_TYPE.get(cats[0], "keyword_match") if cats else "keyword_match"
 
+    # A1/A2 키워드가 매칭돼도 계정명 유사도가 낮으면 실제 사칭이 아닌 비방으로 재분류
+    # impersonation_score는 l1_filter_with_profile에서만 계산됨 (폴백 필터는 0.0)
+    if threat_type == "account_impersonation" and l1.get("impersonation_score", 0.0) < 0.5:
+        threat_type = "reputation_attack"
+
     # ── L2 텍스트 분석 ────────────────────────────────────────────────
     if precomputed_l2 is not None:
         l2 = precomputed_l2

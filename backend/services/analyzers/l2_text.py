@@ -136,7 +136,7 @@ async def _call_gemini(text: str) -> dict | None:
     try:
         import google.generativeai as genai
         genai.configure(api_key=settings.gemini_api_key)
-        model = genai.GenerativeModel("gemini-2.0-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash-lite")
         prompt = f"{_GEMINI_L2_PROMPT}\n\n분석 텍스트:\n{text[:500]}"
 
         response = await asyncio.to_thread(
@@ -147,7 +147,7 @@ async def _call_gemini(text: str) -> dict | None:
         tokens_in = getattr(response.usage_metadata, "prompt_token_count", 0)
         tokens_out = getattr(response.usage_metadata, "candidates_token_count", 0)
         result = _parse_l2_response(response.text)
-        result["_meta"] = {"model": "gemini-2.0-flash", "tokens_in": tokens_in, "tokens_out": tokens_out}
+        result["_meta"] = {"model": "gemini-2.5-flash-lite", "tokens_in": tokens_in, "tokens_out": tokens_out}
         return result
     except Exception as e:
         err_str = f"{type(e).__name__}{e}"
@@ -282,7 +282,7 @@ async def analyze_batch(posts: list[str], max_batch: int = 10) -> list[dict]:
     try:
         import google.generativeai as genai
         genai.configure(api_key=settings.gemini_api_key)
-        model = genai.GenerativeModel("gemini-2.0-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash-lite")
 
         items = "\n---\n".join(
             f"[{i + 1}] {p[:500]}" for i, p in enumerate(batch)
@@ -315,7 +315,7 @@ async def analyze_batch(posts: list[str], max_batch: int = 10) -> list[dict]:
                     "emotion": data.get("emotion", "중립"),
                     "sentiment_score": float(data.get("sentiment_score", 0.0)),
                     "is_mock": False,
-                    "_meta": {"model": "gemini-2.0-flash-batch", "tokens_in": 0, "tokens_out": 0},
+                    "_meta": {"model": "gemini-2.5-flash-lite-batch", "tokens_in": 0, "tokens_out": 0},
                 })
             while len(results) < len(batch):
                 results.append(_mock_analysis())

@@ -236,10 +236,15 @@ async def l1_filter_with_profile(
             industry_flags.append(kw)
 
     # 6. 사칭 계정명 탐지
+    # 원칙: impersonation_score는 계정명(source_account) 기반으로만 판단한다.
+    # 콘텐츠에 "공식계정"·"대표이사" 등 A1/A2 키워드가 있다고 해서 사칭이 아님.
+    # → impersonation_score < 0.5 이면 pipeline에서 reputation_attack으로 재분류됨.
     impersonation_score = 0.0
+    account_clean = account_name.lower().lstrip("@")
+
+    # 6a. 등록된 공식 핸들 대비 계정명 유사도
     for handle in profile.official_handles.values():
         official_clean = handle.lower().lstrip("@")
-        account_clean = account_name.lower().lstrip("@")
         if not official_clean:
             continue
         if official_clean in account_clean or account_clean in official_clean:
@@ -247,6 +252,34 @@ async def l1_filter_with_profile(
                 impersonation_score += 0.8
         if re.search(rf"{re.escape(official_clean)}[\._\-]?\d+$", account_clean):
             impersonation_score = max(impersonation_score, 0.9)
+
+    # 6b. 공식 핸들 미등록이어도 브랜드 별칭이 계정명에 + 사칭 패턴 조합으로 탐지
+    # 예: samsung_official, brandname_kr_2024 → 사칭 의심
+    # 예: "비방성 포스트를 쓴 계정명이 브랜드와 무관" → impersonation_score 0 유지
+    if account_clean:
+        brand_in_account = any(
+            alias.lower() in account_clean
+            for alias, _ in all_names
+            if len(alias) >= 2
+        )
+        _IMPERSONATION_PATTERN = re.compile(
+            r'[_.]?(official|verified|real|kr|korea|한국|공식|본사|직영|\d{2,4})$',
+            re.IGNORECASE,
+        )
+        if brand_in_account:
+            is_known_official = any(
+                handle.lower().lstrip("@") == account_clean
+                for handle in profile.official_handles.values()
+                if handle
+            )
+            if not is_known_official:
+                if _IMPERSONATION_PATTERN.search(account_clean):
+                    # brandname_official, brandname_kr 등 → 높은 사칭 의심
+                    impersonation_score = max(impersonation_score, 0.85)
+                else:
+                    # 브랜드명이 계정에 있지만 공식 계정은 아님 → 경계값
+                    impersonation_score = max(impersonation_score, 0.5)
+
     impersonation_score = min(impersonation_score, 1.0)
 
     # 7. 기존 KEYWORD_DATABASE 체크

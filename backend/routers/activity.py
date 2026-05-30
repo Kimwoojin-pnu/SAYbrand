@@ -1,4 +1,4 @@
-"""활동 로그 API — 조직 내 처리 내역 조회/삭제 (어드민·오너 전용)"""
+"""활동 로그 API — 조직 내 처리 내역 조회(비Viewer)/삭제(Admin+)"""
 from __future__ import annotations
 
 from datetime import datetime
@@ -42,8 +42,8 @@ async def get_activity_logs(
     await db.commit()
 
     role = await _get_role(user["id"], org, db)
-    if role not in ("owner", "admin"):
-        raise HTTPException(status_code=403, detail="관리자 이상 권한이 필요합니다.")
+    if role == "viewer":
+        raise HTTPException(status_code=403, detail="팀원 이상 권한이 필요합니다.")
 
     if org:
         base = select(ActivityLog).where(ActivityLog.org_id == org.id)
@@ -87,8 +87,8 @@ async def delete_activity_log(
     org: Organization | None = Depends(optional_current_org),
 ):
     role = await _get_role(user["id"], org, db)
-    if role != "owner":
-        raise HTTPException(status_code=403, detail="오너만 로그를 삭제할 수 있습니다.")
+    if role not in ("admin", "owner"):
+        raise HTTPException(status_code=403, detail="Admin 이상 권한이 필요합니다.")
 
     result = await db.execute(select(ActivityLog).where(ActivityLog.id == log_id))
     log = result.scalar_one_or_none()
