@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.models.orm import Keyword, Threat
 from backend.services.analyzers.l1_filter import l1_filter, l1_filter_with_profile
-from backend.services.analyzers.l2_text import analyze_text_with_cache
+from backend.services.analyzers.l2_text import analyze_text_with_cache, analyze_batch
 from backend.services.profile_loader import profile_loader
 from backend.services.reach_calculator import estimate_reach
 from backend.services.risk_scorer import calculate_risk_score, classify_alert_threshold
@@ -59,6 +59,7 @@ async def run_pipeline(
     profile_id: int | None = None,
     org_id: int | None = None,
     include_l2: bool = True,
+    precomputed_l2: dict | None = None,
 ) -> Threat | None:
     """
     단일 포스트를 L1→L2→L3 파이프라인으로 분석하고 DB에 저장한다.
@@ -72,6 +73,9 @@ async def run_pipeline(
     # DB DateTime 컬럼은 naive UTC — timezone.utc 사용 시 asyncpg DataError
     now = datetime.utcnow()
 
+    content_preview = post["content"][:80].replace("\n", " ")
+    print(f"[PIPELINE 시작] {post.get('platform','?')}/{post.get('source_account','?')}: {content_preview}")
+
     # ── 프로파일 로드 ─────────────────────────────────────────────────
     profile = None
     if profile_id:
@@ -80,9 +84,6 @@ async def run_pipeline(
         profile = await profile_loader.load_for_user(user_id, db)
 
     # ── L1 필터 ───────────────────────────────────────────────────────
-    content_preview = post["content"][:80].replace("\n", " ")
-    print(f"[PIPELINE 시작] {post.get('platform','?')}/{post.get('source_account','?')}: {content_preview}")
-    logger.info("[PIPELINE] 처리 시작 [%s/%s]: %s", post.get("platform", "?"), post.get("source_account", "?"), content_preview)
 
     if profile:
         aliases_preview = [a for a, _ in profile.aliases[:5]]
@@ -117,7 +118,9 @@ async def run_pipeline(
     threat_type = _CATEGORY_TO_THREAT_TYPE.get(cats[0], "keyword_match") if cats else "keyword_match"
 
     # ── L2 텍스트 분석 ────────────────────────────────────────────────
-    if not include_l2:
+    if precomputed_l2 is not None:
+        l2 = precomputed_l2
+    elif not include_l2:
         l2 = _L2_MOCK
     else:
         try:
@@ -417,10 +420,52 @@ async def run_scan(
 
     pid = profile.profile_id if profile else None
 
+    # ── L1 사전 필터 → L2 배치 분석 ──────────────────────────────────
+    from backend.config import settings
+
+    # 프로파일 없을 때 키워드 한 번만 로드
+    brand_kws_fallback: list[str] = []
+    if not profile:
+        kw_rows = await db.execute(
+            select(Keyword.keyword).where(Keyword.user_id == user_id, Keyword.active.is_(True))
+        )
+        brand_kws_fallback = [r[0] for r in kw_rows.all()]
+
+    l1_passing_contents: list[str] = []
     for post in posts:
         try:
-            # Vercel 타임아웃 방지: 배치 스캔에서는 L2(Gemini) 스킵
-            threat = await run_pipeline(post, user_id, db, pid, org_id=org_id, include_l2=False)
+            if profile:
+                l1_pre = await l1_filter_with_profile(
+                    content=post["content"],
+                    account_name=post.get("source_account", ""),
+                    profile=profile,
+                    search_keyword=post.get("_search_keyword", ""),
+                )
+            else:
+                l1_pre = l1_filter(post["content"], brand_keywords=brand_kws_fallback or None)
+            if l1_pre["pass"]:
+                l1_passing_contents.append(post["content"])
+        except Exception:
+            pass
+
+    # L1 통과 콘텐츠 → Gemini 배치 분석 (최대 10건씩)
+    l2_by_content: dict[str, dict] = {}
+    if l1_passing_contents and settings.gemini_api_key:
+        try:
+            for i in range(0, len(l1_passing_contents), 10):
+                batch = l1_passing_contents[i:i + 10]
+                results = await analyze_batch(batch, max_batch=10)
+                for text, res in zip(batch, results):
+                    l2_by_content[text[:200]] = res
+            print(f"[L2 배치] {len(l1_passing_contents)}건 L1통과 → {len(l2_by_content)}건 분석 완료")
+        except Exception as e:
+            print(f"[L2 배치 오류] {type(e).__name__}: {e}")
+
+    for post in posts:
+        try:
+            precomputed = l2_by_content.get(post["content"][:200])
+            threat = await run_pipeline(post, user_id, db, pid, org_id=org_id,
+                                        include_l2=False, precomputed_l2=precomputed)
             if threat:
                 threats_created += 1
                 l1_pass += 1
@@ -428,6 +473,7 @@ async def run_scan(
                 l1_fail += 1
         except Exception as e:
             errors += 1
+            print(f"[PIPELINE 오류] {type(e).__name__}: {e}")
             logger.warning("파이프라인 실패 (계속 진행): %s", e)
 
     if threats_created:

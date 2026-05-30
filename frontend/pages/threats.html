@@ -145,7 +145,7 @@
     <div style="display:flex;gap:6px;">
       <button id="status-active" style="flex:1;padding:7px;border-radius:4px;font-size:11px;font-family:'NanumSquare',sans-serif;font-weight:700;cursor:pointer;border:1px solid rgba(226,75,74,.25);color:#E24B4A;background:transparent;">활성</button>
       <button id="status-reviewing" style="flex:1;padding:7px;border-radius:4px;font-size:11px;font-family:'NanumSquare',sans-serif;font-weight:700;cursor:pointer;border:1px solid rgba(24,95,165,.25);color:#185FA5;background:transparent;">검토중</button>
-      <button id="status-resolved" style="flex:1;padding:7px;border-radius:4px;font-size:11px;font-family:'NanumSquare',sans-serif;font-weight:700;cursor:pointer;border:1px solid rgba(0,0,0,.12);color:rgba(12,20,40,.45);background:transparent;">해결됨</button>
+      <button id="status-resolved" style="flex:1;padding:7px;border-radius:4px;font-size:11px;font-family:'NanumSquare',sans-serif;font-weight:700;cursor:pointer;border:1px solid rgba(29,158,117,.30);color:#1D9E75;background:transparent;">해결됨</button>
     </div>
   </div>
 </div>
@@ -169,7 +169,7 @@ function renderThreats(data) {
   const tbody=document.getElementById('threat-tbody');
   if(!data.items.length){tbody.innerHTML=`<tr><td colspan="8" style="padding:40px;text-align:center;color:rgba(12,20,40,.38);">위협 없음</td></tr>`;return;}
   tbody.innerHTML=data.items.map(t=>`
-    <tr style="cursor:pointer;transition:background .1s;border-bottom:1px solid rgba(0,0,0,.05);" onmouseover="this.style.background='rgba(0,0,0,.02)'" onmouseout="this.style.background='transparent'" onclick="window._openThreat(${t.id})">
+    <tr style="cursor:pointer;transition:background .1s;border-bottom:1px solid var(--db-border);" onmouseover="this.style.background='var(--db-hover,rgba(0,0,0,.03))'" onmouseout="this.style.background='transparent'" onclick="window._openThreat(${t.id})">
       <td style="padding:10px 14px;">${severityBadge(t.severity)}</td>
       <td style="padding:10px 14px;"><div style="display:flex;align-items:center;gap:6px;">${moduleBadge(t.module)}<span style="font-size:11px;color:#0c1428;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${TYPE_MAP[t.threat_type]||t.threat_type}</span></div></td>
       <td style="padding:10px 14px;"><div style="display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(12,20,40,.60);">${platformIcon(t.platform)}<span style="text-transform:capitalize;">${t.platform}</span></div></td>

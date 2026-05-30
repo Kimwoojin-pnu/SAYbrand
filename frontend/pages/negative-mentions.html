@@ -311,8 +311,8 @@ function updateKPIs() {
 
 async function load() {
   try {
-    /* 충분히 큰 page_size로 전체 조회 후 클라이언트 필터링 */
-    const data = await api.threats({ page: 1, page_size: 50 });
+    /* feedback 등급만 조회 (브랜드 언급 but 위협 패턴 미매칭) */
+    const data = await api.threats({ page: 1, page_size: 50, severity: 'feedback' });
     allItems = data.items.filter(t => OPINION_TYPES.includes(t.threat_type));
     filtered = [...allItems];
     updateKPIs();

@@ -101,6 +101,7 @@ body { font-family: 'NanumSquare', 'Noto Sans KR', sans-serif; }
   --db-text-1:  #0c1428;
   --db-text-2:  rgba(12,20,40,0.55);
   --db-text-3:  rgba(12,20,40,0.38);
+  --db-hover:   rgba(0,0,0,0.03);
 }
 [data-theme="dark"] {
   --db-bg:      #0d1117;
@@ -109,6 +110,7 @@ body { font-family: 'NanumSquare', 'Noto Sans KR', sans-serif; }
   --db-text-1:  #e6edf3;
   --db-text-2:  rgba(230,237,243,0.55);
   --db-text-3:  rgba(230,237,243,0.38);
+  --db-hover:   rgba(255,255,255,0.04);
 }
 
 /* dark: page + card surfaces */

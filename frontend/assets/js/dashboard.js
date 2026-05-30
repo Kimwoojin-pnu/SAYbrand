@@ -9,8 +9,13 @@ function showToast(msg, type = "success") {
   const colors = { success: "#1D9E75", error: "#E24B4A", info: "#185FA5", critical: "#E24B4A", high: "#BA7517", medium: "#185FA5", low: "#1D9E75" };
   const color = colors[type] || "#1D9E75";
   const el = document.createElement("div");
-  el.style.cssText = `display:flex;align-items:center;gap:10px;padding:11px 14px;background:#fff;border:1px solid rgba(0,0,0,.08);border-left:3px solid ${color};border-radius:8px;box-shadow:rgba(12,20,40,.14) 0 4px 16px;font-size:12px;font-family:'NanumSquare',sans-serif;pointer-events:auto;transform:translateX(120%);transition:transform .3s cubic-bezier(.34,1.56,.64,1);min-width:260px;max-width:340px;`;
-  el.innerHTML = `<span style="width:7px;height:7px;border-radius:50%;background:${color};flex-shrink:0;"></span><span style="color:#0c1428;">${msg}</span>`;
+  const dark = document.documentElement.getAttribute("data-theme") === "dark";
+  const bg = dark ? "#1c2128" : "#ffffff";
+  const border = dark ? "rgba(255,255,255,.10)" : "rgba(0,0,0,.08)";
+  const shadow = dark ? "rgba(0,0,0,.50) 0 4px 20px" : "rgba(12,20,40,.14) 0 4px 16px";
+  const textColor = dark ? "#e6edf3" : "#0c1428";
+  el.style.cssText = `display:flex;align-items:center;gap:10px;padding:11px 14px;background:${bg};border:1px solid ${border};border-left:3px solid ${color};border-radius:8px;box-shadow:${shadow};font-size:12px;font-family:'NanumSquare',sans-serif;pointer-events:auto;transform:translateX(120%);transition:transform .3s cubic-bezier(.34,1.56,.64,1);min-width:260px;max-width:340px;`;
+  el.innerHTML = `<span style="width:7px;height:7px;border-radius:50%;background:${color};flex-shrink:0;"></span><span style="color:${textColor};">${msg}</span>`;
   wrap.appendChild(el);
   requestAnimationFrame(() => requestAnimationFrame(() => { el.style.transform = "translateX(0)"; }));
   setTimeout(() => { el.style.opacity = "0"; el.style.transition = "opacity .4s"; setTimeout(() => el.remove(), 400); }, 3500);
@@ -61,11 +66,11 @@ function renderAlerts(alerts) {
   if (!alerts.length) { el.innerHTML = `<p style="color:rgba(12,20,40,.35);font-size:12px;text-align:center;padding:20px;">알림 없음</p>`; return; }
   const dots = { critical: "#E24B4A", high: "#BA7517", medium: "#185FA5", low: "#1D9E75" };
   el.innerHTML = alerts.map(a => `
-    <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid rgba(0,0,0,.05);">
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--db-border);">
       <span style="margin-top:4px;flex-shrink:0;width:6px;height:6px;border-radius:50%;background:${dots[a.severity] || '#94a3b8'};"></span>
       <div style="flex:1;min-width:0;">
-        <p style="font-size:12px;color:#0c1428;line-height:1.5;">${a.message}</p>
-        <p style="font-size:10px;color:rgba(12,20,40,.35);margin-top:2px;font-family:'JetBrains Mono',monospace;">${timeAgo(a.sent_at)}</p>
+        <p style="font-size:12px;color:var(--db-text-1);line-height:1.5;">${a.message}</p>
+        <p style="font-size:10px;color:var(--db-text-3);margin-top:2px;font-family:'JetBrains Mono',monospace;">${timeAgo(a.sent_at)}</p>
       </div>
     </div>`).join("");
 }
@@ -291,7 +296,7 @@ function renderThreats(data) {
     tbody.innerHTML = data.items.map(t => {
       const reach = t.reach_estimate ? _fmtReach(t.reach_estimate) : "—";
       return `
-      <tr style="cursor:pointer;transition:background .1s;border-bottom:1px solid rgba(0,0,0,.05);" onmouseover="this.style.background='rgba(0,0,0,.02)'" onmouseout="this.style.background='transparent'" data-id="${t.id}" onclick="window._openThreat(${t.id})">
+      <tr style="cursor:pointer;transition:background .1s;border-bottom:1px solid var(--db-border);" onmouseover="this.style.background='var(--db-hover,rgba(0,0,0,.03))'" onmouseout="this.style.background='transparent'" data-id="${t.id}" onclick="window._openThreat(${t.id})">
         <td style="padding:10px 14px;">${severityBadge(t.severity)}</td>
         <td style="padding:10px 14px;">
           <div style="display:flex;align-items:center;gap:6px;">
