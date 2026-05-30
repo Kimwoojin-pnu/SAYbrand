@@ -227,15 +227,13 @@
 import { api } from "/assets/js/api.js";
 import { timeAgo, platformIcon, scoreColor } from "/assets/js/utils.js";
 
-/* 부정 의견 유형만 표시 — 공격/위협 제외 */
-const OPINION_TYPES = ['negative_comment', 'casual_mention', 'negative_review_cluster', 'reputation_attack', 'competitor_mention'];
-
 const TYPE_LABEL = {
   negative_comment: '부정 댓글',
   casual_mention: '부정 언급',
   negative_review_cluster: '부정 리뷰',
   reputation_attack: '평판 글',
   competitor_mention: '경쟁사 비교',
+  keyword_match: '일반 언급',
 };
 
 const TYPE_COLOR = {
@@ -244,6 +242,7 @@ const TYPE_COLOR = {
   negative_review_cluster: { bg:'rgba(186,117,23,.08)', text:'#BA7517' },
   reputation_attack: { bg:'rgba(226,75,74,.10)', text:'#E24B4A' },
   competitor_mention: { bg:'rgba(29,158,117,.08)', text:'#1D9E75' },
+  keyword_match: { bg:'rgba(100,116,139,.08)', text:'#64748b' },
 };
 
 const PLAT_ICON_COLOR = { instagram:'#e1306c', x:'#334155', youtube:'#ff0000', tiktok:'#69c9d0', naver:'#03c75a' };
@@ -415,8 +414,15 @@ window.toggleOpinionPanel = function() {
 async function load() {
   try {
     /* feedback 등급만 조회 (브랜드 언급 but 위협 패턴 미매칭) */
-    const data = await api.threats({ page: 1, page_size: 50, severity: 'feedback' });
-    allItems = data.items.filter(t => OPINION_TYPES.includes(t.threat_type));
+    const [feedbackData, lowData] = await Promise.all([
+      api.threats({ page: 1, page_size: 50, severity: 'feedback' }),
+      api.threats({ page: 1, page_size: 50, severity: 'low' }),
+    ]);
+    const seen = new Set();
+    allItems = [...feedbackData.items, ...lowData.items].filter(t => {
+      if (seen.has(t.id)) return false;
+      seen.add(t.id); return true;
+    });
     filtered = [...allItems];
     updateKPIs();
     renderOpinionPanel();

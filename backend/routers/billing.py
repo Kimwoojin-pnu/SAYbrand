@@ -33,6 +33,14 @@ async def checkout(
     return RedirectResponse(url)
 
 
+@router.get("/success")
+async def billing_success(
+    request: Request,
+    checkout_id: str = "",
+):
+    return RedirectResponse("/dashboard")
+
+
 @router.post("/webhook")
 async def webhook(request: Request, db: AsyncSession = Depends(get_db)):
     body = await request.body()
