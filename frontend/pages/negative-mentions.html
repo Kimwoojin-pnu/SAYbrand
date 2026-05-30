@@ -82,6 +82,37 @@
         </div>
       </div>
 
+      <!-- 여론 종합 패널 -->
+      <div class="db-card" style="padding:20px 22px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <svg style="width:15px;height:15px;color:#185FA5;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+            <h2 style="font-weight:800;font-size:13px;color:var(--db-text-1);letter-spacing:-.02em;">여론 종합</h2>
+            <span id="opinion-refresh-note" style="font-size:10px;color:var(--db-text-3);font-family:'JetBrains Mono',monospace;">—</span>
+          </div>
+          <button id="btn-toggle-opinion" style="font-size:10px;color:rgba(12,20,40,.40);background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:4px;" onclick="toggleOpinionPanel()">접기</button>
+        </div>
+
+        <div id="opinion-panel-body">
+          <!-- 2열 레이아웃 -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+            <!-- 왼쪽: 의견 유형 분포 -->
+            <div>
+              <p style="font-size:9px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:var(--db-text-3);margin-bottom:12px;">의견 유형 분포</p>
+              <div id="opinion-dist" style="display:flex;flex-direction:column;gap:8px;"></div>
+            </div>
+
+            <!-- 오른쪽: 주목 언급 -->
+            <div>
+              <p style="font-size:9px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:var(--db-text-3);margin-bottom:12px;">🔥 주목 언급 <span style="font-weight:400;text-transform:none;letter-spacing:0;">공감 높은 순</span></p>
+              <div id="opinion-hot" style="display:flex;flex-direction:column;gap:8px;"></div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
       <!-- 필터 바 -->
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
         <!-- 플랫폼 -->
@@ -309,6 +340,78 @@ function updateKPIs() {
   document.getElementById('total-count').textContent = `총 ${allItems.length}건`;
 }
 
+/* ── 여론 종합 패널 ─────────────────────────────────── */
+const DIST_COLORS = [
+  '#185FA5', '#E24B4A', '#BA7517', '#1D9E75', '#7C3AED',
+];
+
+function renderOpinionPanel() {
+  const total = allItems.length;
+  if (!total) {
+    document.getElementById('opinion-dist').innerHTML = `<p style="font-size:11px;color:var(--db-text-3);">데이터 없음</p>`;
+    document.getElementById('opinion-hot').innerHTML = `<p style="font-size:11px;color:var(--db-text-3);">데이터 없음</p>`;
+    document.getElementById('opinion-refresh-note').textContent = '';
+    return;
+  }
+
+  /* 1. 의견 유형 분포 */
+  const typeCounts = {};
+  allItems.forEach(t => { typeCounts[t.threat_type] = (typeCounts[t.threat_type] || 0) + 1; });
+  const sorted = Object.entries(typeCounts).sort((a, b) => b[1] - a[1]);
+  const distEl = document.getElementById('opinion-dist');
+  distEl.innerHTML = sorted.map(([type, cnt], i) => {
+    const pct = Math.round((cnt / total) * 100);
+    const label = TYPE_LABEL[type] || type;
+    const color = DIST_COLORS[i % DIST_COLORS.length];
+    return `
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <span style="font-size:11px;font-weight:700;color:var(--db-text-1);">${label}</span>
+          <span style="font-size:10px;color:var(--db-text-3);font-family:'JetBrains Mono',monospace;">${pct}% <span style="opacity:.6;">(${cnt}건)</span></span>
+        </div>
+        <div style="height:6px;border-radius:99px;background:var(--db-border);overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:${color};border-radius:99px;transition:width .5s ease;"></div>
+        </div>
+      </div>`;
+  }).join('');
+
+  /* 2. 주목 언급 — engagements_per_hour 높은 순 Top 3 */
+  const hot = [...allItems].sort((a, b) => (b.engagements_per_hour || 0) - (a.engagements_per_hour || 0)).slice(0, 3);
+  const hotEl = document.getElementById('opinion-hot');
+  if (hot.every(t => !t.engagements_per_hour)) {
+    /* 공감 데이터가 없으면 risk_score 높은 순 */
+    hot.sort((a, b) => b.risk_score - a.risk_score);
+  }
+  const plColor2 = (p) => ({ instagram:'#e1306c', x:'#334155', youtube:'#ff0000', tiktok:'#69c9d0', naver:'#03c75a' }[p] || '#94a3b8');
+  hotEl.innerHTML = hot.map(t => {
+    const tc = TYPE_COLOR[t.threat_type] || { bg:'rgba(0,0,0,.05)', text:'rgba(12,20,40,.50)' };
+    const engText = t.engagements_per_hour > 0
+      ? `<span style="font-family:'JetBrains Mono',monospace;">${t.engagements_per_hour.toFixed(1)}</span>/hr`
+      : `위험도 ${t.risk_score}`;
+    return `
+      <div class="opinion-hot-card" style="padding:10px 12px;border-radius:7px;border:1px solid var(--db-border);background:var(--db-surface);cursor:pointer;transition:box-shadow .15s;"
+           onclick="window._openMention(${t.id})"
+           onmouseover="this.style.boxShadow='rgba(12,20,40,0.10) 0 3px 12px'" onmouseout="this.style.boxShadow=''">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <span style="width:22px;height:22px;border-radius:50%;background:${plColor2(t.platform)}18;color:${plColor2(t.platform)};font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${t.platform[0].toUpperCase()}</span>
+          <span style="font-size:11px;font-weight:700;color:var(--db-text-1);font-family:'JetBrains Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">${t.source_account}</span>
+          <span style="font-size:10px;color:#185FA5;font-weight:700;flex-shrink:0;">🔥 ${engText}</span>
+        </div>
+        <p style="font-size:11px;color:var(--db-text-2);line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:6px;">${t.content_preview || ''}</p>
+        <span style="padding:2px 7px;border-radius:4px;font-size:9px;font-weight:700;background:${tc.bg};color:${tc.text};">${TYPE_LABEL[t.threat_type] || t.threat_type}</span>
+      </div>`;
+  }).join('');
+
+  document.getElementById('opinion-refresh-note').textContent = `${total}건 분석`;
+}
+
+let _opinionCollapsed = false;
+window.toggleOpinionPanel = function() {
+  _opinionCollapsed = !_opinionCollapsed;
+  document.getElementById('opinion-panel-body').style.display = _opinionCollapsed ? 'none' : '';
+  document.getElementById('btn-toggle-opinion').textContent = _opinionCollapsed ? '펼치기' : '접기';
+};
+
 async function load() {
   try {
     /* feedback 등급만 조회 (브랜드 언급 but 위협 패턴 미매칭) */
@@ -316,6 +419,7 @@ async function load() {
     allItems = data.items.filter(t => OPINION_TYPES.includes(t.threat_type));
     filtered = [...allItems];
     updateKPIs();
+    renderOpinionPanel();
     renderPage();
   } catch (e) {
     document.getElementById('mention-grid').innerHTML = `<div class="db-card" style="padding:40px;text-align:center;color:rgba(12,20,40,.38);">데이터 로딩 실패</div>`;

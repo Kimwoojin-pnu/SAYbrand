@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.models.orm import Keyword, Threat
 from backend.services.analyzers.l1_filter import l1_filter, l1_filter_with_profile
 from backend.services.analyzers.l2_text import analyze_text_with_cache, analyze_batch
+from backend.services.collectors.compliance import is_news_domain
 from backend.services.profile_loader import profile_loader
 from backend.services.reach_calculator import estimate_reach
 from backend.services.risk_scorer import calculate_risk_score, classify_alert_threshold
@@ -110,6 +111,12 @@ async def run_pipeline(
     if not l1["pass"]:
         print(f"[L1 탈락] score={l1['score']:.4f} brand={l1.get('brand_mentioned')} neg_filter={l1.get('negative_filter_applied')} reason={l1.get('reason','')}")
         logger.info("[L1] 탈락: score=%.4f brand=%s neg_filter=%s", l1["score"], l1.get("brand_mentioned"), l1.get("negative_filter_applied"))
+        return None
+
+    # ── 뉴스 도메인 화이트리스트 ──────────────────────────────────────
+    post_url = post.get("post_url", "")
+    if is_news_domain(post_url):
+        print(f"[WHITELIST] 뉴스 도메인 제외: {post_url}")
         return None
 
     # ── 위협 유형 / 모듈 결정 ─────────────────────────────────────────

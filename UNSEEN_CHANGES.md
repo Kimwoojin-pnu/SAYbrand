@@ -9,6 +9,64 @@
 <!-- 새 항목은 위에서부터 추가 (최신순) -->
 
 ---
+## [#44] 2026-05-30
+**분류:** 수정 (오탐 방지 + UI 개선)
+**파일:**
+- `backend/services/collectors/compliance.py` (수정)
+- `backend/services/pipeline.py` (수정)
+- `backend/services/collectors/community_kr.py` (수정)
+- `frontend/assets/js/dashboard.js` (수정)
+- `frontend/assets/css/custom.css` (수정)
+- `frontend/pages/negative-mentions.html` (수정 — 여론 종합 패널)
+
+**변경 내용:**
+
+### 1. 뉴스 도메인 화이트리스트
+- `compliance.py`: `NEWS_DOMAINS` 집합 + `is_news_domain(url)` 함수 추가
+  - 방송(MBC/KBS/SBS/JTBC 등), 신문(조선/중앙/동아/한겨레 등), 인터넷 뉴스(연합/뉴시스/뉴스1 등) 포함
+- `pipeline.py`: L1 통과 직후 `is_news_domain()` 체크 — 뉴스 URL이면 `[WHITELIST]` 로그 후 `None` 반환
+  - 뉴스 기사는 수집은 하되 위협 DB 저장 안 됨
+
+### 2. 커뮤니티 계정명 파싱 개선
+- `community_kr.py`: SITES 딕셔너리에 `author_selector` 필드 추가
+  - 클리앙: `.list_author .nickname, .author, .nick, .user_id`
+  - 루리웹: `.nick, .user_nick, .author_name`
+- `_parse_posts()`: 셀렉터로 닉네임 파싱 시 `"클리앙/닉네임"` 형식으로 저장
+  - 셀렉터 미매칭 시 기존 사이트명(클리앙) 폴백
+
+### 3. Critical 위협 토스트 알림
+- `dashboard.js`: `showThreatToast({ severity, message })` 함수 신규
+  - 동일 id(`threat-toast`) 토스트는 누적 대신 교체 방식
+  - Critical 8초, 그 외 4초 후 자동 소멸
+  - `initDashboard()`: 초기 로드 시 `stats.critical > 0` 이면 토스트 표시
+  - `startPolling()`: 30초 폴링 중 `lastCriticalCount` 비교 — 신규 Critical 감지 시 토스트
+- `custom.css`: `@keyframes threatDotPulse` 추가 (box-shadow 파동 효과)
+
+### 4. 여론 종합 패널 (negative-mentions)
+- `negative-mentions.html`: KPI 카드 아래 "여론 종합" 패널 신규
+  - 왼쪽: `threat_type`별 의견 분포 가로 바 차트 (건수/비율)
+  - 오른쪽: `engagements_per_hour` 높은 순 Top 3 주목 언급 카드 (공감 없으면 risk_score 폴백)
+  - 접기/펼치기 토글 버튼
+
+**완료 기준 점검:**
+- ✅ 뉴스 도메인 수집 후 위협 분류 안 됨 (pipeline.py whitelist 적용)
+- ✅ 커뮤니티 위협 계정명 "클리앙/닉네임" 형식 (셀렉터 미매칭 시 사이트명 폴백)
+- ✅ 대시보드 로드 시 Critical 있으면 토스트 표시
+- ✅ 30초 폴링 중 새 Critical 감지 시 토스트
+- ⚠️ 기존 뉴스 도메인 위협 DB 정리: Railway PostgreSQL Data 탭에서 직접 실행 필요
+
+**Railway DB 정리 SQL (직접 실행 필요):**
+```sql
+UPDATE threats SET status='resolved', resolution_type='false_positive'
+WHERE source_url LIKE '%mbc.co.kr%'
+   OR source_url LIKE '%kbs.co.kr%'
+   OR source_url LIKE '%sbs.co.kr%'
+   OR source_url LIKE '%chosun.com%'
+   OR source_url LIKE '%yonhapnews.co.kr%'
+   OR source_url LIKE '%news.naver.com%';
+```
+
+---
 ## [#43] 2026-05-27
 **분류:** 수정 (L1 디버그 + 위협 해결 분류 + 보고서 전면 재작성 + 사이드바 통일 + DB 수정)
 **파일:**

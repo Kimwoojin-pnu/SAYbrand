@@ -44,6 +44,7 @@ class KoreanCommunityCollector(BaseCollector):
             "title_selector": ".subject_fixed",
             "link_selector": ".subject_fixed",
             "date_selector": ".list_time",
+            "author_selector": ".list_author .nickname, .author, .nick, .user_id",
             "platform_name": "클리앙",
         },
         "ruliweb": {
@@ -53,6 +54,7 @@ class KoreanCommunityCollector(BaseCollector):
             "title_selector": "a.title",
             "link_selector": "a.title",
             "date_selector": "span.time",
+            "author_selector": ".nick, .user_nick, .author_name",
             "platform_name": "루리웹",
         },
     }
@@ -174,9 +176,19 @@ class KoreanCommunityCollector(BaseCollector):
                     (title + (" " + excerpt if excerpt else "")).strip()
                 )
 
+                # 작성자 파싱 — 셀렉터 성공 시 "사이트명/닉네임" 형식
+                author = platform
+                author_selector = site.get("author_selector", "")
+                if author_selector:
+                    author_el = item.select_one(author_selector)
+                    if author_el:
+                        author_text = author_el.get_text(strip=True)
+                        if author_text and author_text != platform:
+                            author = f"{platform}/{author_text}"
+
                 posts.append(make_post(
                     platform=platform,
-                    source_account=platform,
+                    source_account=author,
                     content=content,
                     post_url=post_url,
                     published_at=self._parse_date(

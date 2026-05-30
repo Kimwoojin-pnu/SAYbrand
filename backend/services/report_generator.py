@@ -14,7 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 def _period_range(period: str) -> tuple[datetime, str]:
-    now = datetime.now(timezone.utc)
+    # DB DateTime 컬럼은 naive UTC — timezone.utc 사용 시 asyncpg DataError
+    now = datetime.utcnow()
     if period == "daily":
         since = now - timedelta(days=1)
         label = f"{now.strftime('%Y년 %m월 %d일')} 일간 보고서"
@@ -37,7 +38,8 @@ async def generate_report(
     period: "daily" (24h) | "weekly" (7일) | "monthly" (30일)
     오탐(false_positive)은 통계에서 제외.
     """
-    now = datetime.now(timezone.utc)
+    # DB DateTime 컬럼은 naive UTC — timezone.utc 사용 시 asyncpg DataError
+    now = datetime.utcnow()
     since, label = _period_range(period)
 
     def _scope(q):

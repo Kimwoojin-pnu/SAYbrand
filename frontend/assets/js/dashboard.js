@@ -21,7 +21,50 @@ function showToast(msg, type = "success") {
   setTimeout(() => { el.style.opacity = "0"; el.style.transition = "opacity .4s"; setTimeout(() => el.remove(), 400); }, 3500);
 }
 
+// ── Threat Toast (Critical 전용) ──────────────────────────────────────────────
+function showThreatToast({ severity, message }) {
+  const existing = document.getElementById("threat-toast");
+  if (existing) existing.remove();
+
+  const toast = document.createElement("div");
+  toast.id = "threat-toast";
+  toast.className = `threat-toast severity-${severity}`;
+
+  const dotColor = severity === "critical" ? "#E24B4A" : "#BA7517";
+  const dark = document.documentElement.getAttribute("data-theme") === "dark";
+  const bg = dark ? "#1c2128" : "#ffffff";
+  const textColor = dark ? "#e6edf3" : "#0c1428";
+
+  toast.style.cssText = `position:fixed;bottom:24px;right:24px;display:flex;align-items:center;gap:10px;padding:14px 18px;background:${bg};border-radius:8px;border-left:4px solid ${dotColor};box-shadow:${dark ? "rgba(0,0,0,.50)" : "rgba(12,20,40,.18)"} 0 4px 20px;font-family:'NanumSquare',sans-serif;font-size:13px;color:${textColor};z-index:1000;transform:translateX(120%);transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);max-width:320px;`;
+
+  const dot = document.createElement("span");
+  dot.style.cssText = `width:8px;height:8px;border-radius:50%;background:${dotColor};flex-shrink:0;animation:threatDotPulse 2s infinite;`;
+
+  const msg = document.createElement("span");
+  msg.textContent = message;
+
+  const closeBtn = document.createElement("button");
+  closeBtn.style.cssText = "background:none;border:none;cursor:pointer;color:inherit;opacity:.4;font-size:12px;margin-left:auto;padding:0 2px;flex-shrink:0;";
+  closeBtn.textContent = "✕";
+  closeBtn.onclick = () => toast.remove();
+
+  toast.appendChild(dot);
+  toast.appendChild(msg);
+  toast.appendChild(closeBtn);
+  document.body.appendChild(toast);
+
+  requestAnimationFrame(() => requestAnimationFrame(() => { toast.style.transform = "translateX(0)"; }));
+
+  const duration = severity === "critical" ? 8000 : 4000;
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transition = "opacity .4s";
+    setTimeout(() => toast.remove(), 400);
+  }, duration);
+}
+
 // ── State ─────────────────────────────────────────────────────────────────────
+let lastCriticalCount = 0;
 const state = { threats: [], total: 0, page: 1, pageSize: 10, filterSeverity: "", filterStatus: "", selectedThreat: null };
 
 // ── Gauge ─────────────────────────────────────────────────────────────────────
@@ -259,6 +302,12 @@ function startPolling() {
       renderModuleBar("module-b", riskScore.module_b.score, riskScore.module_b.threat_count);
       renderModuleBar("module-c", riskScore.module_c.score, riskScore.module_c.threat_count);
       document.getElementById("last-updated").textContent = new Date().toLocaleTimeString("ko-KR");
+
+      if (stats.critical > lastCriticalCount) {
+        const newCount = stats.critical - lastCriticalCount;
+        showThreatToast({ severity: "critical", message: `새 Critical 위협 ${newCount}건 탐지됨` });
+      }
+      lastCriticalCount = stats.critical;
     } catch (_) {}
   }, 30000);
 }
@@ -443,6 +492,10 @@ async function initDashboard() {
     const [stats, riskScore, alerts] = await Promise.all([api.stats(), api.riskScore(), api.alerts(8)]);
     renderStats(stats);
     updateMockBadge(stats);
+    lastCriticalCount = stats.critical;
+    if (stats.critical > 0) {
+      showThreatToast({ severity: "critical", message: `Critical 위협 ${stats.critical}건이 즉각 대응을 요구합니다` });
+    }
     renderGauge(riskScore.overall, riskScore.level);
     renderModuleBar("module-a", riskScore.module_a.score, riskScore.module_a.threat_count);
     renderModuleBar("module-b", riskScore.module_b.score, riskScore.module_b.threat_count);

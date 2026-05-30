@@ -5,6 +5,32 @@ import asyncio
 import httpx
 from datetime import datetime
 
+# 뉴스 미디어 도메인 — 수집하되 위협으로 분류하지 않는다
+NEWS_DOMAINS = {
+    # 방송
+    "mbc.co.kr", "kbs.co.kr", "sbs.co.kr", "jtbc.co.kr",
+    "tvchosun.com", "mbn.co.kr", "ytn.co.kr",
+    # 신문
+    "chosun.com", "joongang.co.kr", "donga.com",
+    "hani.co.kr", "khan.co.kr", "hankookilbo.com",
+    "ohmynews.com", "pressian.com", "newsis.com",
+    "yonhapnews.co.kr", "yna.co.kr", "news1.kr",
+    "edaily.co.kr", "mt.co.kr", "hankyung.com",
+    # 지역
+    "gjmbc.co.kr", "imaeil.com", "knnews.co.kr",
+    # 인터넷 뉴스
+    "news.naver.com",
+}
+
+
+def is_news_domain(url: str) -> bool:
+    """뉴스 도메인 여부 확인"""
+    if not url:
+        return False
+    from urllib.parse import urlparse
+    domain = urlparse(url).netloc.lower().replace("www.", "")
+    return any(news_domain in domain for news_domain in NEWS_DOMAINS)
+
 # SAYbrand 봇 식별 User-Agent
 # 봇임을 숨기지 않는 것이 법적으로 안전
 SAYBRAND_USER_AGENT = (

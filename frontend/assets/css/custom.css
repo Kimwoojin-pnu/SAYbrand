@@ -279,6 +279,12 @@ body { font-family: 'NanumSquare', 'Noto Sans KR', sans-serif; }
   box-shadow: rgba(0,0,0,0.45) 0px 4px 20px;
 }
 
+/* ── Critical 위협 토스트 dot 애니메이션 ─────────────────────────────── */
+@keyframes threatDotPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(226,75,74,0.4); }
+  50%       { box-shadow: 0 0 0 6px rgba(226,75,74,0); }
+}
+
 /* ── Invite code button ───────────────────────────────────────────── */
 .btn-invite-code {
   border: 1.5px solid rgba(29,95,168,0.5);
