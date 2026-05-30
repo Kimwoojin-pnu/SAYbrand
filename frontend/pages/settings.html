@@ -835,7 +835,6 @@ document.getElementById('kw-confirm').addEventListener('click', async () => {
 });
 
 loadKeywords();
-loadTeam();
 </script>
 
 <script>
@@ -932,9 +931,12 @@ async function renderMembers(orgId) {
 }
 
 document.getElementById('btn-gen-code').addEventListener('click', async () => {
-  if (!currentOrgId) return;
+  if (!currentOrgId) { alert('소속된 조직이 없습니다.'); return; }
+  const btn = document.getElementById('btn-gen-code');
   const role = document.getElementById('invite-role').value;
   const expires = document.getElementById('invite-expires').value;
+  btn.disabled = true;
+  btn.textContent = '발급 중...';
   try {
     const res = await fetch(`/api/orgs/${currentOrgId}/invite-codes?role_to_assign=${role}&expires_days=${expires}`, { method: 'POST' });
     if (res.status === 402) {
@@ -942,11 +944,17 @@ document.getElementById('btn-gen-code').addEventListener('click', async () => {
       showUpgradeModal(data.detail?.message || '플랜 업그레이드가 필요합니다.');
       return;
     }
+    if (!res.ok) {
+      const data = await res.json();
+      alert(data.detail || '코드 발급 실패');
+      return;
+    }
     const data = await res.json();
     document.getElementById('code-value').textContent = data.code;
     document.getElementById('code-expires').textContent = `${expires}일 유효`;
     document.getElementById('code-display').style.display = 'flex';
   } catch (e) { alert('코드 발급 실패: ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = '초대코드 발급'; }
 });
 
 async function approveMember(userId, action) {
@@ -990,6 +998,8 @@ function showUpgradeModal(message) {
   document.getElementById('upgrade-message').textContent = message;
   document.getElementById('upgrade-modal').style.display = 'flex';
 }
+
+loadTeam();
 </script>
 
 <script>

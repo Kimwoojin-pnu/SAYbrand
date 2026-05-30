@@ -454,6 +454,7 @@ function closePanel() {
 
 async function handleStatusChange(newStatus) {
   if (!state.selectedThreat) return;
+  if (newStatus === "resolved") { openResolveModal(); return; }
   try {
     await api.updateStatus(state.selectedThreat.id, newStatus);
     state.selectedThreat.status = newStatus;
@@ -467,6 +468,64 @@ async function handleStatusChange(newStatus) {
     showToast(`상태가 "${labels[newStatus]}"으로 변경되었습니다`);
   } catch (e) { showToast("상태 변경 실패: " + e.message, "error"); }
 }
+
+// ── Resolve Modal ─────────────────────────────────────────────────────────────
+let _resolveOpt = null;
+
+function openResolveModal() {
+  if (!state.selectedThreat) return;
+  _resolveOpt = null;
+  ["dismiss","archive"].forEach(o => {
+    document.getElementById(`db-opt-${o}`).style.borderColor = "transparent";
+    document.getElementById(`db-opt-${o}`).style.background = "rgba(0,0,0,.03)";
+    document.getElementById(`db-dot-${o}`).style.background = "transparent";
+    document.getElementById(`db-dot-${o}`).style.borderColor = "#d1d5db";
+  });
+  document.getElementById("db-archive-form").style.display = "none";
+  document.getElementById("db-action-taken").value = "";
+  document.getElementById("db-resolution-note").value = "";
+  document.getElementById("db-btn-confirm").disabled = true;
+  document.getElementById("db-btn-confirm").style.opacity = "0.5";
+  document.getElementById("db-resolve-modal").style.display = "flex";
+}
+
+window.dbCloseResolveModal = function() { document.getElementById("db-resolve-modal").style.display = "none"; };
+
+window.dbSelectResolveOpt = function(opt) {
+  _resolveOpt = opt;
+  const colors = { dismiss:"#64748b", archive:"#1D9E75" };
+  ["dismiss","archive"].forEach(o => {
+    const sel = o === opt;
+    document.getElementById(`db-opt-${o}`).style.borderColor = sel ? colors[o] : "transparent";
+    document.getElementById(`db-opt-${o}`).style.background = sel ? (o==="dismiss"?"rgba(100,116,139,.06)":"rgba(29,158,117,.06)") : "rgba(0,0,0,.03)";
+    document.getElementById(`db-dot-${o}`).style.background = sel ? colors[o] : "transparent";
+    document.getElementById(`db-dot-${o}`).style.borderColor = sel ? colors[o] : "#d1d5db";
+  });
+  document.getElementById("db-archive-form").style.display = opt === "archive" ? "block" : "none";
+  document.getElementById("db-btn-confirm").disabled = false;
+  document.getElementById("db-btn-confirm").style.opacity = "1";
+};
+
+window.dbConfirmResolve = async function() {
+  if (!_resolveOpt || !state.selectedThreat) return;
+  const id = state.selectedThreat.id;
+  const btn = document.getElementById("db-btn-confirm");
+  btn.disabled = true; btn.textContent = "처리 중...";
+  try {
+    if (_resolveOpt === "dismiss") {
+      await fetch(`/api/dashboard/threats/${id}/resolve`, { method:"PATCH", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ resolution_type:"false_positive", action_taken:"", resolution_note:"" }) });
+      dbCloseResolveModal(); closePanel();
+      showToast("경미 처리 완료 — 재스캔 차단됩니다.");
+    } else {
+      const actionTaken = document.getElementById("db-action-taken").value.trim();
+      if (!actionTaken) { showToast("조치 내용을 입력해주세요.", "error"); btn.disabled=false; btn.textContent="처리하기"; return; }
+      await fetch(`/api/dashboard/threats/${id}/resolve`, { method:"PATCH", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ resolution_type:"real_resolved", action_taken: actionTaken, resolution_note: document.getElementById("db-resolution-note").value.trim(), resolution_method:"직접 처리" }) });
+      dbCloseResolveModal(); closePanel();
+      showToast("조치 완료 기록 — 보고서에서 확인하세요.");
+    }
+    await loadThreats();
+  } catch(e) { showToast("처리 실패","error"); btn.disabled=false; btn.textContent="처리하기"; }
+};
 
 // ── Filters ───────────────────────────────────────────────────────────────────
 function setFilter(severity) {

@@ -7,6 +7,7 @@ from backend.services.analyzers.keyword_database import (
     KEYWORD_DATABASE,
     NEGATIVE_KEYWORD_LIST,
     CRITICAL_BYPASS,
+    BRAND_DEFENDER_PATTERNS,
 )
 
 _PASS_THRESHOLD = 0.05  # 이 점수 이상이면 L2로 전달
@@ -285,12 +286,23 @@ async def l1_filter_with_profile(
     # 7. 기존 KEYWORD_DATABASE 체크
     kw_result = _check_keyword_database(content, account_name, brand_mentioned)
 
+    # 7b. 브랜드 방어자 맥락 감지 — "비방 세력을 처벌해야" 류의 글
+    # brand_mentioned=True일 때만 의미 있음 (브랜드가 언급된 상태에서 방어 패턴이 나타나야)
+    defender_context = brand_mentioned and _any_match(text_lower, BRAND_DEFENDER_PATTERNS)
+    if defender_context:
+        # 방어자 맥락이면 위협 점수를 75% 감소 (NEGATIVE_FILTER의 40%보다 강한 감쇠)
+        kw_result = dict(kw_result)
+        kw_result["score"] = round(kw_result["score"] * 0.25, 4)
+        kw_result["negative_filter_applied"] = True
+
     # 8. 업종 임계값 (기본 0.15, 업종 multiplier로 낮아짐)
     industry_threshold = 0.08 / profile.industry_config["risk_multiplier"]
 
     # 9. 최종 스코어 종합
     # brand_mentioned=True 포스트는 최소 industry_threshold 보장 → L2에서 실제 판단
-    brand_base = industry_threshold if brand_mentioned else 0.0
+    # 단, defender_context=True인 경우에는 brand_base 바닥을 적용하지 않음
+    # (방어자 글에 키워드 기반 점수가 75% 감소했음에도 brand_base 때문에 low로 분류되는 오분류 방지)
+    brand_base = (industry_threshold if (brand_mentioned and not defender_context) else 0.0)
     total_score = max(
         kw_result["score"],
         impersonation_score,
@@ -321,8 +333,10 @@ async def l1_filter_with_profile(
         severity = None
 
     # 브랜드 언급됐지만 위협 패턴 미매칭 → "feedback" 등급으로 저장
+    # 방어자 맥락(defender_context=True)인 글도 점수가 낮으면 여기서 feedback으로 분류됨
     # (피드백 탭에서 표시 — 위협 탭에는 안 나옴)
-    if brand_mentioned and total_score < industry_threshold:
+    # total_score == industry_threshold인 경우는 brand_base만 있는 순수 긍정 글이므로 feedback으로 분류
+    if brand_mentioned and total_score <= industry_threshold:
         return {
             "pass": True,
             "score": total_score,
@@ -336,6 +350,7 @@ async def l1_filter_with_profile(
             "impersonation_score": impersonation_score,
             "industry_flags": industry_flags,
             "category": category,
+            "defender_context": defender_context,
         }
 
     return {
@@ -351,4 +366,5 @@ async def l1_filter_with_profile(
         "impersonation_score": impersonation_score,
         "industry_flags": industry_flags,
         "category": category,
+        "defender_context": defender_context,
     }

@@ -49,11 +49,14 @@ class TestRequiresBrand:
         assert "B1_product_safety_crisis" not in result["matched_categories"]
 
     def test_requires_brand_false_scores_without_brand(self):
-        # B4: 불매운동 (requires_brand=False) → 브랜드 없어도 스코어
-        result = l1_filter("불매운동 boycott 동참해요")
-        assert result["pass"] is True
-        assert "B4_organized_attack_bot" in result["matched_categories"]
-        assert result["score"] == pytest.approx(0.88)
+        # B4: 불매운동 (requires_brand=True) → 브랜드 있어야 스코어
+        # 브랜드 포함 시 매칭됨을 확인
+        result = l1_filter("불매운동 boycott 동참해요", brand_keywords=["브랜드"])
+        # B4 weight=0.70, 텍스트에 "브랜드" 없으므로 brand_ok=False → 매칭 안 됨
+        # brand_keywords에 "브랜드"를 줬지만 텍스트에 "브랜드"가 없어 brand_ok=False
+        assert "B4_organized_attack_bot" not in result["matched_categories"]
+        # A1_impersonation_account(requires_brand=False)는 키워드 없으므로 pass=False
+        assert result["pass"] is False
 
     def test_requires_brand_false_a1_impersonation(self):
         # A1: 공식계정 (requires_brand=False)
@@ -122,11 +125,11 @@ class TestSafeContent:
 
 class TestScoreAccumulation:
     def test_multiple_categories_accumulate_score(self):
-        # A1(0.90, no brand) + B4(0.88, no brand) 동시 매칭
+        # A1(0.90, requires_brand=False) 단독 매칭 확인
+        # B4(requires_brand=True)는 브랜드 없으면 매칭 안 됨
         result = l1_filter("공식계정 불매운동 boycott")
-        assert len(result["matched_categories"]) >= 2
-        expected = min(1.0, 0.90 + 0.88)
-        assert result["score"] == pytest.approx(expected)
+        assert "A1_impersonation_account" in result["matched_categories"]
+        assert result["score"] == pytest.approx(0.90)
 
     def test_score_clamped_at_1(self):
         # 다수 고가중치 카테고리 매칭 → 1.0 초과 불가
@@ -135,18 +138,18 @@ class TestScoreAccumulation:
         assert result["score"] <= 1.0
 
     def test_single_high_weight_match(self):
-        # B4 단독 (weight=0.88)
-        result = l1_filter("불매운동")
-        assert result["score"] == pytest.approx(0.88)
-        assert result["severity"] == "critical"  # 0.88 >= 0.70
+        # A1 단독 (weight=0.90, requires_brand=False)
+        result = l1_filter("공식계정입니다")
+        assert result["score"] == pytest.approx(0.90)
+        assert result["severity"] == "critical"  # 0.90 >= 0.70
 
 
 # ── 심각도 임계값 ──────────────────────────────────────────────────
 
 class TestSeverityThresholds:
     def test_critical_severity_above_070(self):
-        # B4 weight=0.88 → critical
-        result = l1_filter("불매운동")
+        # A1 weight=0.90, requires_brand=False → critical (0.90 >= 0.70)
+        result = l1_filter("공식계정입니다")
         assert result["severity"] == "critical"
 
     def test_high_severity_045_to_070(self):

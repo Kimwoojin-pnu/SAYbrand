@@ -208,11 +208,37 @@ async def generate_pdf_report(
     try:
         from reportlab.lib import colors
         from reportlab.lib.pagesizes import A4
-        from reportlab.lib.styles import getSampleStyleSheet
-        from reportlab.lib.units import cm, mm
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import mm
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
         from reportlab.platypus import (
             HRFlowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
         )
+
+        # ── 한글 폰트 등록 (맑은 고딕 우선, 없으면 나눔고딕, 없으면 Helvetica) ──
+        _FONT_CANDIDATES = [
+            ("C:/Windows/Fonts/malgun.ttf",   "C:/Windows/Fonts/malgunbd.ttf"),   # Windows 맑은 고딕
+            ("C:/Windows/Fonts/NanumGothic.ttf", "C:/Windows/Fonts/NanumGothicBold.ttf"),
+            ("/usr/share/fonts/truetype/nanum/NanumGothic.ttf",
+             "/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf"),               # Linux
+        ]
+        KR = "Helvetica"
+        KR_BOLD = "Helvetica-Bold"
+        for reg_path, bold_path in _FONT_CANDIDATES:
+            try:
+                import os
+                if os.path.exists(reg_path):
+                    pdfmetrics.registerFont(TTFont("KoreanFont", reg_path))
+                    KR = "KoreanFont"
+                    if os.path.exists(bold_path):
+                        pdfmetrics.registerFont(TTFont("KoreanFontBold", bold_path))
+                        KR_BOLD = "KoreanFontBold"
+                    else:
+                        KR_BOLD = KR
+                    break
+            except Exception:
+                continue
 
         NAVY = colors.HexColor("#0c1428")
         BLUE = colors.HexColor("#1d5fa8")
@@ -224,20 +250,27 @@ async def generate_pdf_report(
         doc = SimpleDocTemplate(buf, pagesize=A4,
                                 leftMargin=20*mm, rightMargin=20*mm,
                                 topMargin=20*mm, bottomMargin=20*mm)
-        styles = getSampleStyleSheet()
+
+        # 한글 폰트 적용된 스타일
+        base = getSampleStyleSheet()
+        ST_NORMAL  = ParagraphStyle("KrNormal",  fontName=KR,      fontSize=10, leading=15)
+        ST_SMALL   = ParagraphStyle("KrSmall",   fontName=KR,      fontSize=9,  leading=13, textColor=colors.HexColor("#555555"))
+        ST_TITLE   = ParagraphStyle("KrTitle",   fontName=KR_BOLD, fontSize=18, leading=24, spaceAfter=4)
+        ST_H2      = ParagraphStyle("KrH2",      fontName=KR_BOLD, fontSize=13, leading=18, spaceBefore=6, spaceAfter=4)
+        ST_FOOTER  = ParagraphStyle("KrFooter",  fontName=KR,      fontSize=8,  leading=12, textColor=colors.grey)
+
         story = []
 
-        story.append(Paragraph(
-            f'<font color="#1d5fa8"><b>SAYbrand</b></font> 브랜드 보호 서비스',
-            styles["Normal"]
-        ))
-        story.append(Paragraph(data["label"], styles["Title"]))
+        # 헤더
+        story.append(Paragraph("SAYbrand 브랜드 보호 서비스", ST_NORMAL))
+        story.append(Paragraph(data["label"], ST_TITLE))
         story.append(Paragraph(
             f"기간: {data['period']}   생성: {data['generated_at'][:10]}",
-            styles["Normal"]
+            ST_SMALL
         ))
         story.append(Spacer(1, 8*mm))
 
+        # KPI 요약 테이블
         s = data["summary"]
         kpi_data = [
             ["항목", "수치"],
@@ -248,15 +281,18 @@ async def generate_pdf_report(
             ["오탐 처리", str(s["false_positive_count"])],
             ["브랜드 이미지 점수", f"{s['brand_score']}/100"],
         ]
-        kpi_tbl = Table(kpi_data, colWidths=[100*mm, 70*mm])
+        kpi_tbl = Table(kpi_data, colWidths=[110*mm, 60*mm])
         kpi_tbl.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), NAVY),
             ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-            ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+            ("FONTNAME", (0, 0), (-1, -1), KR),
+            ("FONTNAME", (0, 0), (-1, 0), KR_BOLD),
             ("FONTSIZE", (0, 0), (-1, -1), 10),
             ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
             ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, GRAY]),
             ("ALIGN", (1, 0), (1, -1), "CENTER"),
+            ("TOPPADDING", (0, 0), (-1, -1), 5),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
         ]))
         story.append(kpi_tbl)
         story.append(Spacer(1, 8*mm))
@@ -264,20 +300,25 @@ async def generate_pdf_report(
         # 심각도별 분포
         by_s = data.get("by_severity", {})
         if any(by_s.values()):
-            story.append(Paragraph("<b>심각도별 분포</b>", styles["Heading2"]))
+            story.append(Paragraph("심각도별 분포", ST_H2))
+            SEV_LABEL = {"critical": "위험 (Critical)", "high": "높음 (High)",
+                         "medium": "중간 (Medium)", "low": "낮음 (Low)"}
             sev_rows = [["심각도", "건수"]]
             for sev in ("critical", "high", "medium", "low"):
                 if by_s.get(sev, 0):
-                    sev_rows.append([sev.upper(), str(by_s[sev])])
+                    sev_rows.append([SEV_LABEL.get(sev, sev), str(by_s[sev])])
             if len(sev_rows) > 1:
-                sev_tbl = Table(sev_rows, colWidths=[100*mm, 70*mm])
+                sev_tbl = Table(sev_rows, colWidths=[110*mm, 60*mm])
                 sev_tbl.setStyle(TableStyle([
                     ("BACKGROUND", (0, 0), (-1, 0), BLUE),
                     ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                    ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+                    ("FONTNAME", (0, 0), (-1, -1), KR),
+                    ("FONTNAME", (0, 0), (-1, 0), KR_BOLD),
                     ("FONTSIZE", (0, 0), (-1, -1), 10),
                     ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
                     ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, GRAY]),
+                    ("TOPPADDING", (0, 0), (-1, -1), 5),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
                 ]))
                 story.append(sev_tbl)
                 story.append(Spacer(1, 6*mm))
@@ -285,38 +326,43 @@ async def generate_pdf_report(
         # 미해결 위협
         unresolved = data.get("unresolved_threats", [])
         if unresolved:
-            story.append(Paragraph("<b>미해결 위협 (우선순위 순)</b>", styles["Heading2"]))
+            story.append(Paragraph("미해결 위협 (우선순위 순)", ST_H2))
+            SEV_COLOR = {"critical": "#E24B4A", "high": "#BA7517", "medium": "#185FA5", "low": "#1D9E75"}
             for th in unresolved:
-                sev_color = "#E24B4A" if th["severity"] in ("critical", "high") else "#BA7517"
+                sc = SEV_COLOR.get(th["severity"], "#555555")
+                preview = (th.get("content_preview") or "")[:80]
                 story.append(Paragraph(
-                    f'<font color="{sev_color}">■</font> [{th["platform"]}] {th["content_preview"][:80]}',
-                    styles["Normal"]
+                    f'[{th["platform"]}] {preview}',
+                    ParagraphStyle("ThreatRow", fontName=KR, fontSize=9, leading=13,
+                                   leftIndent=6, borderPad=3,
+                                   borderColor=colors.HexColor(sc), borderWidth=0,
+                                   borderLeftWidth=3)
                 ))
                 if th.get("source_url"):
                     story.append(Paragraph(
-                        f'<link href="{th["source_url"]}">→ 원본 보기</link>',
-                        styles["Normal"]
+                        f'원본: {th["source_url"]}',
+                        ST_SMALL
                     ))
                 story.append(Spacer(1, 2*mm))
             story.append(Spacer(1, 4*mm))
 
-        # 해결된 실제 위협
+        # 해결 완료 위협
         resolved_threats = data.get("resolved_threats", [])
         if resolved_threats:
-            story.append(Paragraph("<b>해결 완료된 위협</b>", styles["Heading2"]))
+            story.append(Paragraph("해결 완료된 위협", ST_H2))
             for t in resolved_threats:
+                note = f" — {t['note']}" if t.get("note") else ""
                 story.append(Paragraph(
-                    f'[{t["platform"]}] 해결방법: {t["resolution_method"] or "기타"}'
-                    + (f' — {t["note"]}' if t.get("note") else ""),
-                    styles["Normal"]
+                    f"[{t['platform']}] 해결방법: {t['resolution_method'] or '기타'}{note}",
+                    ST_NORMAL
                 ))
             story.append(Spacer(1, 4*mm))
 
         story.append(Spacer(1, 10*mm))
         story.append(HRFlowable(width="100%", thickness=0.5, color=colors.grey))
         story.append(Paragraph(
-            "SAYbrand AI 브랜드 보호 서비스 | 자동 생성 보고서",
-            styles["Normal"]
+            "SAYbrand AI 브랜드 보호 서비스  |  자동 생성 보고서",
+            ST_FOOTER
         ))
 
         doc.build(story)

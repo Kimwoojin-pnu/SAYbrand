@@ -285,6 +285,31 @@ body { font-family: 'NanumSquare', 'Noto Sans KR', sans-serif; }
   50%       { box-shadow: 0 0 0 6px rgba(226,75,74,0); }
 }
 
+/* ── Resolve modal dark mode (threats / dashboard / actions 공통) ── */
+[data-theme="dark"] #resolve-modal > div,
+[data-theme="dark"] #db-resolve-modal > div,
+[data-theme="dark"] #ac-resolve-modal > div {
+  background: #1c2128 !important;
+}
+[data-theme="dark"] #resolve-modal textarea,
+[data-theme="dark"] #resolve-modal input[type="text"],
+[data-theme="dark"] #db-resolve-modal textarea,
+[data-theme="dark"] #db-resolve-modal input[type="text"],
+[data-theme="dark"] #ac-resolve-modal textarea,
+[data-theme="dark"] #ac-resolve-modal input[type="text"] {
+  background: #21262d !important;
+  color: #e6edf3 !important;
+  border-color: rgba(255,255,255,0.12) !important;
+}
+[data-theme="dark"] #resolve-modal #opt-dismiss,
+[data-theme="dark"] #resolve-modal #opt-archive,
+[data-theme="dark"] #db-resolve-modal #db-opt-dismiss,
+[data-theme="dark"] #db-resolve-modal #db-opt-archive,
+[data-theme="dark"] #ac-resolve-modal #ac-opt-dismiss,
+[data-theme="dark"] #ac-resolve-modal #ac-opt-archive {
+  background: rgba(255,255,255,0.04) !important;
+}
+
 /* ── Invite code button ───────────────────────────────────────────── */
 .btn-invite-code {
   border: 1.5px solid rgba(29,95,168,0.5);
