@@ -319,23 +319,31 @@
         <!-- 초대코드 발급 -->
         <div style="padding:14px 20px;border-bottom:1px solid rgba(0,0,0,.06);">
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-            <select id="invite-role" style="padding:6px 10px;border-radius:5px;border:1px solid rgba(0,0,0,.12);font-size:12px;font-family:'NanumSquare',sans-serif;background:#fff;cursor:pointer;">
-              <option value="member">Member</option>
-              <option value="admin">Admin</option>
-              <option value="viewer">Viewer (한도 미포함)</option>
-            </select>
             <select id="invite-expires" style="padding:6px 10px;border-radius:5px;border:1px solid rgba(0,0,0,.12);font-size:12px;font-family:'NanumSquare',sans-serif;background:#fff;">
               <option value="7">7일 유효</option>
               <option value="14">14일 유효</option>
               <option value="30">30일 유효</option>
             </select>
             <button id="btn-gen-code" style="padding:6px 14px;border-radius:5px;background:#0c1428;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">초대코드 발급</button>
-            <!-- 코드 발급 후 버튼 옆에 바로 표시 -->
-            <div id="code-display" style="display:none;align-items:center;gap:8px;background:rgba(26,110,248,0.07);border:1px solid rgba(26,110,248,0.2);border-radius:6px;padding:5px 12px;">
-              <span id="code-value" style="font-size:15px;font-family:'JetBrains Mono',monospace;font-weight:700;color:#1a6ef8;letter-spacing:0.12em;"></span>
-              <span id="code-expires" style="font-size:11px;color:rgba(12,20,40,.4);"></span>
-              <button onclick="copyCode()" style="padding:3px 9px;border-radius:4px;border:1px solid rgba(26,110,248,0.3);background:transparent;font-size:11px;color:#1a6ef8;cursor:pointer;font-family:'NanumSquare',sans-serif;">복사</button>
+          </div>
+          <!-- 3개 코드 한번에 표시 -->
+          <div id="code-display" style="display:none;flex-direction:column;gap:6px;margin-top:12px;">
+            <div style="display:flex;align-items:center;gap:8px;background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.2);border-radius:6px;padding:7px 12px;">
+              <span style="font-size:10px;font-weight:700;color:#7c3aed;min-width:48px;">Admin</span>
+              <span id="code-admin" style="flex:1;font-size:13px;font-family:'JetBrains Mono',monospace;font-weight:700;color:#7c3aed;letter-spacing:0.1em;"></span>
+              <button onclick="copyCodeVal('code-admin')" style="padding:3px 9px;border-radius:4px;border:1px solid rgba(124,58,237,0.3);background:transparent;font-size:11px;color:#7c3aed;cursor:pointer;font-family:'NanumSquare',sans-serif;">복사</button>
             </div>
+            <div style="display:flex;align-items:center;gap:8px;background:rgba(26,110,248,0.06);border:1px solid rgba(26,110,248,0.2);border-radius:6px;padding:7px 12px;">
+              <span style="font-size:10px;font-weight:700;color:#1a6ef8;min-width:48px;">Member</span>
+              <span id="code-member" style="flex:1;font-size:13px;font-family:'JetBrains Mono',monospace;font-weight:700;color:#1a6ef8;letter-spacing:0.1em;"></span>
+              <button onclick="copyCodeVal('code-member')" style="padding:3px 9px;border-radius:4px;border:1px solid rgba(26,110,248,0.3);background:transparent;font-size:11px;color:#1a6ef8;cursor:pointer;font-family:'NanumSquare',sans-serif;">복사</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;background:rgba(107,114,128,0.06);border:1px solid rgba(107,114,128,0.2);border-radius:6px;padding:7px 12px;">
+              <span style="font-size:10px;font-weight:700;color:#6b7280;min-width:48px;">Viewer</span>
+              <span id="code-viewer" style="flex:1;font-size:13px;font-family:'JetBrains Mono',monospace;font-weight:700;color:#6b7280;letter-spacing:0.1em;"></span>
+              <button onclick="copyCodeVal('code-viewer')" style="padding:3px 9px;border-radius:4px;border:1px solid rgba(107,114,128,0.3);background:transparent;font-size:11px;color:#6b7280;cursor:pointer;font-family:'NanumSquare',sans-serif;">복사</button>
+            </div>
+            <p id="code-expires" style="font-size:11px;color:rgba(12,20,40,.4);margin:2px 0 0;padding-left:2px;"></p>
           </div>
         </div>
 
@@ -908,8 +916,14 @@ async function renderMembers(orgId) {
       pendingSection.style.display = 'none';
     }
 
-    document.getElementById('member-list').innerHTML = active.length ? active.map(m => `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.04);">
+    document.getElementById('member-list').innerHTML = active.length ? active.map(m => {
+      const canChange = (myRole === 'owner' || myRole === 'admin') && m.role !== 'owner';
+      const roleOpts = (myRole === 'owner' ? ['admin','member','viewer'] : ['member','viewer'])
+        .map(r => `<option value="${r}"${m.role===r?' selected':''}>${ROLE_KR[r]||r}</option>`).join('');
+      const roleCell = canChange
+        ? `<select onchange="changeRole(${m.user_id},this.value)" style="padding:2px 8px;border-radius:4px;border:1px solid rgba(0,0,0,.12);font-size:10px;font-weight:700;color:${ROLE_COLOR[m.role]||'#0c1428'};background:transparent;cursor:pointer;font-family:'NanumSquare',sans-serif;">${roleOpts}</select>`
+        : `<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(26,110,248,0.08);color:${ROLE_COLOR[m.role]||'#0c1428'};">${ROLE_KR[m.role]||m.role}</span>`;
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.04);">
         <div style="display:flex;align-items:center;gap:8px;">
           <div style="width:28px;height:28px;border-radius:50%;background:rgba(26,110,248,0.1);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#1a6ef8;">${(m.name||'?')[0].toUpperCase()}</div>
           <div>
@@ -918,12 +932,12 @@ async function renderMembers(orgId) {
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(26,110,248,0.08);color:${ROLE_COLOR[m.role]||'#0c1428'};">${ROLE_KR[m.role]||m.role}</span>
-          ${m.role !== 'owner' && myRole === 'owner' ? `<button onclick="transferOwnership(${m.user_id},'${m.name.replace(/'/g,'\\\'')}')" style="padding:3px 8px;border-radius:4px;border:1px solid #1a6ef8;background:transparent;font-size:10px;color:#1a6ef8;cursor:pointer;font-family:'NanumSquare',sans-serif;">소유권 이전</button>` : ''}
-          ${m.role !== 'owner' ? `<button onclick="removeMember(${m.user_id})" style="padding:3px 8px;border-radius:4px;border:1px solid rgba(0,0,0,.1);background:transparent;font-size:10px;color:rgba(12,20,40,.4);cursor:pointer;font-family:'NanumSquare',sans-serif;">강퇴</button>` : ''}
+          ${roleCell}
+          ${m.role !== 'owner' && myRole === 'owner' ? `<button onclick="transferOwnership(${m.user_id},'${m.name.replace(/'/g,String.fromCharCode(39))}')" style="padding:3px 8px;border-radius:4px;border:1px solid #1a6ef8;background:transparent;font-size:10px;color:#1a6ef8;cursor:pointer;font-family:'NanumSquare',sans-serif;">소유권 이전</button>` : ''}
+          ${m.role !== 'owner' && (myRole === 'owner' || myRole === 'admin') ? `<button onclick="removeMember(${m.user_id})" style="padding:3px 8px;border-radius:4px;border:1px solid rgba(0,0,0,.1);background:transparent;font-size:10px;color:rgba(12,20,40,.4);cursor:pointer;font-family:'NanumSquare',sans-serif;">강퇴</button>` : ''}
         </div>
-      </div>
-    `).join('') : '<p style="font-size:12px;color:rgba(12,20,40,.35);text-align:center;padding:12px 0;">활성 멤버가 없습니다</p>';
+      </div>`;
+    }).join('') : '<p style="font-size:12px;color:rgba(12,20,40,.35);text-align:center;padding:12px 0;">활성 멤버가 없습니다</p>';
   } catch (e) {
     document.getElementById('member-list').innerHTML =
       `<p style="font-size:12px;color:#ef4444;text-align:center;padding:12px 0;">멤버 목록을 불러올 수 없습니다: ${e.message}</p>`;
@@ -933,25 +947,23 @@ async function renderMembers(orgId) {
 document.getElementById('btn-gen-code').addEventListener('click', async () => {
   if (!currentOrgId) { alert('소속된 조직이 없습니다.'); return; }
   const btn = document.getElementById('btn-gen-code');
-  const role = document.getElementById('invite-role').value;
   const expires = document.getElementById('invite-expires').value;
   btn.disabled = true;
   btn.textContent = '발급 중...';
   try {
-    const res = await fetch(`/api/orgs/${currentOrgId}/invite-codes?role_to_assign=${role}&expires_days=${expires}`, { method: 'POST' });
-    if (res.status === 402) {
-      const data = await res.json();
-      showUpgradeModal(data.detail?.message || '플랜 업그레이드가 필요합니다.');
-      return;
-    }
-    if (!res.ok) {
-      const data = await res.json();
-      alert(data.detail || '코드 발급 실패');
-      return;
-    }
-    const data = await res.json();
-    document.getElementById('code-value').textContent = data.code;
-    document.getElementById('code-expires').textContent = `${expires}일 유효`;
+    const roles = ['admin', 'member', 'viewer'];
+    const responses = await Promise.all(
+      roles.map(role => fetch(`/api/orgs/${currentOrgId}/invite-codes?role_to_assign=${role}&expires_days=${expires}`, { method: 'POST' }))
+    );
+    const bodies = await Promise.all(responses.map(r => r.json()));
+    const err402 = responses.findIndex(r => r.status === 402);
+    if (err402 !== -1) { showUpgradeModal(bodies[err402].detail?.message || '플랜 업그레이드가 필요합니다.'); return; }
+    const errOther = responses.findIndex(r => !r.ok);
+    if (errOther !== -1) { alert(bodies[errOther].detail || '코드 발급 실패'); return; }
+    document.getElementById('code-admin').textContent  = bodies[0].code;
+    document.getElementById('code-member').textContent = bodies[1].code;
+    document.getElementById('code-viewer').textContent = bodies[2].code;
+    document.getElementById('code-expires').textContent = `유효기간 ${expires}일`;
     document.getElementById('code-display').style.display = 'flex';
   } catch (e) { alert('코드 발급 실패: ' + e.message); }
   finally { btn.disabled = false; btn.textContent = '초대코드 발급'; }
@@ -989,8 +1001,26 @@ async function transferOwnership(userId, userName) {
   } catch (e) {}
 }
 
-function copyCode() {
-  const code = document.getElementById('code-value').textContent;
+async function changeRole(userId, newRole) {
+  if (!currentOrgId) return;
+  try {
+    const res = await fetch(`/api/orgs/${currentOrgId}/members/${userId}/role`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: newRole }),
+    });
+    if (res.ok) {
+      await renderMembers(currentOrgId);
+    } else {
+      const d = await res.json();
+      alert(d.detail || '역할 변경 실패');
+      await renderMembers(currentOrgId);
+    }
+  } catch (e) { alert('역할 변경 중 오류가 발생했습니다.'); }
+}
+
+function copyCodeVal(elemId) {
+  const code = document.getElementById(elemId).textContent;
   navigator.clipboard.writeText(code).then(() => alert(`코드 "${code}" 복사됨`));
 }
 
