@@ -198,6 +198,7 @@ async def get_threats(
     request: Request,
     severity: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
+    sort_by: str = Query("date", pattern="^(date|risk)$"),
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=50),
     org: Organization | None = Depends(optional_current_org),
@@ -217,9 +218,10 @@ async def get_threats(
         base = base.where(Threat.status == status)
         count_base = count_base.where(Threat.status == status)
 
+    order = Threat.detected_at.desc() if sort_by == "date" else Threat.risk_score.desc()
     total = (await db.execute(count_base)).scalar()
     items_result = await db.execute(
-        base.order_by(Threat.risk_score.desc(), Threat.detected_at.desc())
+        base.order_by(order, Threat.detected_at.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
     )

@@ -242,6 +242,26 @@ async def run_pipeline(
     if not ai_analysis and l2.get("summary") and l2.get("threat_detected"):
         ai_analysis = l2["summary"]
 
+    # ── L2 없을 때 L1 기반 ai_analysis 폴백 ─────────────────────────
+    if not ai_analysis and cats:
+        _cat_names = {
+            "B5_consumer_complaint_high": "고강도 소비자 불만",
+            "B6_consumer_complaint_mid": "소비자 불만",
+            "B7_fake_news_patterns": "허위정보/루머 패턴",
+            "B8_crisis_escalation": "위기 확산 징후",
+            "B9_competitor_attack": "경쟁사 공격",
+            "B4_organized_attack_bot": "조직적 공격/봇",
+            "B1_product_safety_crisis": "제품 안전 위기",
+            "B2_legal_crisis": "법적 위기",
+            "B3_financial_crisis": "재무 위기",
+            "C1_executive_misconduct": "임직원 비위",
+            "C2_internal_leak": "내부 정보 유출",
+            "KR_community_slang": "커뮤니티 부정 표현",
+            "KR_sns_attack_patterns": "SNS 공격 패턴",
+        }
+        cat_labels = [_cat_names.get(c, c) for c in cats[:3]]
+        ai_analysis = f"[L1 자동 분류] {', '.join(cat_labels)} 패턴 감지."
+
     # ── 업종 기반 최종 severity 재분류 ───────────────────────────────
     # "feedback" 등급은 브랜드 언급은 됐으나 위협 패턴 미매칭 — 재분류 대상 아님
     if severity == "feedback":

@@ -79,6 +79,14 @@
               <button class="status-filter-btn" data-status="resolved">해결됨</button>
             </div>
           </div>
+          <div style="width:1px;height:32px;background:rgba(0,0,0,.08);"></div>
+          <div>
+            <p style="font-size:9px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);margin-bottom:5px;">정렬</p>
+            <div style="display:flex;gap:2px;background:rgba(0,0,0,.04);border-radius:6px;padding:3px;">
+              <button class="sort-btn active" data-sort="date">최신순</button>
+              <button class="sort-btn" data-sort="risk">위험도순</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -189,7 +197,7 @@
 <script type="module">
 import { api } from "/assets/js/api.js";
 import { timeAgo, severityBadge, statusBadge, moduleBadge, platformIcon, scoreColor } from "/assets/js/utils.js";
-const state = { threats:[], total:0, page:1, pageSize:15, filterSeverity:'', filterStatus:'', selected:null };
+const state = { threats:[], total:0, page:1, pageSize:15, filterSeverity:'', filterStatus:'', sortBy:'date', selected:null };
 const TYPE_MAP = { logo_spoof:'로고 사칭', account_impersonation:'계정 사칭', organized_rumor:'조직적 루머', viral_rumor:'바이럴 루머', executive_exposure:'임직원 노출', bot_attack:'봇 공격', reputation_attack:'평판 공격', negative_review_cluster:'부정 리뷰 클러스터', internal_info_leak:'내부 정보 유출', watermark_removal:'워터마크 제거', negative_comment:'부정 댓글', casual_mention:'일반 언급', competitor_mention:'경쟁사 언급', similar_logo:'유사 로고' };
 function showToast(msg, type='success') {
   const wrap=document.getElementById('toast-wrap'); if(!wrap)return;
@@ -220,7 +228,7 @@ function renderThreats(data) {
   document.getElementById('btn-next').disabled=data.page>=tp;
 }
 async function loadThreats() {
-  const data=await api.threats({severity:state.filterSeverity||null,status:state.filterStatus||null,page:state.page,page_size:state.pageSize});
+  const data=await api.threats({severity:state.filterSeverity||null,status:state.filterStatus||null,sort_by:state.sortBy,page:state.page,page_size:state.pageSize});
   renderThreats(data);
 }
 async function loadStats() {
@@ -263,6 +271,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('.status-filter-btn').forEach(b=>b.addEventListener('click',()=>{state.filterStatus=b.dataset.status;state.page=1;document.querySelectorAll('.status-filter-btn').forEach(x=>x.classList.toggle('active',x===b));loadThreats();}));
   document.getElementById('btn-prev').addEventListener('click',()=>{if(state.page>1){state.page--;loadThreats();}});
   document.getElementById('btn-next').addEventListener('click',()=>{const tp=Math.ceil(state.total/state.pageSize);if(state.page<tp){state.page++;loadThreats();}});
+  document.querySelectorAll('.sort-btn').forEach(b=>b.addEventListener('click',()=>{state.sortBy=b.dataset.sort;state.page=1;document.querySelectorAll('.sort-btn').forEach(x=>x.classList.toggle('active',x===b));loadThreats();}));
   document.getElementById('btn-close-panel').addEventListener('click',closePanel);
   document.getElementById('panel-backdrop').addEventListener('click',closePanel);
   document.getElementById('status-active').addEventListener('click',()=>handleStatus('active'));
