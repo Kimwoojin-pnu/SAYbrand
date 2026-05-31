@@ -140,7 +140,13 @@
   </div>
   <div style="flex:1;padding:16px 18px;display:flex;flex-direction:column;gap:14px;font-size:12px;">
     <div><p style="font-weight:300;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.45);margin-bottom:7px;">탐지 내용</p><p id="detail-content" style="color:#0c1428;line-height:1.65;background:rgba(0,0,0,.03);border-radius:6px;padding:10px;"></p></div>
-    <div id="detail-analysis-wrap" style="background:rgba(24,95,165,0.04);border:1px solid rgba(24,95,165,0.12);border-radius:7px;padding:12px;"><p style="font-weight:300;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#185FA5;margin-bottom:7px;">🤖 AI 분석</p><p id="detail-analysis" style="color:#0c1428;line-height:1.65;font-size:11px;"></p></div>
+    <div id="detail-analysis-wrap" style="background:rgba(24,95,165,0.04);border:1px solid rgba(24,95,165,0.12);border-radius:7px;padding:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">
+        <p style="font-weight:300;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#185FA5;margin:0;">🤖 AI 분석</p>
+        <button id="btn-reanalyze" onclick="reanalyze()" style="padding:3px 9px;border-radius:4px;border:1px solid rgba(24,95,165,0.3);background:transparent;color:#185FA5;font-size:10px;font-weight:700;cursor:pointer;font-family:'NanumSquare',sans-serif;">재분석</button>
+      </div>
+      <p id="detail-analysis" style="color:#0c1428;line-height:1.65;font-size:11px;margin:0;"></p>
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
       <div style="background:#f5f6f8;border-radius:7px;padding:10px;"><span style="font-size:9px;font-weight:300;text-transform:uppercase;letter-spacing:.08em;color:rgba(12,20,40,.45);display:block;margin-bottom:3px;">리스크 점수</span><span id="detail-score" style="font-weight:800;font-size:20px;">—</span></div>
       <div style="background:#f5f6f8;border-radius:7px;padding:10px;"><span style="font-size:9px;font-weight:300;text-transform:uppercase;letter-spacing:.08em;color:rgba(12,20,40,.45);display:block;margin-bottom:3px;">AI 신뢰도</span><span id="detail-confidence" style="font-weight:800;font-size:20px;color:#0c1428;">—</span></div>
@@ -249,7 +255,8 @@ window._openThreat = function(id) {
   document.getElementById('detail-confidence').textContent=`${Math.round(t.confidence*100)}%`;
   const bot=document.getElementById('detail-bot'); if(t.bot_probability!=null){const p=Math.round(t.bot_probability*100);bot.textContent=p+'%';bot.style.color=p>=70?'#E24B4A':p>=40?'#BA7517':'#1D9E75';}else{bot.textContent='—';bot.style.color='rgba(12,20,40,.35)';}
   const org=document.getElementById('detail-organized'); if(t.is_organized===true){org.textContent='감지됨';org.style.color='#BA7517';}else if(t.is_organized===false){org.textContent='감지되지 않음';org.style.color='#1D9E75';}else{org.textContent='—';org.style.color='rgba(12,20,40,.35)';}
-  const aw=document.getElementById('detail-analysis-wrap'); if(t.ai_analysis){document.getElementById('detail-analysis').textContent=t.ai_analysis;aw.style.display='';}else{aw.style.display='none';}
+  const aw=document.getElementById('detail-analysis-wrap'); aw.style.display='';
+  document.getElementById('detail-analysis').textContent=t.ai_analysis||'AI 분析 없음 — 재분析 버튼을 눌러주세요.';
   const sw=document.getElementById('detail-suggestion-wrap'); if(t.ai_response_suggestion){document.getElementById('detail-suggestion').textContent=t.ai_response_suggestion;sw.style.display='';}else{sw.style.display='none';}
   const lu=document.getElementById('detail-url'); if(t.source_url){lu.href=t.source_url;lu.style.display='inline-flex';}else{lu.style.display='none';}
   ['active','reviewing','resolved'].forEach(s=>{const b=document.getElementById(`status-${s}`);b.style.opacity=t.status===s?'1':'0.55';b.style.fontWeight=t.status===s?'800':'700';});
@@ -265,6 +272,20 @@ async function handleStatus(s) {
   } catch(e){showToast('상태 변경 실패','error');}
 }
 function closePanel(){document.getElementById('detail-panel').style.transform='translateX(100%)';document.getElementById('panel-backdrop').style.display='none';document.body.style.overflow='';}
+window.reanalyze = async function() {
+  if (!state.selected) return;
+  const btn = document.getElementById('btn-reanalyze');
+  btn.textContent = '분析 중...'; btn.disabled = true;
+  try {
+    const res = await fetch(`/api/dashboard/threats/${state.selected.id}/reanalyze`, {method:'POST'});
+    if (!res.ok) { const e = await res.json(); throw new Error(e.detail || res.status); }
+    const data = await res.json();
+    document.getElementById('detail-analysis').textContent = data.ai_analysis || '분析 결과 없음';
+    state.selected.ai_analysis = data.ai_analysis;
+    showToast(`재분析 완료 (${data.model})`);
+  } catch(e) { showToast('재분析 실패: ' + e.message, 'error'); }
+  finally { btn.textContent = '재분析'; btn.disabled = false; }
+};
 document.addEventListener('DOMContentLoaded',()=>{
   loadStats(); loadThreats();
   document.querySelectorAll('.filter-btn').forEach(b=>b.addEventListener('click',()=>{state.filterSeverity=b.dataset.severity;state.page=1;document.querySelectorAll('.filter-btn').forEach(x=>x.classList.toggle('active',x===b));loadThreats();}));

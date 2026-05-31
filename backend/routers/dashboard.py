@@ -344,6 +344,45 @@ async def resolve_threat(
         return {"id": threat_id, "status": "resolved", "resolution_type": body.resolution_type}
 
 
+@router.post("/threats/{threat_id}/reanalyze")
+async def reanalyze_threat(
+    threat_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+):
+    """L2(Gemini) 재분析 — ai_analysis 갱신"""
+    result = await db.execute(select(Threat).where(Threat.id == threat_id))
+    threat = result.scalar_one_or_none()
+    if not threat:
+        raise HTTPException(status_code=404, detail="Threat not found")
+
+    from backend.services.analyzers.l2_text import call_l2_with_fallback
+    try:
+        l2 = await call_l2_with_fallback(threat.content_preview or "")
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"L2 분析 실패: {e}")
+
+    if l2.get("is_mock"):
+        raise HTTPException(status_code=503, detail="Gemini API 키 없음 또는 할당량 초과 — Mock 반환됨")
+
+    threat.ai_analysis = l2.get("summary") or threat.ai_analysis
+    threat.sentiment = l2.get("sentiment") or threat.sentiment
+    threat.emotion = l2.get("emotion") or threat.emotion
+    threat.sentiment_score = l2.get("sentiment_score") if l2.get("sentiment_score") is not None else threat.sentiment_score
+    threat.is_organized = l2.get("is_organized") if l2.get("is_organized") is not None else threat.is_organized
+    threat.updated_at = datetime.utcnow()
+    await db.commit()
+
+    print(f"[REANALYZE] threat.id={threat_id} summary={threat.ai_analysis[:60] if threat.ai_analysis else None}")
+    return {
+        "id": threat_id,
+        "ai_analysis": threat.ai_analysis,
+        "sentiment": threat.sentiment,
+        "is_organized": threat.is_organized,
+        "model": l2.get("_meta", {}).get("model", "unknown"),
+    }
+
+
 _CATEGORY_TO_THREAT_TYPE: dict[str, str] = {
     "A1_impersonation_account":  "account_impersonation",
     "A2_ceo_impersonation":      "account_impersonation",
