@@ -101,7 +101,7 @@ async def billing_success(
 
     if checkout_id and settings.polar_access_token:
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
+            async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
                 resp = await client.get(
                     f"{settings.polar_server_url}/v1/checkouts/custom/{checkout_id}",
                     headers={"Authorization": f"Bearer {settings.polar_access_token}"},
@@ -166,7 +166,7 @@ async def sync_subscription(
         raise HTTPException(503, "POLAR_ACCESS_TOKEN이 설정되지 않았습니다.")
 
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
             resp = await client.get(
                 f"{settings.polar_server_url}/v1/subscriptions",
                 params={"customer_email": db_user.email, "limit": 20},
