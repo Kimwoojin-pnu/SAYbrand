@@ -83,6 +83,8 @@ class Settings(BaseSettings):
     polar_product_id_pro: str = ""
     polar_checkout_url_starter: str = ""
     polar_checkout_url_pro: str = ""
+    # sandbox-api.polar.sh (sandbox) 또는 api.polar.sh (production)
+    polar_server_url: str = "https://sandbox-api.polar.sh"
 
     # DART
     dart_api_key: str = ""
