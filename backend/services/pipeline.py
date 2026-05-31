@@ -441,6 +441,7 @@ async def run_scan(
     l1_pass = 0
     l1_fail = 0
     errors = 0
+    first_error: str | None = None
 
     pid = profile.profile_id if profile else None
 
@@ -497,6 +498,8 @@ async def run_scan(
                 l1_fail += 1
         except Exception as e:
             errors += 1
+            if not first_error:
+                first_error = f"{type(e).__name__}: {e}"
             print(f"[PIPELINE 오류] {type(e).__name__}: {e}")
             logger.warning("파이프라인 실패 (계속 진행): %s", e)
 
@@ -514,4 +517,5 @@ async def run_scan(
         "errors": errors,
         "new_threats": threats_created,
         "is_mock": mock_count > 0 and len(real_posts) == 0,
+        "first_error": first_error,
     }
