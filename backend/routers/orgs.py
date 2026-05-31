@@ -185,6 +185,36 @@ async def switch_org(
     return {"success": True}
 
 
+@router.get("/{org_id}/invite-codes")
+async def list_invite_codes(
+    org_id: int,
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """유효한 초대코드 목록 조회 (owner/admin 전용)"""
+    await _require_role(org_id, user["id"], ["owner", "admin"], db)
+    result = await db.execute(
+        select(InviteCode)
+        .where(
+            InviteCode.org_id == org_id,
+            InviteCode.is_active == True,
+            InviteCode.expires_at > datetime.utcnow(),
+        )
+        .order_by(InviteCode.created_at.desc())
+    )
+    codes = result.scalars().all()
+    return [
+        {
+            "code": c.code,
+            "role_to_assign": c.role_to_assign,
+            "expires_at": c.expires_at,
+            "uses_count": c.uses_count,
+            "max_uses": c.max_uses,
+        }
+        for c in codes
+    ]
+
+
 @router.post("/{org_id}/invite-codes")
 async def issue_invite_code(
     org_id: int,

@@ -326,7 +326,7 @@
             </select>
             <button id="btn-gen-code" style="padding:6px 14px;border-radius:5px;background:#0c1428;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">초대코드 발급</button>
           </div>
-          <!-- 3개 코드 한번에 표시 -->
+          <!-- 신규 발급된 3개 코드 -->
           <div id="code-display" style="display:none;flex-direction:column;gap:6px;margin-top:12px;">
             <div style="display:flex;align-items:center;gap:8px;background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.2);border-radius:6px;padding:7px 12px;">
               <span style="font-size:10px;font-weight:700;color:#7c3aed;min-width:48px;">Admin</span>
@@ -344,6 +344,10 @@
               <button onclick="copyCodeVal('code-viewer')" style="padding:3px 9px;border-radius:4px;border:1px solid rgba(107,114,128,0.3);background:transparent;font-size:11px;color:#6b7280;cursor:pointer;font-family:'NanumSquare',sans-serif;">복사</button>
             </div>
             <p id="code-expires" style="font-size:11px;color:rgba(12,20,40,.4);margin:2px 0 0;padding-left:2px;"></p>
+          </div>
+          <!-- 페이지 로드 시 DB에서 불러온 기존 유효 코드 목록 -->
+          <div id="existing-codes-list" style="display:none;flex-direction:column;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(0,0,0,.06);">
+            <p style="font-size:11px;font-weight:700;color:rgba(12,20,40,.4);margin:0 0 4px;">유효한 초대코드</p>
           </div>
         </div>
 
@@ -876,10 +880,41 @@ async function loadTeam() {
     }
 
     await renderMembers(org.id);
+    await loadExistingCodes();
   } catch (e) {
     document.getElementById('member-list').innerHTML =
       '<p style="font-size:12px;color:#ef4444;text-align:center;padding:12px 0;">팀 정보를 불러오는 중 오류가 발생했습니다.</p>';
   }
+}
+
+const _ROLE_CODE_STYLE = {
+  admin:  { color: '#7c3aed', bg: 'rgba(124,58,237,0.06)', border: 'rgba(124,58,237,0.2)' },
+  member: { color: '#1a6ef8', bg: 'rgba(26,110,248,0.06)', border: 'rgba(26,110,248,0.2)' },
+  viewer: { color: '#6b7280', bg: 'rgba(107,114,128,0.06)', border: 'rgba(107,114,128,0.2)' },
+};
+
+async function loadExistingCodes() {
+  if (!currentOrgId || (myRole !== 'owner' && myRole !== 'admin')) return;
+  const container = document.getElementById('existing-codes-list');
+  try {
+    const codes = await fetch(`/api/orgs/${currentOrgId}/invite-codes`).then(r => r.ok ? r.json() : []);
+    if (!codes.length) { container.style.display = 'none'; return; }
+    const rows = codes.map(c => {
+      const s = _ROLE_CODE_STYLE[c.role_to_assign] || _ROLE_CODE_STYLE.member;
+      const label = c.role_to_assign.charAt(0).toUpperCase() + c.role_to_assign.slice(1);
+      const exp = new Date(c.expires_at).toLocaleDateString('ko-KR');
+      return `<div style="display:flex;align-items:center;gap:8px;background:${s.bg};border:1px solid ${s.border};border-radius:6px;padding:7px 12px;">
+        <span style="font-size:10px;font-weight:700;color:${s.color};min-width:48px;">${label}</span>
+        <span style="flex:1;font-size:13px;font-family:'JetBrains Mono',monospace;font-weight:700;color:${s.color};letter-spacing:0.1em;">${c.code}</span>
+        <span style="font-size:10px;color:rgba(12,20,40,.35);white-space:nowrap;">~${exp}</span>
+        <button onclick="navigator.clipboard.writeText('${c.code}').then(()=>alert('코드 \"${c.code}\" 복사됨'))" style="padding:3px 9px;border-radius:4px;border:1px solid ${s.border};background:transparent;font-size:11px;color:${s.color};cursor:pointer;font-family:'NanumSquare',sans-serif;">복사</button>
+      </div>`;
+    }).join('');
+    container.innerHTML = '<p style="font-size:11px;font-weight:700;color:rgba(12,20,40,.4);margin:0 0 4px;">유효한 초대코드</p>' + rows;
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
+    container.style.gap = '6px';
+  } catch (_) { container.style.display = 'none'; }
 }
 
 async function renderMembers(orgId) {
@@ -965,6 +1000,7 @@ document.getElementById('btn-gen-code').addEventListener('click', async () => {
     document.getElementById('code-viewer').textContent = bodies[2].code;
     document.getElementById('code-expires').textContent = `유효기간 ${expires}일`;
     document.getElementById('code-display').style.display = 'flex';
+    await loadExistingCodes();
   } catch (e) { alert('코드 발급 실패: ' + e.message); }
   finally { btn.disabled = false; btn.textContent = '초대코드 발급'; }
 });
