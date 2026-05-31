@@ -81,9 +81,10 @@ async def run_pipeline(
     import hashlib as _hashlib
     _content_hash = _hashlib.sha256((post.get("content", "")).encode()).hexdigest()[:32]
     _url = post.get("post_url") or post.get("source_url") or ""
+    _url_clause = (DismissedUrl.source_url == _url) if _url else False
     _dismissed_q = select(DismissedUrl.id).where(
         DismissedUrl.user_id == user_id,
-        (DismissedUrl.content_hash == _content_hash) | ((_url != "") & (DismissedUrl.source_url == _url)),
+        (DismissedUrl.content_hash == _content_hash) | _url_clause,
     ).limit(1)
     if (await db.execute(_dismissed_q)).scalar():
         print(f"[DISMISSED] 건너뜀 (경미 처리됨): {_url or _content_hash}")
