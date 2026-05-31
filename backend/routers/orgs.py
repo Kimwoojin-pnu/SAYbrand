@@ -203,15 +203,26 @@ async def list_invite_codes(
         .order_by(InviteCode.created_at.desc())
     )
     codes = result.scalars().all()
+
+    # 역할별로 가장 최근 1개만 유지
+    seen: set[str] = set()
+    deduped = []
+    for c in codes:
+        if c.role_to_assign not in seen:
+            seen.add(c.role_to_assign)
+            deduped.append(c)
+
+    now = datetime.utcnow()
     return [
         {
             "code": c.code,
             "role_to_assign": c.role_to_assign,
             "expires_at": c.expires_at,
+            "remaining_days": max(0, (c.expires_at - now).days),
             "uses_count": c.uses_count,
             "max_uses": c.max_uses,
         }
-        for c in codes
+        for c in deduped
     ]
 
 
