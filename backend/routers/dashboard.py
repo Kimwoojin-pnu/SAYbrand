@@ -350,7 +350,7 @@ async def reanalyze_threat(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
 ):
-    """L2(Gemini) 재분析 — ai_analysis 갱신"""
+    """L2(Gemini) 재분석 — ai_analysis 갱신"""
     result = await db.execute(select(Threat).where(Threat.id == threat_id))
     threat = result.scalar_one_or_none()
     if not threat:
@@ -360,7 +360,7 @@ async def reanalyze_threat(
     try:
         l2 = await call_l2_with_fallback(threat.content_preview or "")
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"L2 분析 실패: {e}")
+        raise HTTPException(status_code=502, detail=f"L2 분석 실패: {e}")
 
     if l2.get("is_mock"):
         raise HTTPException(status_code=503, detail="Gemini API 키 없음 또는 할당량 초과 — Mock 반환됨")
