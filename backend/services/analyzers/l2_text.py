@@ -292,10 +292,23 @@ async def analyze_batch(posts: list[str], max_batch: int = 10) -> list[dict]:
         response = await asyncio.to_thread(
             model.generate_content,
             prompt,
-            generation_config={"max_output_tokens": 600},
+            generation_config={"max_output_tokens": 2000},
         )
 
-        arr_match = re.search(r"\[.*\]", response.text, re.DOTALL)
+        raw_text = response.text
+        # 마크다운 코드블록 제거
+        raw_text = re.sub(r"```(?:json)?\s*", "", raw_text).strip()
+
+        arr_match = re.search(r"\[.*\]", raw_text, re.DOTALL)
+        if not arr_match:
+            # 불완전한 배열 복구 시도: [ ... 로 시작하면 ] 붙여서 재시도
+            incomplete = re.search(r"\[.*", raw_text, re.DOTALL)
+            if incomplete:
+                try:
+                    raw_text = incomplete.group().rstrip(",\n ") + "]"
+                    arr_match = re.search(r"\[.*\]", raw_text, re.DOTALL)
+                except Exception:
+                    pass
         if arr_match:
             parsed_list = json.loads(arr_match.group())
             results: list[dict] = []
