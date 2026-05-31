@@ -151,6 +151,73 @@ async def billing_success(
     return RedirectResponse("/dashboard")
 
 
+@router.post("/sync")
+async def sync_subscription(
+    user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Polar API에서 현재 구독 상태를 조회해 DB에 즉시 반영"""
+    result = await db.execute(select(User).where(User.id == user["id"]))
+    db_user = result.scalar_one_or_none()
+    if not db_user:
+        raise HTTPException(404, "User not found")
+
+    if not settings.polar_access_token:
+        raise HTTPException(503, "POLAR_ACCESS_TOKEN이 설정되지 않았습니다.")
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                f"{settings.polar_server_url}/v1/subscriptions",
+                params={"customer_email": db_user.email, "limit": 20},
+                headers={"Authorization": f"Bearer {settings.polar_access_token}"},
+            )
+        print(f"[BILLING] sync API 응답: {resp.status_code} — {resp.text[:200]}")
+
+        if resp.status_code != 200:
+            raise HTTPException(502, f"Polar API 오류: {resp.status_code}")
+
+        data = resp.json()
+        # Polar API 응답 구조: {"items": [...]} 또는 {"result": [...]}
+        items = data.get("items") or data.get("result") or data.get("data") or []
+
+        active_sub = next(
+            (s for s in items if s.get("status") in ("active", "trialing")),
+            None,
+        )
+
+        if not active_sub:
+            return {
+                "synced": False,
+                "tier": db_user.subscription_tier or "free",
+                "message": "Polar에서 활성 구독을 찾을 수 없습니다.",
+            }
+
+        product_id = active_sub.get("product_id") or (
+            active_sub.get("product") or {}
+        ).get("id", "")
+        new_tier = _resolve_tier(product_id)
+
+        org_result = await db.execute(
+            select(Organization).where(Organization.owner_user_id == db_user.id).limit(1)
+        )
+        org = org_result.scalar_one_or_none()
+
+        await _apply_subscription(
+            db_user, org, new_tier,
+            customer_id=active_sub.get("customer_id"),
+            subscription_id=active_sub.get("id"),
+            db=db,
+        )
+        return {"synced": True, "tier": new_tier, "message": f"{new_tier} 플랜으로 동기화 완료"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[BILLING] sync 오류: {e}")
+        raise HTTPException(500, f"동기화 중 오류: {str(e)}")
+
+
 @router.get("/me")
 async def billing_me(
     user=Depends(get_current_user),

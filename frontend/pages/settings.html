@@ -326,29 +326,8 @@
             </select>
             <button id="btn-gen-code" style="padding:6px 14px;border-radius:5px;background:#0c1428;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">초대코드 발급</button>
           </div>
-          <!-- 신규 발급된 3개 코드 -->
-          <div id="code-display" style="display:none;flex-direction:column;gap:6px;margin-top:12px;">
-            <div style="display:flex;align-items:center;gap:8px;background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.2);border-radius:6px;padding:7px 12px;">
-              <span style="font-size:10px;font-weight:700;color:#7c3aed;min-width:48px;">Admin</span>
-              <span id="code-admin" style="flex:1;font-size:13px;font-family:'JetBrains Mono',monospace;font-weight:700;color:#7c3aed;letter-spacing:0.1em;"></span>
-              <button onclick="copyCodeVal('code-admin')" style="padding:3px 9px;border-radius:4px;border:1px solid rgba(124,58,237,0.3);background:transparent;font-size:11px;color:#7c3aed;cursor:pointer;font-family:'NanumSquare',sans-serif;">복사</button>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px;background:rgba(26,110,248,0.06);border:1px solid rgba(26,110,248,0.2);border-radius:6px;padding:7px 12px;">
-              <span style="font-size:10px;font-weight:700;color:#1a6ef8;min-width:48px;">Member</span>
-              <span id="code-member" style="flex:1;font-size:13px;font-family:'JetBrains Mono',monospace;font-weight:700;color:#1a6ef8;letter-spacing:0.1em;"></span>
-              <button onclick="copyCodeVal('code-member')" style="padding:3px 9px;border-radius:4px;border:1px solid rgba(26,110,248,0.3);background:transparent;font-size:11px;color:#1a6ef8;cursor:pointer;font-family:'NanumSquare',sans-serif;">복사</button>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px;background:rgba(107,114,128,0.06);border:1px solid rgba(107,114,128,0.2);border-radius:6px;padding:7px 12px;">
-              <span style="font-size:10px;font-weight:700;color:#6b7280;min-width:48px;">Viewer</span>
-              <span id="code-viewer" style="flex:1;font-size:13px;font-family:'JetBrains Mono',monospace;font-weight:700;color:#6b7280;letter-spacing:0.1em;"></span>
-              <button onclick="copyCodeVal('code-viewer')" style="padding:3px 9px;border-radius:4px;border:1px solid rgba(107,114,128,0.3);background:transparent;font-size:11px;color:#6b7280;cursor:pointer;font-family:'NanumSquare',sans-serif;">복사</button>
-            </div>
-            <p id="code-expires" style="font-size:11px;color:rgba(12,20,40,.4);margin:2px 0 0;padding-left:2px;"></p>
-          </div>
-          <!-- 페이지 로드 시 DB에서 불러온 기존 유효 코드 목록 -->
-          <div id="existing-codes-list" style="display:none;flex-direction:column;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(0,0,0,.06);">
-            <p style="font-size:11px;font-weight:700;color:rgba(12,20,40,.4);margin:0 0 4px;">유효한 초대코드</p>
-          </div>
+          <!-- 유효한 초대코드 목록 (발급 후 / 페이지 로드 시 모두 여기에 표시) -->
+          <div id="existing-codes-list" style="display:none;flex-direction:column;gap:6px;margin-top:12px;"></div>
         </div>
 
         <!-- 대기 중 멤버 -->
@@ -416,9 +395,12 @@
               <p id="plan-desc" style="font-size:11px;color:rgba(12,20,40,.45);margin-top:1px;"></p>
             </div>
           </div>
-          <div id="btn-upgrade" style="display:none;gap:6px;">
-            <a href="/billing/checkout?plan=starter" style="padding:8px 14px;border-radius:7px;background:#1a6ef8;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;text-decoration:none;">Starter 업그레이드</a>
-            <a href="/billing/checkout?plan=pro" style="padding:8px 14px;border-radius:7px;background:#0c1428;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;text-decoration:none;">Pro 업그레이드</a>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <div id="btn-upgrade" style="display:none;gap:6px;">
+              <a href="/billing/checkout?plan=starter" style="padding:8px 14px;border-radius:7px;background:#1a6ef8;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;text-decoration:none;">Starter 업그레이드</a>
+              <a href="/billing/checkout?plan=pro" style="padding:8px 14px;border-radius:7px;background:#0c1428;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;text-decoration:none;">Pro 업그레이드</a>
+            </div>
+            <button id="btn-sync-plan" onclick="syncSubscription()" style="padding:8px 14px;border-radius:7px;border:1px solid rgba(0,0,0,.12);background:transparent;color:rgba(12,20,40,.55);font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">구독 동기화</button>
           </div>
         </div>
       </div>
@@ -997,11 +979,6 @@ document.getElementById('btn-gen-code').addEventListener('click', async () => {
     if (err402 !== -1) { showUpgradeModal(bodies[err402].detail?.message || '플랜 업그레이드가 필요합니다.'); return; }
     const errOther = responses.findIndex(r => !r.ok);
     if (errOther !== -1) { alert(bodies[errOther].detail || '코드 발급 실패'); return; }
-    document.getElementById('code-admin').textContent  = bodies[0].code;
-    document.getElementById('code-member').textContent = bodies[1].code;
-    document.getElementById('code-viewer').textContent = bodies[2].code;
-    document.getElementById('code-expires').textContent = `유효기간 ${expires}일`;
-    document.getElementById('code-display').style.display = 'flex';
     await loadExistingCodes();
   } catch (e) { alert('코드 발급 실패: ' + e.message); }
   finally { btn.disabled = false; btn.textContent = '초대코드 발급'; }
@@ -1223,6 +1200,27 @@ async function confirmDeleteAccount() {
     }
   } catch (e) {
     alert('탈퇴 요청 중 오류가 발생했습니다: ' + e.message);
+  }
+}
+
+async function syncSubscription() {
+  const btn = document.getElementById('btn-sync-plan');
+  btn.disabled = true;
+  btn.textContent = '동기화 중...';
+  try {
+    const res = await fetch('/billing/sync', { method: 'POST' });
+    const data = await res.json();
+    if (res.ok && data.synced) {
+      alert(`✓ ${data.message}`);
+      await loadPlanInfo();
+    } else {
+      alert(data.message || data.detail || '동기화 실패: Polar에서 활성 구독을 찾지 못했습니다.');
+    }
+  } catch (e) {
+    alert('동기화 중 오류: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '구독 동기화';
   }
 }
 
