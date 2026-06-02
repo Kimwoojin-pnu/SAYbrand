@@ -494,18 +494,18 @@ async def run_scan(
         except Exception:
             pass
 
-    # L1 통과 콘텐츠 → Gemini 배치 분석 (최대 10건씩)
+    # L1 통과 콘텐츠 → KNU 감성 사전 배치 분석 (API 불필요, 항상 실행)
     l2_by_content: dict[str, dict] = {}
-    if l1_passing_contents and settings.gemini_api_key:
+    if l1_passing_contents:
         try:
             for i in range(0, len(l1_passing_contents), 10):
                 batch = l1_passing_contents[i:i + 10]
                 results = await analyze_batch(batch, max_batch=10)
                 for text, res in zip(batch, results):
                     l2_by_content[text[:200]] = res
-            print(f"[L2 배치] {len(l1_passing_contents)}건 L1통과 → {len(l2_by_content)}건 분석 완료")
+            print(f"[L2 KNU] {len(l1_passing_contents)}건 L1통과 → {len(l2_by_content)}건 감성 분석 완료")
         except Exception as e:
-            print(f"[L2 배치 오류] {type(e).__name__}: {e}")
+            print(f"[L2 오류] {type(e).__name__}: {e}")
 
     for post in posts:
         try:

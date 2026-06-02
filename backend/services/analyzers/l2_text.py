@@ -1,4 +1,4 @@
-"""L2 텍스트 분석 — HyperCLOVA X → Gemini 2.0 Flash → Mock 폴백 (10-field sentiment)"""
+"""L2 텍스트 분석 — HyperCLOVA X → KNU 감성 사전 폴백 (10-field sentiment, API 불필요)"""
 from __future__ import annotations
 
 import asyncio
@@ -128,34 +128,27 @@ async def _call_hyperclova(text: str) -> dict | None:
         return None
 
 
-# ── Gemini 2.0 Flash ────────────────────────────────────────────────
+# ── KNU 감성 사전 기반 분석 ──────────────────────────────────────────
 
-async def _call_gemini(text: str) -> dict | None:
-    if not settings.gemini_api_key:
-        return None
-    try:
-        import google.generativeai as genai
-        genai.configure(api_key=settings.gemini_api_key)
-        model = genai.GenerativeModel("gemini-2.0-flash-lite")
-        prompt = f"{_GEMINI_L2_PROMPT}\n\n분석 텍스트:\n{text[:500]}"
-
-        response = await asyncio.to_thread(
-            model.generate_content,
-            prompt,
-            generation_config={"max_output_tokens": 200},
-        )
-        tokens_in = getattr(response.usage_metadata, "prompt_token_count", 0)
-        tokens_out = getattr(response.usage_metadata, "candidates_token_count", 0)
-        result = _parse_l2_response(response.text)
-        result["_meta"] = {"model": "gemini-2.0-flash-lite", "tokens_in": tokens_in, "tokens_out": tokens_out}
-        return result
-    except Exception as e:
-        err_str = f"{type(e).__name__}{e}"
-        if "ResourceExhausted" in err_str or "429" in str(e) or "quota" in str(e).lower():
-            logger.warning("Gemini 무료 티어 한도 초과 — Mock 반환")
-            return _mock_analysis()
-        logger.warning("Gemini 호출 실패: %s", e)
-        return None
+def _call_knu(text: str) -> dict:
+    """KNU 감성 사전으로 sentiment/emotion/sentiment_score 결정. 항상 성공."""
+    from backend.services.analyzers.sentiment_kr import analyze_sentiment
+    senti = analyze_sentiment(text)
+    return {
+        "threat_detected": False,   # L1 결과로 덮어씀
+        "severity": "none",         # L1 결과로 덮어씀
+        "threat_type": "",
+        "confidence": 0.0,          # L1 score 사용
+        "summary": "",
+        "bot_indicators": [],
+        "irony_detected": False,
+        "is_organized": False,
+        "sentiment": senti["sentiment"],
+        "emotion": senti["emotion"],
+        "sentiment_score": senti["sentiment_score"],
+        "is_mock": False,
+        "_meta": {"model": "knu-senti-lexicon", "tokens_in": 0, "tokens_out": 0},
+    }
 
 
 # ── 응답 파싱 ───────────────────────────────────────────────────────
@@ -233,16 +226,12 @@ def _mock_analysis() -> dict:
 # ── 공개 API ────────────────────────────────────────────────────────
 
 async def call_l2_with_fallback(text: str) -> dict:
-    """HyperCLOVA → Gemini 2.0 Flash → Mock 순서로 폴백 호출."""
+    """HyperCLOVA → KNU 감성 사전 순서로 폴백. KNU는 항상 결과 반환."""
     result = await _call_hyperclova(text)
     if result:
         return result
 
-    result = await _call_gemini(text)
-    if result:
-        return result
-
-    return _mock_analysis()
+    return _call_knu(text)
 
 
 async def analyze_text_with_cache(
@@ -270,74 +259,8 @@ async def analyze_text_with_cache(
 
 
 async def analyze_batch(posts: list[str], max_batch: int = 10) -> list[dict]:
-    """최대 10건을 1 API 호출로 배치 분석 (Gemini 2.0 Flash)."""
+    """KNU 감성 사전으로 배치 감성 분석 (API 불필요, 항상 성공)."""
     if not posts:
         return []
-
     batch = posts[:max_batch]
-
-    if not settings.gemini_api_key:
-        return [_mock_analysis() for _ in batch]
-
-    try:
-        import google.generativeai as genai
-        genai.configure(api_key=settings.gemini_api_key)
-        model = genai.GenerativeModel("gemini-2.0-flash-lite")
-
-        items = "\n---\n".join(
-            f"[{i + 1}] {p[:500]}" for i, p in enumerate(batch)
-        )
-        prompt = f"{_GEMINI_BATCH_PROMPT}\n\n{items}"
-
-        response = await asyncio.to_thread(
-            model.generate_content,
-            prompt,
-            generation_config={"max_output_tokens": 2000},
-        )
-
-        raw_text = response.text
-        # 마크다운 코드블록 제거
-        raw_text = re.sub(r"```(?:json)?\s*", "", raw_text).strip()
-
-        arr_match = re.search(r"\[.*\]", raw_text, re.DOTALL)
-        if not arr_match:
-            # 불완전한 배열 복구 시도: [ ... 로 시작하면 ] 붙여서 재시도
-            incomplete = re.search(r"\[.*", raw_text, re.DOTALL)
-            if incomplete:
-                try:
-                    raw_text = incomplete.group().rstrip(",\n ") + "]"
-                    arr_match = re.search(r"\[.*\]", raw_text, re.DOTALL)
-                except Exception:
-                    pass
-        if arr_match:
-            parsed_list = json.loads(arr_match.group())
-            results: list[dict] = []
-            for data in parsed_list[:len(batch)]:
-                severity = data.get("severity", "none")
-                confidence = float(data.get("confidence", 0.0)) or _URGENCY_CONF.get(severity, 0.1)
-                results.append({
-                    "threat_detected": bool(data.get("threat_detected", False)),
-                    "severity": severity,
-                    "threat_type": data.get("threat_type", ""),
-                    "confidence": confidence,
-                    "summary": data.get("summary", ""),
-                    "bot_indicators": data.get("bot_indicators", []),
-                    "irony_detected": False,
-                    "is_organized": bool(data.get("is_organized", False)),
-                    "sentiment": data.get("sentiment", "neutral"),
-                    "emotion": data.get("emotion", "중립"),
-                    "sentiment_score": float(data.get("sentiment_score", 0.0)),
-                    "is_mock": False,
-                    "_meta": {"model": "gemini-2.0-flash-lite-batch", "tokens_in": 0, "tokens_out": 0},
-                })
-            while len(results) < len(batch):
-                results.append(_mock_analysis())
-            return results
-    except Exception as e:
-        err_str = f"{type(e).__name__}{e}"
-        if "ResourceExhausted" in err_str or "429" in str(e) or "quota" in str(e).lower():
-            logger.warning("Gemini 배치 429 — Mock 반환")
-        else:
-            logger.warning("L2 배치 분석 실패: %s", e)
-
-    return [_mock_analysis() for _ in batch]
+    return [_call_knu(text) for text in batch]
