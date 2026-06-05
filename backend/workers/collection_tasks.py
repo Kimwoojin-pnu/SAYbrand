@@ -40,7 +40,7 @@ async def _collect_all_profiles_async():
                 critical_ids: list[int] = []
                 for post in raw_posts:
                     threat = await run_pipeline(
-                        raw_post=post,
+                        post=post,
                         user_id=profile_orm.user_id,
                         db=db,
                         profile_id=profile_orm.id,

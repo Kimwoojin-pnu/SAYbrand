@@ -1,12 +1,16 @@
 """네이버 검색 API 수집기 — 블로그 / 카페 / 뉴스"""
 from __future__ import annotations
 
+import asyncio
 import html
 import logging
 import re
 from datetime import datetime, timezone
 
 import httpx
+
+# Naver API 동시 요청 3개 제한 — 초당 10 req 제한 초과 방지
+_naver_semaphore = asyncio.Semaphore(3)
 
 from backend.config import settings
 from backend.services.collectors.base import BaseCollector, make_post
@@ -87,6 +91,10 @@ class NaverCollector(BaseCollector):
             logger.info("Naver API 키 없음 — Mock 반환")
             return _mock_posts(keyword)
 
+        async with _naver_semaphore:
+            return await self._search_inner(keyword, limit, days_back)
+
+    async def _search_inner(self, keyword: str, limit: int, days_back: int) -> list[dict]:
         headers = {
             "X-Naver-Client-Id": settings.naver_client_id,
             "X-Naver-Client-Secret": settings.naver_client_secret,
