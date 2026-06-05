@@ -106,6 +106,7 @@ class NaverCollector(BaseCollector):
 
         async with httpx.AsyncClient(timeout=10) as client:
             for source, acct_field, link_field in _SOURCES:
+                await asyncio.sleep(0.12)
                 display = allocations.get(source, 5)
                 try:
                     resp = await client.get(
