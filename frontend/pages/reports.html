@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="/assets/css/custom.css" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config={theme:{extend:{colors:{brand:{500:'#1a6ef8'}}}}}</script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 </head>
 <body style="font-family:'NanumSquare','Noto Sans KR',sans-serif;background:var(--db-bg);color:var(--db-text-1);">
 <div style="display:flex;height:100vh;overflow:hidden;">
@@ -51,6 +52,7 @@
         <button onclick="loadReport('monthly')" id="btn-monthly" style="padding:5px 12px;border-radius:5px;background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.10);color:rgba(12,20,40,0.55);font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">월간</button>
         <div style="width:1px;height:20px;background:rgba(0,0,0,.10);flex-shrink:0;"></div>
         <button onclick="showArchiveTab()" id="btn-archive" style="padding:5px 12px;border-radius:5px;background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.10);color:rgba(12,20,40,0.55);font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">조치완료 기록</button>
+        <button onclick="showMapTab()" id="btn-map" style="padding:5px 12px;border-radius:5px;background:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.10);color:rgba(12,20,40,0.55);font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;display:flex;align-items:center;gap:5px;"><svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>위협 인텔리전스 맵</button>
         <button onclick="downloadPDF()" style="padding:5px 12px;border-radius:5px;background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.10);color:rgba(12,20,40,0.65);font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;display:flex;align-items:center;gap:5px;"><svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>PDF 다운로드</button>
         <button class="db-theme-toggle" id="theme-toggle" aria-label="다크모드 전환">
           <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -115,6 +117,27 @@
         </div>
         <div id="top-threats" style="padding:14px 18px;">
           <p style="font-size:12px;color:rgba(12,20,40,.35);text-align:center;padding:24px;">로딩 중...</p>
+        </div>
+      </div>
+
+      <!-- 위협 인텔리전스 맵 패널 (기본 숨김) -->
+      <div id="map-panel" style="display:none;height:calc(100vh - 96px);">
+        <div style="display:flex;height:100%;gap:0;">
+          <div style="flex:1;position:relative;min-width:0;">
+            <div id="map-echarts" style="width:100%;height:100%;"></div>
+            <div id="map-gemini-notice" style="display:none;position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(220,38,38,0.08);border:1px solid rgba(220,38,38,0.25);border-radius:8px;padding:10px 18px;text-align:center;white-space:nowrap;">
+              <p style="font-size:11px;color:#dc2626;font-weight:700;">Gemini 결제 활성화 후 조직 공격 노드가 표시됩니다</p>
+              <p style="font-size:10px;color:rgba(220,38,38,0.65);margin-top:2px;">플랫폼 노드를 클릭하면 수집된 위협 데이터를 확인할 수 있습니다</p>
+            </div>
+          </div>
+          <div style="width:290px;flex-shrink:0;border-left:1px solid var(--db-border);overflow-y:auto;padding:16px;background:var(--db-surface);">
+            <div id="map-detail">
+              <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:220px;text-align:center;gap:10px;">
+                <svg style="width:36px;height:36px;opacity:.25;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+                <p style="font-size:12px;color:var(--db-text-3);">플랫폼 노드를 클릭하면<br/>상세 정보가 표시됩니다</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -271,8 +294,7 @@ function _setReportVisible(v) {
 
 window.showArchiveTab = function() {
   _inArchive = true;
-  document.getElementById('archive-panel').style.display = 'flex';
-  ['daily','weekly','monthly'].forEach(t => {
+  ['daily','weekly','monthly','map'].forEach(t => {
     const b = document.getElementById('btn-'+t);
     if(b) { b.style.background='rgba(0,0,0,0.05)'; b.style.color='rgba(12,20,40,0.55)'; b.style.border='1px solid rgba(0,0,0,0.10)'; }
   });
@@ -287,10 +309,12 @@ const _origLoad = loadReport;
 window.loadReport = function(type) {
   _inArchive = false;
   document.getElementById('archive-panel').style.display = 'none';
-  document.querySelectorAll('main > div > *:not(#archive-panel)').forEach(el => { el.style.display = ''; });
-  document.getElementById('btn-archive').style.background = 'rgba(0,0,0,0.05)';
-  document.getElementById('btn-archive').style.color = 'rgba(12,20,40,0.55)';
-  document.getElementById('btn-archive').style.border = '1px solid rgba(0,0,0,0.10)';
+  document.getElementById('map-panel').style.display = 'none';
+  document.querySelectorAll('main > div > *:not(#archive-panel):not(#map-panel)').forEach(el => { el.style.display = ''; });
+  ['archive','map'].forEach(id => {
+    const b = document.getElementById('btn-' + id);
+    if (b) { b.style.background='rgba(0,0,0,0.05)'; b.style.color='rgba(12,20,40,0.55)'; b.style.border='1px solid rgba(0,0,0,0.10)'; }
+  });
   _origLoad(type);
 };
 
@@ -343,6 +367,198 @@ window.deleteArchive = async function(id) {
     loadArchives();
   } catch(e) { alert('삭제 실패'); }
 };
+
+// ── 위협 인텔리전스 맵 ──────────────────────────────────────────────
+
+const PLAT_LABEL = { instagram:'Instagram', youtube:'YouTube', x:'X(트위터)', tiktok:'TikTok', naver:'네이버', unknown:'기타' };
+const PLAT_COL   = { instagram:'#E1306C', youtube:'#FF0000', x:'#1DA1F2', tiktok:'#69C9D0', naver:'#03C75A', unknown:'#6B7280' };
+const EMOT_ICON  = { '분노':'😤','공포':'😨','혐오':'🤢','슬픔':'😢','놀람':'😲','기쁨':'😊','중립':'😐' };
+
+let _mapChart = null;
+
+function _riskColor(p) {
+  const s = p.severity_breakdown, t = p.total || 1;
+  const r = ((s.critical||0) + (s.high||0)) / t;
+  return r > 0.2 ? '#dc2626' : r > 0.1 ? '#ea580c' : r > 0.05 ? '#d97706' : (PLAT_COL[p.platform] || '#1a6ef8');
+}
+
+function _buildTree(data) {
+  const maxT = Math.max(...data.platforms.map(p => p.total), 1);
+  return {
+    name: data.brand_name,
+    value: data.total_threats,
+    symbolSize: 68,
+    itemStyle: { color: '#1a6ef8', shadowBlur: 24, shadowColor: 'rgba(26,110,248,.45)' },
+    label: { fontSize: 13, fontWeight: 'bold', color: '#fff', align: 'center', verticalAlign: 'middle',
+             formatter: d => `${d.name}\n${(data.total_threats||0).toLocaleString()}건` },
+    children: data.platforms.map(p => {
+      const sz = Math.max(38, Math.min(62, 38 + (p.total / maxT) * 24));
+      const rc = _riskColor(p);
+      const children = [];
+      if (p.organized_count > 0) {
+        children.push({
+          name: `조직 공격\n${p.organized_count}건`,
+          symbolSize: 30,
+          itemStyle: { color: '#dc2626', borderColor: '#ff8080', borderWidth: 2 },
+          label: { fontSize: 10, fontWeight: 'bold', color: '#fff', align: 'center', verticalAlign: 'middle' },
+          _organized: true, _platform: p.platform, _attacks: p.organized_attacks,
+        });
+      }
+      return {
+        name: `${PLAT_LABEL[p.platform]||p.platform}\n${p.age_group}\n${p.total.toLocaleString()}건`,
+        symbolSize: sz,
+        itemStyle: { color: rc },
+        label: { fontSize: 10, fontWeight: 'bold', color: '#fff', align: 'center', verticalAlign: 'middle' },
+        _platform: p.platform, _pdata: p,
+        children,
+      };
+    }),
+  };
+}
+
+function renderThreatMap(data) {
+  const el = document.getElementById('map-echarts');
+  if (!el) return;
+  if (!_mapChart) _mapChart = echarts.init(el);
+
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const lineCol = isDark ? 'rgba(255,255,255,.12)' : 'rgba(0,0,0,.10)';
+
+  _mapChart.setOption({
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'item',
+      formatter: p => {
+        if (!p.data._pdata) return '';
+        const d = p.data._pdata;
+        return `<b>${PLAT_LABEL[d.platform]||d.platform}</b><br/>총 ${d.total.toLocaleString()}건 | 평균 위험도 ${d.avg_risk_score}<br/>조직 공격 ${d.organized_count}건`;
+      },
+    },
+    series: [{
+      type: 'tree', layout: 'radial',
+      data: [_buildTree(data)],
+      top: '3%', left: '3%', bottom: '3%', right: '3%',
+      symbol: 'circle', roam: true, expandAndCollapse: false,
+      label: { position: 'inside' },
+      leaves: { label: { position: 'inside' } },
+      lineStyle: { color: lineCol, width: 1.5, curveness: 0.45 },
+      emphasis: { focus: 'ancestor' },
+      animationDuration: 500,
+    }],
+  });
+
+  _mapChart.off('click');
+  _mapChart.on('click', params => {
+    if (params.data._pdata) showPlatformDetail(params.data._pdata);
+    else if (params.data._organized) showOrganizedDetail(params.data._attacks);
+  });
+
+  const hasOrg = data.platforms.some(p => p.organized_count > 0);
+  document.getElementById('map-gemini-notice').style.display = hasOrg ? 'none' : 'flex';
+}
+
+function showPlatformDetail(p) {
+  const snt = p.sentiment_breakdown, st = (snt.negative||0)+(snt.neutral||0)+(snt.positive||0)||1;
+  const sev = p.severity_breakdown;
+  const panel = document.getElementById('map-detail');
+  panel.innerHTML = `
+    <div style="border-bottom:1px solid var(--db-border);padding-bottom:12px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
+        <div style="width:10px;height:10px;border-radius:50%;background:${PLAT_COL[p.platform]||'#6b7280'};flex-shrink:0;"></div>
+        <span style="font-weight:800;font-size:14px;color:var(--db-text-1);">${PLAT_LABEL[p.platform]||p.platform}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--db-text-3);margin-left:auto;">${p.total.toLocaleString()}건</span>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;">
+        <span style="font-size:10px;padding:2px 8px;border-radius:12px;background:rgba(26,110,248,.10);color:#1a6ef8;font-weight:700;">${p.age_group}</span>
+        <span style="font-size:10px;padding:2px 8px;border-radius:12px;background:rgba(0,0,0,.06);color:var(--db-text-2);font-weight:600;">${p.tendency}</span>
+      </div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <p style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--db-text-3);margin-bottom:8px;">감성 분포</p>
+      ${[['negative','부정','#dc2626'],['neutral','중립','#6b7280'],['positive','긍정','#16a34a']].map(([k,l,c])=>{
+        const cnt=snt[k]||0, pct=Math.round(cnt/st*100);
+        return `<div style="margin-bottom:6px;"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;"><span style="color:${c};font-weight:700;">${l}</span><span style="font-family:'JetBrains Mono',monospace;color:var(--db-text-3);">${cnt} (${pct}%)</span></div><div style="height:4px;background:rgba(0,0,0,.08);border-radius:2px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${c};border-radius:2px;transition:width .6s;"></div></div></div>`;
+      }).join('')}
+    </div>
+    ${p.top_emotions.length ? `<div style="margin-bottom:14px;"><p style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--db-text-3);margin-bottom:8px;">주요 감정</p><div style="display:flex;gap:5px;flex-wrap:wrap;">${p.top_emotions.map(e=>`<span style="font-size:11px;padding:4px 9px;border-radius:12px;background:rgba(0,0,0,.06);color:var(--db-text-2);font-weight:600;">${EMOT_ICON[e.emotion]||''} ${e.emotion} <span style="font-family:'JetBrains Mono',monospace;">${e.count}</span></span>`).join('')}</div></div>` : ''}
+    <div style="margin-bottom:14px;">
+      <p style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--db-text-3);margin-bottom:8px;">심각도 분포</p>
+      ${[['critical','#dc2626'],['high','#ea580c'],['medium','#d97706'],['low','#16a34a']].map(([s,c])=>{
+        const cnt=sev[s]||0; if(!cnt) return ''; const pct=Math.round(cnt/p.total*100);
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;"><span style="width:52px;font-size:9px;font-weight:700;color:${c};">${s.toUpperCase()}</span><div style="flex:1;height:4px;background:rgba(0,0,0,.08);border-radius:2px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${c};border-radius:2px;"></div></div><span style="width:36px;text-align:right;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--db-text-3);">${cnt}</span></div>`;
+      }).join('')}
+    </div>
+    ${p.organized_count > 0 ? `
+    <div>
+      <p style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#dc2626;margin-bottom:8px;">🚨 조직적 공격 ${p.organized_count}건</p>
+      ${p.organized_attacks.map(a=>`
+        <div style="padding:9px 11px;background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.20);border-radius:6px;margin-bottom:7px;">
+          <div style="display:flex;align-items:center;gap:5px;margin-bottom:4px;">
+            <span style="font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:${SEV_COLOR[a.severity]||'#6b7280'}20;color:${SEV_COLOR[a.severity]||'#6b7280'};">${(a.severity||'').toUpperCase()}</span>
+            <span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--db-text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px;">${a.source_account}</span>
+            <span style="font-size:10px;color:var(--db-text-3);margin-left:auto;flex-shrink:0;">${a.detected_at?new Date(a.detected_at).toLocaleDateString('ko-KR'):''}</span>
+          </div>
+          <p style="font-size:11px;color:var(--db-text-2);line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${a.content_preview}</p>
+        </div>`).join('')}
+      ${p.organized_count > 5 ? `<p style="font-size:10px;color:var(--db-text-3);text-align:center;margin-top:4px;">외 ${p.organized_count-5}건 더 있음</p>` : ''}
+    </div>` : `
+    <div style="padding:14px;background:rgba(0,0,0,.04);border-radius:6px;text-align:center;">
+      <p style="font-size:11px;color:var(--db-text-3);">조직적 공격이 감지되지 않았습니다.</p>
+    </div>`}`;
+}
+
+function showOrganizedDetail(attacks) {
+  if (!attacks || !attacks.length) return;
+  const panel = document.getElementById('map-detail');
+  panel.innerHTML = `
+    <div style="border-bottom:1px solid var(--db-border);padding-bottom:12px;margin-bottom:14px;">
+      <p style="font-size:13px;font-weight:800;color:#dc2626;">🚨 조직적 공격 상세</p>
+      <p style="font-size:10px;color:var(--db-text-3);margin-top:3px;">L3 심층 분석으로 감지된 공격 목록</p>
+    </div>
+    ${attacks.map(a=>`
+      <div style="padding:10px 12px;background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.20);border-radius:6px;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;">
+          <span style="font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:${SEV_COLOR[a.severity]||'#6b7280'}20;color:${SEV_COLOR[a.severity]||'#6b7280'};">${(a.severity||'').toUpperCase()}</span>
+          <span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--db-text-2);font-weight:700;">${a.source_account}</span>
+        </div>
+        <p style="font-size:10px;color:var(--db-text-3);margin-bottom:4px;font-family:'JetBrains Mono',monospace;">${a.detected_at?new Date(a.detected_at).toLocaleString('ko-KR'):''} | 위험도 ${a.risk_score}</p>
+        <p style="font-size:11px;color:var(--db-text-2);line-height:1.45;">${a.content_preview}</p>
+      </div>`).join('')}`;
+}
+
+async function loadThreatMap() {
+  const el = document.getElementById('map-echarts');
+  el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;"><p style="font-size:12px;color:var(--db-text-3);">데이터 로딩 중...</p></div>';
+  try {
+    const res = await fetch('/api/reports/threat-map');
+    if (!res.ok) throw new Error(res.statusText);
+    const data = await res.json();
+    if (!data.total_threats) {
+      el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;"><p style="font-size:12px;color:var(--db-text-3);">수집된 위협 데이터가 없습니다.</p></div>';
+      return;
+    }
+    el.innerHTML = '';
+    renderThreatMap(data);
+  } catch(e) {
+    el.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;"><p style="font-size:12px;color:#E24B4A;">로드 실패: ${e.message}</p></div>`;
+  }
+}
+
+let _mapLoaded = false;
+window.showMapTab = function() {
+  document.querySelectorAll('main > div > *:not(#map-panel)').forEach(el => { el.style.display = 'none'; });
+  document.getElementById('map-panel').style.display = 'block';
+  ['daily','weekly','monthly','archive'].forEach(t => {
+    const b = document.getElementById('btn-' + t); if (!b) return;
+    b.style.background='rgba(0,0,0,0.05)'; b.style.color='rgba(12,20,40,0.55)'; b.style.border='1px solid rgba(0,0,0,0.10)';
+  });
+  const bm = document.getElementById('btn-map');
+  bm.style.background='#1a6ef8'; bm.style.color='#fff'; bm.style.border='none';
+  if (!_mapLoaded) { _mapLoaded = true; loadThreatMap(); }
+  else if (_mapChart) _mapChart.resize();
+};
+
+window.addEventListener('resize', () => { if (_mapChart) _mapChart.resize(); });
 </script>
 </body>
 </html>
