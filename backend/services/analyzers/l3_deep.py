@@ -1,7 +1,6 @@
 """L3 심층 분석 — Gemini 2.5 Flash 우선, Claude Haiku 폴백"""
 from __future__ import annotations
 
-import asyncio
 import hashlib
 import json
 import logging
@@ -132,17 +131,17 @@ async def _call_gemini_l3(
     if not settings.gemini_api_key:
         return None
     try:
-        import google.generativeai as genai
-        genai.configure(api_key=settings.gemini_api_key)
-        model = genai.GenerativeModel(
-            "gemini-2.5-flash-preview-05-20",
-            system_instruction=system_prompt,
-        )
+        from google import genai
+        from google.genai import types
+        client = genai.Client(api_key=settings.gemini_api_key)
         user_msg = f"위협유형:{threat_type}\n심각도:{severity}\n\n{content[:500]}"
-        response = await asyncio.to_thread(
-            model.generate_content,
-            user_msg,
-            generation_config={"max_output_tokens": 300},
+        response = await client.aio.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=user_msg,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                max_output_tokens=300,
+            ),
         )
         parsed = _extract_json(response.text)
         if not parsed:
@@ -156,9 +155,9 @@ async def _call_gemini_l3(
             "legal_action_required": parsed.get("legal_action_required", False),
         }
     except Exception as e:
-        err_str = f"{type(e).__name__}{e}"
-        if "ResourceExhausted" in err_str or "429" in str(e) or "quota" in str(e).lower():
-            logger.warning("Gemini L3 429 — Claude 폴백 시도")
+        err_str = str(e)
+        if "ResourceExhausted" in err_str or "429" in err_str or "quota" in err_str.lower() or "RESOURCE_EXHAUSTED" in err_str:
+            logger.warning("Gemini L3 429 — 할당량 초과")
         else:
             logger.warning("Gemini L3 호출 실패: %s", e)
         return None
@@ -217,16 +216,16 @@ async def _call_gemini_cluster(
     if not settings.gemini_api_key:
         return None
     try:
-        import google.generativeai as genai
-        genai.configure(api_key=settings.gemini_api_key)
-        model = genai.GenerativeModel(
-            "gemini-2.5-flash-preview-05-20",
-            system_instruction=system_prompt,
-        )
-        response = await asyncio.to_thread(
-            model.generate_content,
-            user_message,
-            generation_config={"max_output_tokens": 400},
+        from google import genai
+        from google.genai import types
+        client = genai.Client(api_key=settings.gemini_api_key)
+        response = await client.aio.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=user_message,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                max_output_tokens=400,
+            ),
         )
         tokens_used = (
             getattr(response.usage_metadata, "prompt_token_count", 0)
