@@ -147,13 +147,13 @@ async def _call_gemini(text: str) -> dict | None:
     try:
         from google import genai as _genai
         response = await client.aio.models.generate_content(
-            model="gemini-2.0-flash-lite",
+            model="gemini-2.5-flash-lite",
             contents=f"{_GEMINI_L2_PROMPT}\n\n분석 대상 텍스트:\n{text}",
         )
         tokens_in = getattr(getattr(response, "usage_metadata", None), "prompt_token_count", 0) or 0
         tokens_out = getattr(getattr(response, "usage_metadata", None), "candidates_token_count", 0) or 0
         result = _parse_l2_response(response.text)
-        result["_meta"] = {"model": "gemini-2.0-flash-lite", "tokens_in": tokens_in, "tokens_out": tokens_out}
+        result["_meta"] = {"model": "gemini-2.5-flash-lite", "tokens_in": tokens_in, "tokens_out": tokens_out}
         return result
     except Exception as e:
         logger.warning("Gemini L2 호출 실패: %s", e)
@@ -167,7 +167,7 @@ async def _call_gemini_batch(posts: list[str]) -> list[dict] | None:
     numbered = "\n".join(f"{i+1}. {p}" for i, p in enumerate(posts))
     try:
         response = await client.aio.models.generate_content(
-            model="gemini-2.0-flash-lite",
+            model="gemini-2.5-flash-lite",
             contents=f"{_GEMINI_BATCH_PROMPT}\n\n게시물 목록:\n{numbered}",
         )
         raw = response.text or ""
@@ -192,7 +192,7 @@ async def _call_gemini_batch(posts: list[str]) -> list[dict] | None:
                 "emotion": item.get("emotion", "중립"),
                 "sentiment_score": float(item.get("sentiment_score", 0.0)),
                 "is_mock": False,
-                "_meta": {"model": "gemini-2.0-flash-lite-batch"},
+                "_meta": {"model": "gemini-2.5-flash-lite-batch"},
             })
         if len(results) < len(posts):
             results.extend([_call_knu(posts[i]) for i in range(len(results), len(posts))])
