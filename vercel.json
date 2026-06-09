@@ -5,15 +5,11 @@
       "src": "app.py",
       "use": "@vercel/python",
       "config": {
+        "maxDuration": 60,
         "maxLambdaSize": "50mb"
       }
     }
   ],
-  "functions": {
-    "app.py": {
-      "maxDuration": 60
-    }
-  },
   "routes": [
     {
       "src": "/(.*)",
