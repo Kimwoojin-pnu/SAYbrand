@@ -1,4 +1,4 @@
-"""L2 텍스트 분석 — HyperCLOVA X → KNU 감성 사전 폴백 (10-field sentiment, API 불필요)"""
+"""L2 텍스트 분석 — HyperCLOVA X → Gemini → KNU 감성 사전 폴백 (10-field sentiment)"""
 from __future__ import annotations
 
 import asyncio
@@ -128,6 +128,80 @@ async def _call_hyperclova(text: str) -> dict | None:
         return None
 
 
+# ── Gemini ────────────────────────────────────────────────────────
+_gemini_client = None
+
+
+def _get_gemini_client():
+    global _gemini_client
+    if _gemini_client is None and settings.gemini_api_key:
+        from google import genai
+        _gemini_client = genai.Client(api_key=settings.gemini_api_key)
+    return _gemini_client
+
+
+async def _call_gemini(text: str) -> dict | None:
+    client = _get_gemini_client()
+    if not client:
+        return None
+    try:
+        from google import genai as _genai
+        response = await client.aio.models.generate_content(
+            model="gemini-2.0-flash-lite",
+            contents=f"{_GEMINI_L2_PROMPT}\n\n분석 대상 텍스트:\n{text}",
+        )
+        tokens_in = getattr(getattr(response, "usage_metadata", None), "prompt_token_count", 0) or 0
+        tokens_out = getattr(getattr(response, "usage_metadata", None), "candidates_token_count", 0) or 0
+        result = _parse_l2_response(response.text)
+        result["_meta"] = {"model": "gemini-2.0-flash-lite", "tokens_in": tokens_in, "tokens_out": tokens_out}
+        return result
+    except Exception as e:
+        logger.warning("Gemini L2 호출 실패: %s", e)
+        return None
+
+
+async def _call_gemini_batch(posts: list[str]) -> list[dict] | None:
+    client = _get_gemini_client()
+    if not client:
+        return None
+    numbered = "\n".join(f"{i+1}. {p}" for i, p in enumerate(posts))
+    try:
+        response = await client.aio.models.generate_content(
+            model="gemini-2.0-flash-lite",
+            contents=f"{_GEMINI_BATCH_PROMPT}\n\n게시물 목록:\n{numbered}",
+        )
+        raw = response.text or ""
+        arr_match = re.search(r"\[.*\]", raw, re.DOTALL)
+        if not arr_match:
+            return None
+        items = json.loads(arr_match.group())
+        results = []
+        for item in items:
+            severity = item.get("severity", "none")
+            confidence = float(item.get("confidence", 0.0)) or _URGENCY_CONF.get(severity, 0.1)
+            results.append({
+                "threat_detected": bool(item.get("threat_detected", False)),
+                "severity": severity,
+                "threat_type": item.get("threat_type", ""),
+                "confidence": confidence,
+                "summary": item.get("summary", ""),
+                "bot_indicators": item.get("bot_indicators", []),
+                "irony_detected": False,
+                "is_organized": bool(item.get("is_organized", False)),
+                "sentiment": item.get("sentiment", "neutral"),
+                "emotion": item.get("emotion", "중립"),
+                "sentiment_score": float(item.get("sentiment_score", 0.0)),
+                "is_mock": False,
+                "_meta": {"model": "gemini-2.0-flash-lite-batch"},
+            })
+        if len(results) < len(posts):
+            results.extend([_call_knu(posts[i]) for i in range(len(results), len(posts))])
+        return results
+    except Exception as e:
+        logger.warning("Gemini 배치 호출 실패: %s", e)
+        return None
+
+
 # ── KNU 감성 사전 기반 분석 ──────────────────────────────────────────
 
 def _call_knu(text: str) -> dict:
@@ -226,8 +300,12 @@ def _mock_analysis() -> dict:
 # ── 공개 API ────────────────────────────────────────────────────────
 
 async def call_l2_with_fallback(text: str) -> dict:
-    """HyperCLOVA → KNU 감성 사전 순서로 폴백. KNU는 항상 결과 반환."""
+    """HyperCLOVA → Gemini → KNU 감성 사전 순서로 폴백. KNU는 항상 결과 반환."""
     result = await _call_hyperclova(text)
+    if result:
+        return result
+
+    result = await _call_gemini(text)
     if result:
         return result
 
@@ -259,8 +337,11 @@ async def analyze_text_with_cache(
 
 
 async def analyze_batch(posts: list[str], max_batch: int = 10) -> list[dict]:
-    """KNU 감성 사전으로 배치 감성 분석 (API 불필요, 항상 성공)."""
+    """Gemini 배치 분석 → 실패 시 KNU 감성 사전 폴백."""
     if not posts:
         return []
     batch = posts[:max_batch]
+    results = await _call_gemini_batch(batch)
+    if results:
+        return results
     return [_call_knu(text) for text in batch]

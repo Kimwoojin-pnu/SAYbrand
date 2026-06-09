@@ -19,25 +19,7 @@ from backend.routers import activity, auth, billing, orgs, profile, keywords, re
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    from backend.db.database import engine
-    if engine is not None:
-        db_url = os.environ.get("DATABASE_URL", "")
-        if "postgresql" in db_url or "postgres" in db_url:
-            from sqlalchemy import text
-            _migrations = [
-                "ALTER TABLE threats ADD COLUMN IF NOT EXISTS resolution_type VARCHAR(50)",
-                "ALTER TABLE threats ADD COLUMN IF NOT EXISTS resolution_method VARCHAR(200)",
-                "ALTER TABLE threats ADD COLUMN IF NOT EXISTS resolution_note TEXT",
-                "CREATE TABLE IF NOT EXISTS dismissed_urls (id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id), org_id INTEGER REFERENCES organizations(id), source_url VARCHAR(500), content_hash VARCHAR(64), dismissed_at TIMESTAMP DEFAULT NOW())",
-                "CREATE TABLE IF NOT EXISTS archived_threats (id SERIAL PRIMARY KEY, org_id INTEGER REFERENCES organizations(id), original_threat_id INTEGER, resolved_by_user_id INTEGER REFERENCES users(id), resolved_by_name VARCHAR(200) DEFAULT '', severity VARCHAR(20), threat_type VARCHAR(100), platform VARCHAR(50), source_account VARCHAR(200), source_url VARCHAR(500), content_preview TEXT, risk_score INTEGER, action_taken TEXT, resolution_note TEXT, original_detected_at TIMESTAMP, archived_at TIMESTAMP DEFAULT NOW(), expires_at TIMESTAMP)",
-                "CREATE TABLE IF NOT EXISTS activity_logs (id SERIAL PRIMARY KEY, org_id INTEGER REFERENCES organizations(id), user_id INTEGER REFERENCES users(id), user_name VARCHAR(200) DEFAULT '', action_type VARCHAR(50), action_detail TEXT, target_id INTEGER, target_type VARCHAR(50), created_at TIMESTAMP DEFAULT NOW(), expires_at TIMESTAMP)",
-            ]
-            try:
-                async with engine.begin() as conn:
-                    for stmt in _migrations:
-                        await conn.execute(text(stmt))
-            except Exception as e:
-                print(f"[MIGRATION] skipped: {e}")
+    print(f"[STARTUP] lifespan begin")
     yield
 
 

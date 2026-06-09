@@ -365,7 +365,15 @@ async def reanalyze_threat(
     if l2.get("is_mock"):
         raise HTTPException(status_code=503, detail="Gemini API 키 없음 또는 할당량 초과 — Mock 반환됨")
 
-    threat.ai_analysis = l2.get("summary") or threat.ai_analysis
+    summary = l2.get("summary") or ""
+    if not summary:
+        model_name = l2.get("_meta", {}).get("model", "")
+        sentiment = l2.get("sentiment", "neutral")
+        emotion = l2.get("emotion", "중립")
+        score = l2.get("sentiment_score", 0.0)
+        summary = f"감성 분석 완료 — {sentiment} ({emotion}), 감성 점수: {score:.2f} [모델: {model_name}]"
+
+    threat.ai_analysis = summary
     threat.sentiment = l2.get("sentiment") or threat.sentiment
     threat.emotion = l2.get("emotion") or threat.emotion
     threat.sentiment_score = l2.get("sentiment_score") if l2.get("sentiment_score") is not None else threat.sentiment_score
