@@ -519,12 +519,31 @@ function showOrganizedDetail(attacks) {
       </div>`).join('')}`;
 }
 
+function _mapError(el, msg) {
+  _mapLoaded = false;
+  _mapChart = null;
+  el.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;">
+    <p style="font-size:12px;color:#E24B4A;">로드 실패: ${msg}</p>
+    <button onclick="showMapTab()" style="padding:5px 14px;border-radius:5px;background:#1a6ef8;border:none;color:#fff;font-size:11px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">다시 시도</button>
+  </div>`;
+}
+
 async function loadThreatMap() {
   const el = document.getElementById('map-echarts');
   el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;"><p style="font-size:12px;color:var(--db-text-3);">데이터 로딩 중...</p></div>';
+
+  if (typeof echarts === 'undefined') {
+    _mapError(el, 'ECharts 라이브러리 로드 실패 — 페이지를 새로고침하세요');
+    return;
+  }
+
   try {
     const res = await fetch('/api/reports/threat-map');
-    if (!res.ok) throw new Error(res.statusText);
+    if (!res.ok) {
+      let detail = '';
+      try { const body = await res.json(); detail = body.detail || ''; } catch(_) {}
+      throw new Error(`HTTP ${res.status}${detail ? ': ' + detail : ''}`);
+    }
     const data = await res.json();
     if (!data.total_threats) {
       el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;"><p style="font-size:12px;color:var(--db-text-3);">수집된 위협 데이터가 없습니다.</p></div>';
@@ -532,8 +551,9 @@ async function loadThreatMap() {
     }
     el.innerHTML = '';
     renderThreatMap(data);
+    if (_mapChart) _mapChart.resize();
   } catch(e) {
-    el.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;"><p style="font-size:12px;color:#E24B4A;">로드 실패: ${e.message}</p></div>`;
+    _mapError(el, e.message || '알 수 없는 오류');
   }
 }
 
@@ -544,7 +564,7 @@ window.showMapTab = function() {
   ['daily','weekly','monthly','archive'].forEach(t => _btnOff(document.getElementById('btn-' + t)));
   _btnOn(document.getElementById('btn-map'));
   if (!_mapLoaded) { _mapLoaded = true; loadThreatMap(); }
-  else if (_mapChart) _mapChart.resize();
+  else if (_mapChart) { _mapChart.resize(); }
 };
 
 window.addEventListener('resize', () => { if (_mapChart) _mapChart.resize(); });

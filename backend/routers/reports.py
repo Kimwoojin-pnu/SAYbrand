@@ -1,6 +1,7 @@
 """리포트 API — 일간/주간/월간 위협 요약 + PDF 다운로드 + 아카이브 + 위협 인텔리전스 맵"""
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -13,6 +14,8 @@ from backend.middleware.auth import get_current_user
 from backend.middleware.org_context import optional_current_org
 from backend.models.orm import ActivityLog, ArchivedThreat, CustomerProfile, Organization, Threat
 from backend.services.report_generator import generate_pdf_report, generate_report
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/reports", tags=["reports"])
 
@@ -33,6 +36,15 @@ async def get_threat_map(
     user: dict = Depends(get_current_user),
     org: Organization | None = Depends(optional_current_org),
 ):
+    try:
+        return await _build_threat_map(db, user, org)
+    except Exception as e:
+        logger.error("threat-map 오류: %s", e, exc_info=True)
+        print(f"[THREAT-MAP ERROR] {type(e).__name__}: {e}")
+        raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {e}")
+
+
+async def _build_threat_map(db, user, org):
     user_id = user["id"]
     org_id = org.id if org else None
     base_filter = Threat.org_id == org_id if org_id else Threat.user_id == user_id
@@ -63,7 +75,7 @@ async def get_threat_map(
 
     org_result = await db.execute(
         select(Threat)
-        .where(base_filter, Threat.is_organized == True)
+        .where(base_filter, Threat.is_organized.is_(True))
         .order_by(Threat.detected_at.desc())
         .limit(100)
     )
@@ -81,14 +93,14 @@ async def get_threat_map(
                 "risk_sum": 0.0,
             }
         d = pdata[p]
-        d["total"] += row.cnt
-        d["risk_sum"] += (row.avg_risk or 0) * row.cnt
+        d["total"] += int(row.cnt)
+        d["risk_sum"] += float(row.avg_risk or 0) * int(row.cnt)
         if row.severity and row.severity in d["severity"]:
-            d["severity"][row.severity] += row.cnt
+            d["severity"][row.severity] += int(row.cnt)
         if row.sentiment and row.sentiment in d["sentiment"]:
-            d["sentiment"][row.sentiment] += row.cnt
+            d["sentiment"][row.sentiment] += int(row.cnt)
         if row.emotion:
-            d["emotions"][row.emotion] = d["emotions"].get(row.emotion, 0) + row.cnt
+            d["emotions"][row.emotion] = d["emotions"].get(row.emotion, 0) + int(row.cnt)
 
     org_by_p: dict[str, list] = {}
     for t in organized:
@@ -108,7 +120,7 @@ async def get_threat_map(
             "total": d["total"],
             "severity_breakdown": d["severity"],
             "sentiment_breakdown": d["sentiment"],
-            "top_emotions": [{"emotion": e, "count": c} for e, c in top_emotions],
+            "top_emotions": [{"emotion": e, "count": int(c)} for e, c in top_emotions],
             "organized_count": len(org_attacks),
             "organized_attacks": [
                 {
@@ -118,7 +130,7 @@ async def get_threat_map(
                     "severity": t.severity or "unknown",
                     "source_account": t.source_account or "",
                     "content_preview": (t.content_preview or "")[:100],
-                    "risk_score": t.risk_score or 0,
+                    "risk_score": int(t.risk_score or 0),
                 }
                 for t in org_attacks[:5]
             ],
@@ -126,7 +138,7 @@ async def get_threat_map(
         })
 
     platforms.sort(key=lambda x: x["total"], reverse=True)
-    return {"brand_name": brand_name, "total_threats": total, "platforms": platforms}
+    return {"brand_name": brand_name, "total_threats": int(total), "platforms": platforms}
 
 
 @router.get("/archives")
