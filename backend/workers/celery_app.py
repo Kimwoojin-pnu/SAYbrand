@@ -26,6 +26,12 @@ celery_app.conf.update(
 )
 
 celery_app.conf.beat_schedule = {
+    # 15분마다 critical 미분석 위협 L3 분석
+    "analyze-unanalyzed-critical": {
+        "task": "backend.workers.analysis_tasks.analyze_unanalyzed_critical_threats",
+        "schedule": crontab(minute="*/15"),
+        "options": {"expires": 12 * 60},
+    },
     # 30분마다 모든 고객 키워드 수집
     "collect-all-profiles": {
         "task": "backend.workers.collection_tasks.collect_all_profiles",

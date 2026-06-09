@@ -25,7 +25,9 @@ _L3_ANALYSIS_PROMPT_TEMPLATE = """브랜드 위협 분석 전문가. 고위협 �
 {account_history}
 
 JSON만 출력(설명·마크다운 없음):
-{{"threat_assessment":"위협평가한줄","is_organized_attack":false,"legal_action_required":false,"analysis":"100자이내분석","response_suggestion":["대응1(50자이내)","대응2(50자이내)","대응3(50자이내)"]}}"""
+{{"threat_assessment":"위협평가한줄","is_false_positive":false,"is_organized_attack":false,"legal_action_required":false,"analysis":"100자이내분석","response_suggestion":["대응1(50자이내)","대응2(50자이내)","대응3(50자이내)"]}}
+
+is_false_positive: 실제 브랜드 위협이 아니라고 판단되면 true. 단순 언급·중립적 피드백·무관한 내용이면 true."""
 
 # ── 클러스터 분석 프롬프트 ─────────────────────────────────────────
 _CLUSTER_SYSTEM_PROMPT = """당신은 브랜드 리스크 분석 전문가입니다.
@@ -155,6 +157,7 @@ async def _call_gemini_l3(
             "ai_response_suggestion": "\n".join(
                 f"{i + 1}. {s}" for i, s in enumerate(parsed.get("response_suggestion", []))
             ),
+            "is_false_positive": parsed.get("is_false_positive", False),
             "is_organized_attack": parsed.get("is_organized_attack", False),
             "legal_action_required": parsed.get("legal_action_required", False),
         }
@@ -202,6 +205,7 @@ async def _call_claude_l3(
                 "ai_response_suggestion": "\n".join(
                     f"{i + 1}. {s}" for i, s in enumerate(parsed.get("response_suggestion", []))
                 ),
+                "is_false_positive": parsed.get("is_false_positive", False),
             }
         parts = text.split("3. 즉각 대응 방안", 1)
         analysis = parts[0].strip()

@@ -1,6 +1,11 @@
 import asyncio
+import logging
 
 from backend.workers.celery_app import celery_app
+
+logger = logging.getLogger(__name__)
+
+_UNANALYZED_BATCH_SIZE = 10  # 1회 최대 처리 건수
 
 
 @celery_app.task(
@@ -20,7 +25,7 @@ async def _analyze_async(threat_id: int):
     from sqlalchemy import select
     from backend.db.database import AsyncSessionLocal
     from backend.models.orm import Threat
-    from backend.services.analyzers.l3_deep import deep_analyze
+    from backend.services.analyzers.l3_deep import analyze as l3_analyze
 
     async with AsyncSessionLocal() as db:
         result = await db.execute(select(Threat).where(Threat.id == threat_id))
@@ -28,12 +33,82 @@ async def _analyze_async(threat_id: int):
         if not threat:
             return
 
-        analysis = await deep_analyze(
+        analysis = await l3_analyze(
             content=threat.content_preview,
-            platform=threat.platform,
-            account=threat.source_account,
-            profile_context={},
+            threat_type=threat.threat_type,
+            severity=threat.severity,
+            db=db,
+            source_account=threat.source_account,
         )
-        threat.ai_analysis = analysis.get("analysis")
-        threat.ai_response_suggestion = analysis.get("response_suggestion")
+        _apply_analysis(threat, analysis)
         await db.commit()
+
+
+@celery_app.task(name="backend.workers.analysis_tasks.analyze_unanalyzed_critical_threats")
+def analyze_unanalyzed_critical_threats():
+    """
+    15분마다 실행 — critical 등급이면서 ai_analysis가 없는 위협을 찾아 L3 분석 시작.
+    오탐(is_false_positive=true) 판정 시 severity를 low로 다운그레이드.
+    """
+    asyncio.run(_scan_and_analyze_critical())
+
+
+async def _scan_and_analyze_critical():
+    from sqlalchemy import select
+    from backend.db.database import AsyncSessionLocal
+    from backend.models.orm import Threat
+    from backend.services.analyzers.l3_deep import analyze as l3_analyze
+
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(
+            select(Threat)
+            .where(
+                Threat.severity == "critical",
+                Threat.ai_analysis.is_(None),
+                Threat.status == "active",
+            )
+            .limit(_UNANALYZED_BATCH_SIZE)
+        )
+        threats = result.scalars().all()
+
+        if not threats:
+            logger.info("analyze_unanalyzed_critical_threats: 미분석 critical 위협 없음")
+            return
+
+        logger.info("analyze_unanalyzed_critical_threats: %d건 L3 분석 시작", len(threats))
+
+        for threat in threats:
+            try:
+                analysis = await l3_analyze(
+                    content=threat.content_preview,
+                    threat_type=threat.threat_type,
+                    severity=threat.severity,
+                    db=db,
+                    source_account=threat.source_account,
+                )
+                _apply_analysis(threat, analysis)
+                logger.info(
+                    "  threat_id=%d L3 완료 — is_false_positive=%s severity=%s",
+                    threat.id,
+                    analysis.get("is_false_positive"),
+                    threat.severity,
+                )
+            except Exception as e:
+                logger.warning("  threat_id=%d L3 분석 실패: %s", threat.id, e)
+
+        await db.commit()
+
+
+def _apply_analysis(threat, analysis: dict) -> None:
+    """L3 분석 결과를 위협 레코드에 적용. 오탐이면 severity를 low로 다운그레이드."""
+    from datetime import datetime
+
+    threat.ai_analysis = analysis.get("ai_analysis")
+    threat.ai_response_suggestion = analysis.get("ai_response_suggestion")
+    threat.updated_at = datetime.utcnow()
+
+    if analysis.get("is_false_positive"):
+        threat.severity = "low"
+        prefix = "[L3 오탐 판정] "
+        if threat.ai_analysis and not threat.ai_analysis.startswith(prefix):
+            threat.ai_analysis = prefix + threat.ai_analysis
