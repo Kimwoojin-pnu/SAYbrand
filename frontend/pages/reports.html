@@ -121,8 +121,39 @@
       </div>
 
       <!-- 위협 인텔리전스 맵 패널 (기본 숨김) -->
-      <div id="map-panel" style="display:none;height:calc(100vh - 96px);">
-        <div style="display:flex;height:100%;gap:0;">
+      <div id="map-panel" style="display:none;flex-direction:column;height:calc(100vh - 96px);">
+        <!-- 상단 통계 바 -->
+        <div style="padding:10px 20px;border-bottom:1px solid var(--db-border);display:flex;align-items:center;gap:20px;flex-shrink:0;background:var(--db-surface);flex-wrap:wrap;">
+          <div style="display:flex;flex-direction:column;gap:1px;">
+            <span style="font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--db-text-3);">총 위협</span>
+            <span style="display:flex;align-items:baseline;gap:3px;">
+              <span id="mstat-total" style="font-size:20px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--db-text-1);">—</span>
+              <span style="font-size:10px;color:var(--db-text-3);">건</span>
+            </span>
+          </div>
+          <div style="width:1px;height:28px;background:var(--db-border);flex-shrink:0;"></div>
+          <div style="display:flex;gap:18px;">
+            <div style="display:flex;flex-direction:column;gap:1px;">
+              <span style="font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#dc2626;">CRITICAL</span>
+              <span id="mstat-critical" style="font-size:18px;font-weight:800;font-family:'JetBrains Mono',monospace;color:#dc2626;">—</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:1px;">
+              <span style="font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#ea580c;">HIGH</span>
+              <span id="mstat-high" style="font-size:18px;font-weight:800;font-family:'JetBrains Mono',monospace;color:#ea580c;">—</span>
+            </div>
+          </div>
+          <div style="width:1px;height:28px;background:var(--db-border);flex-shrink:0;"></div>
+          <div style="display:flex;flex-direction:column;gap:1px;">
+            <span style="font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--db-text-3);">최고 위험 플랫폼</span>
+            <span id="mstat-top-plat" style="font-size:13px;font-weight:800;color:var(--db-text-1);">—</span>
+          </div>
+          <div style="margin-left:auto;display:flex;flex-direction:column;gap:1px;align-items:flex-end;">
+            <span style="font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#ef4444;">조직 공격</span>
+            <span id="mstat-org" style="font-size:18px;font-weight:800;font-family:'JetBrains Mono',monospace;color:#ef4444;">—</span>
+          </div>
+        </div>
+        <!-- 차트 + 사이드바 -->
+        <div style="flex:1;display:flex;min-height:0;">
           <div style="flex:1;position:relative;min-width:0;">
             <div id="map-echarts" style="width:100%;height:100%;"></div>
             <div id="map-gemini-notice" style="display:none;position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(220,38,38,0.08);border:1px solid rgba(220,38,38,0.25);border-radius:8px;padding:10px 18px;text-align:center;white-space:nowrap;">
@@ -130,11 +161,11 @@
               <p style="font-size:10px;color:rgba(220,38,38,0.65);margin-top:2px;">플랫폼 노드를 클릭하면 수집된 위협 데이터를 확인할 수 있습니다</p>
             </div>
           </div>
-          <div style="width:290px;flex-shrink:0;border-left:1px solid var(--db-border);overflow-y:auto;padding:16px;background:var(--db-surface);">
+          <div style="width:300px;flex-shrink:0;border-left:1px solid var(--db-border);overflow-y:auto;padding:14px;background:var(--db-surface);">
             <div id="map-detail">
-              <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:220px;text-align:center;gap:10px;">
+              <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:200px;text-align:center;gap:10px;">
                 <svg style="width:36px;height:36px;opacity:.25;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
-                <p style="font-size:12px;color:var(--db-text-3);">플랫폼 노드를 클릭하면<br/>상세 정보가 표시됩니다</p>
+                <p style="font-size:12px;color:var(--db-text-3);">데이터 로딩 후<br/>노드를 클릭하면 상세 정보가 표시됩니다</p>
               </div>
             </div>
           </div>
@@ -364,127 +395,274 @@ window.deleteArchive = async function(id) {
 // ── 위협 인텔리전스 맵 ──────────────────────────────────────────────
 
 const PLAT_LABEL = { instagram:'Instagram', youtube:'YouTube', x:'X(트위터)', tiktok:'TikTok', naver:'네이버', unknown:'기타' };
-const PLAT_COL   = { instagram:'#E1306C', youtube:'#FF0000', x:'#1DA1F2', tiktok:'#69C9D0', naver:'#03C75A', unknown:'#6B7280' };
+const PLAT_COL   = { instagram:'#E1306C', youtube:'#FF0000', x:'#60a5fa', tiktok:'#69C9D0', naver:'#03C75A', unknown:'#6B7280' };
 const EMOT_ICON  = { '분노':'😤','공포':'😨','혐오':'🤢','슬픔':'😢','놀람':'😲','기쁨':'😊','중립':'😐' };
 
 let _mapChart = null;
+let _platDataMap = {};
 
 function _riskColor(p) {
-  const s = p.severity_breakdown, t = p.total || 1;
+  const s = p.severity_breakdown || {}, t = p.total || 1;
   const r = ((s.critical||0) + (s.high||0)) / t;
-  return r > 0.2 ? '#dc2626' : r > 0.1 ? '#ea580c' : r > 0.05 ? '#d97706' : (PLAT_COL[p.platform] || '#1a6ef8');
+  return r > 0.3 ? '#dc2626' : r > 0.15 ? '#ea580c' : r > 0.05 ? '#d97706' : (PLAT_COL[p.platform] || '#1a6ef8');
 }
 
-function _buildTree(data) {
+function _buildGraphData(data) {
+  const nodes = [], links = [];
   const maxT = Math.max(...data.platforms.map(p => p.total), 1);
-  return {
-    name: data.brand_name,
+
+  // 중심 브랜드 노드
+  nodes.push({
+    id: 'brand',
+    name: `${data.brand_name}\n${data.total_threats.toLocaleString()}건`,
     value: data.total_threats,
-    symbolSize: 68,
-    itemStyle: { color: '#1a6ef8', shadowBlur: 24, shadowColor: 'rgba(26,110,248,.45)' },
-    label: { fontSize: 13, fontWeight: 'bold', color: '#fff', align: 'center', verticalAlign: 'middle',
-             formatter: d => `${d.name}\n${(data.total_threats||0).toLocaleString()}건` },
-    children: data.platforms.map(p => {
-      const sz = Math.max(38, Math.min(62, 38 + (p.total / maxT) * 24));
+    symbolSize: 72,
+    _type: 'brand',
+    itemStyle: { color: '#1a6ef8', shadowBlur: 36, shadowColor: 'rgba(26,110,248,0.6)', borderColor: 'rgba(255,255,255,0.28)', borderWidth: 2 },
+    label: { color: '#fff', fontWeight: 'bold', fontSize: 11, lineHeight: 20 },
+  });
+
+  data.platforms.forEach(p => {
+    const platId = `plat_${p.platform}`;
+    const sz = Math.max(46, Math.min(70, 46 + (p.total / maxT) * 24));
+    const rc = _riskColor(p);
+    const snt = p.sentiment_breakdown || {};
+    const sntTotal = (snt.negative||0) + (snt.neutral||0) + (snt.positive||0) || 1;
+    const negPct = Math.round((snt.negative||0) / sntTotal * 100);
+    const posPct = Math.round((snt.positive||0) / sntTotal * 100);
+
+    // 플랫폼 노드
+    nodes.push({
+      id: platId, name: `${PLAT_LABEL[p.platform]||p.platform}\n${p.total.toLocaleString()}건`,
+      _pdata: p, _type: 'platform', symbolSize: sz,
+      itemStyle: { color: rc, shadowBlur: 18, shadowColor: rc + '88', borderColor: PLAT_COL[p.platform]||'#6b7280', borderWidth: 2.5 },
+      label: { color: '#fff', fontWeight: 'bold', fontSize: 10, lineHeight: 16 },
+    });
+    links.push({ source: 'brand', target: platId, lineStyle: { width: Math.max(1, Math.round((p.total/maxT)*5)), color: 'rgba(26,110,248,0.22)', curveness: 0.2 } });
+
+    // 부정 감성 노드 (50% 초과)
+    if (negPct > 50) {
+      const negId = `neg_${p.platform}`;
+      nodes.push({
+        id: negId, name: `부정 ${negPct}%`, _type: 'neg_sentiment', symbolSize: 26,
+        itemStyle: { color: '#991b1b', shadowBlur: 10, shadowColor: 'rgba(220,38,38,0.55)', borderColor: '#dc2626', borderWidth: 1.5 },
+        label: { color: '#fca5a5', fontSize: 9, fontWeight: 'bold' },
+      });
+      links.push({ source: platId, target: negId, lineStyle: { width: 1, color: 'rgba(220,38,38,0.28)', curveness: 0.4, type: 'dashed' } });
+    }
+
+    // 긍정 감성 노드 (40% 초과)
+    if (posPct > 40) {
+      const posId = `pos_${p.platform}`;
+      nodes.push({
+        id: posId, name: `긍정 ${posPct}%`, _type: 'pos_sentiment', symbolSize: 22,
+        itemStyle: { color: '#166534', shadowBlur: 6, shadowColor: 'rgba(22,163,74,0.4)', borderColor: '#16a34a', borderWidth: 1.5 },
+        label: { color: '#86efac', fontSize: 9, fontWeight: 'bold' },
+      });
+      links.push({ source: platId, target: posId, lineStyle: { width: 1, color: 'rgba(22,163,74,0.22)', curveness: 0.38, type: 'dashed' } });
+    }
+
+    // 조직 공격 노드
+    if (p.organized_count > 0) {
+      const orgId = `org_${p.platform}`;
+      nodes.push({
+        id: orgId, name: `조직공격\n${p.organized_count}건`, _type: 'organized',
+        _attacks: p.organized_attacks, symbolSize: 32,
+        itemStyle: { color: '#7f1d1d', borderColor: '#ef4444', borderWidth: 2, shadowBlur: 16, shadowColor: 'rgba(239,68,68,0.65)' },
+        label: { color: '#fca5a5', fontSize: 9, fontWeight: 'bold', lineHeight: 14 },
+      });
+      links.push({ source: platId, target: orgId, lineStyle: { width: 1.5, color: 'rgba(239,68,68,0.42)', curveness: 0.35 } });
+    }
+  });
+
+  return { nodes, links };
+}
+
+function _updateStatsBar(data) {
+  const critical = data.platforms.reduce((a, p) => a + ((p.severity_breakdown||{}).critical||0), 0);
+  const high     = data.platforms.reduce((a, p) => a + ((p.severity_breakdown||{}).high||0), 0);
+  const organized = data.platforms.reduce((a, p) => a + (p.organized_count||0), 0);
+  const topPlat  = data.platforms[0];
+  document.getElementById('mstat-total').textContent    = data.total_threats.toLocaleString();
+  document.getElementById('mstat-critical').textContent = critical;
+  document.getElementById('mstat-high').textContent     = high;
+  document.getElementById('mstat-org').textContent      = organized;
+  document.getElementById('mstat-top-plat').textContent = topPlat ? (PLAT_LABEL[topPlat.platform]||topPlat.platform) : '—';
+}
+
+function showDefaultSidebar(data) {
+  if (!data) return;
+  const panel = document.getElementById('map-detail');
+  const maxT  = Math.max(...data.platforms.map(p => p.total), 1);
+  panel.innerHTML = `
+    <div style="padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--db-border);">
+      <p style="font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--db-text-3);">플랫폼 위험도 순위</p>
+      <p style="font-size:10px;color:var(--db-text-3);margin-top:2px;">노드 클릭 시 상세 분석</p>
+    </div>
+    ${data.platforms.map((p, i) => {
       const rc = _riskColor(p);
-      const children = [];
-      if (p.organized_count > 0) {
-        children.push({
-          name: `조직 공격\n${p.organized_count}건`,
-          symbolSize: 30,
-          itemStyle: { color: '#dc2626', borderColor: '#ff8080', borderWidth: 2 },
-          label: { fontSize: 10, fontWeight: 'bold', color: '#fff', align: 'center', verticalAlign: 'middle' },
-          _organized: true, _platform: p.platform, _attacks: p.organized_attacks,
-        });
-      }
-      return {
-        name: `${PLAT_LABEL[p.platform]||p.platform}\n${p.age_group}\n${p.total.toLocaleString()}건`,
-        symbolSize: sz,
-        itemStyle: { color: rc },
-        label: { fontSize: 10, fontWeight: 'bold', color: '#fff', align: 'center', verticalAlign: 'middle' },
-        _platform: p.platform, _pdata: p,
-        children,
-      };
-    }),
-  };
+      const snt = p.sentiment_breakdown || {};
+      const st  = (snt.negative||0)+(snt.neutral||0)+(snt.positive||0)||1;
+      const negPct = Math.round((snt.negative||0)/st*100);
+      const neuPct = Math.round((snt.neutral||0)/st*100);
+      const posPct = 100 - negPct - neuPct;
+      const barPct = Math.round(p.total/maxT*100);
+      return `<div onclick="showPlatformDetail(_platDataMap['${p.platform}'])"
+        style="padding:9px 5px;border-bottom:1px solid var(--db-border);cursor:pointer;transition:background .12s;border-radius:4px;"
+        onmouseover="this.style.background='rgba(26,110,248,0.06)'" onmouseout="this.style.background=''">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;">
+          <span style="font-size:9px;font-weight:700;color:var(--db-text-3);width:12px;text-align:center;">${i+1}</span>
+          <div style="width:7px;height:7px;border-radius:50%;background:${PLAT_COL[p.platform]||'#6b7280'};flex-shrink:0;box-shadow:0 0 5px ${(PLAT_COL[p.platform]||'#6b7280')}99;"></div>
+          <span style="font-weight:800;font-size:12px;color:var(--db-text-1);">${PLAT_LABEL[p.platform]||p.platform}</span>
+          <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--db-text-3);">${p.total.toLocaleString()}건</span>
+        </div>
+        <div style="padding-left:20px;">
+          <div style="height:3px;background:rgba(0,0,0,.08);border-radius:2px;overflow:hidden;margin-bottom:4px;">
+            <div style="height:100%;width:${barPct}%;background:${rc};border-radius:2px;transition:width .8s;"></div>
+          </div>
+          <div style="display:flex;gap:0;height:3px;border-radius:2px;overflow:hidden;margin-bottom:5px;">
+            <div style="height:100%;flex:${negPct};background:#dc2626;"></div>
+            <div style="height:100%;flex:${neuPct};background:#6b7280;"></div>
+            <div style="height:100%;flex:${posPct};background:#16a34a;"></div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <span style="font-size:9px;color:#dc2626;font-weight:600;">부정 ${negPct}%</span>
+            <span style="font-size:9px;color:${rc};font-family:'JetBrains Mono',monospace;">위험도 ${p.avg_risk_score}</span>
+            ${p.organized_count > 0 ? `<span style="font-size:9px;color:#ef4444;font-weight:700;">⚠ 조직공격 ${p.organized_count}건</span>` : ''}
+          </div>
+        </div>
+      </div>`;
+    }).join('')}`;
 }
 
 function renderThreatMap(data) {
   const el = document.getElementById('map-echarts');
   if (!el) return;
-  if (!_mapChart) _mapChart = echarts.init(el);
+  if (_mapChart) { _mapChart.dispose(); _mapChart = null; }
+  _mapChart = echarts.init(el);
 
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const lineCol = isDark ? 'rgba(255,255,255,.12)' : 'rgba(0,0,0,.10)';
+  const { nodes, links } = _buildGraphData(data);
 
   _mapChart.setOption({
     backgroundColor: 'transparent',
     tooltip: {
       trigger: 'item',
-      formatter: p => {
-        if (!p.data._pdata) return '';
-        const d = p.data._pdata;
-        return `<b>${PLAT_LABEL[d.platform]||d.platform}</b><br/>총 ${d.total.toLocaleString()}건 | 평균 위험도 ${d.avg_risk_score}<br/>조직 공격 ${d.organized_count}건`;
+      backgroundColor: isDark ? '#1e293b' : '#fff',
+      borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+      borderWidth: 1, padding: [8, 12],
+      textStyle: { color: isDark ? '#e2e8f0' : '#0c1428', fontSize: 12 },
+      formatter: params => {
+        if (!params.data) return '';
+        const d = params.data;
+        if (d._type === 'brand') return `<b>${data.brand_name}</b><br/>총 ${data.total_threats.toLocaleString()}건`;
+        if (d._type === 'platform' && d._pdata) {
+          const p = d._pdata, snt = p.sentiment_breakdown||{}, st = (snt.negative||0)+(snt.neutral||0)+(snt.positive||0)||1;
+          return `<b>${PLAT_LABEL[p.platform]||p.platform}</b><br/>총 ${p.total.toLocaleString()}건 | 평균 위험도 ${p.avg_risk_score}<br/>부정 ${Math.round((snt.negative||0)/st*100)}% | 조직공격 ${p.organized_count}건`;
+        }
+        if (d._type === 'organized') return `<b>⚠ 조직적 공격</b><br/>${(d._attacks||[]).length}건 감지 — 클릭하면 상세 보기`;
+        if (d._type === 'neg_sentiment') return `<b>부정 감성 집중</b><br/>${d.name}`;
+        if (d._type === 'pos_sentiment') return `<b>긍정 반응</b><br/>${d.name}`;
+        return '';
       },
     },
     series: [{
-      type: 'tree', layout: 'radial',
-      data: [_buildTree(data)],
-      top: '3%', left: '3%', bottom: '3%', right: '3%',
-      symbol: 'circle', roam: true, expandAndCollapse: false,
-      label: { position: 'inside' },
-      leaves: { label: { position: 'inside' } },
-      lineStyle: { color: lineCol, width: 1.5, curveness: 0.45 },
-      emphasis: { focus: 'ancestor' },
-      animationDuration: 500,
+      type: 'graph', layout: 'force', roam: true, draggable: true,
+      data: nodes, links: links,
+      force: { repulsion: 750, gravity: 0.18, edgeLength: [100, 230], layoutAnimation: true, friction: 0.65 },
+      label: { show: true, position: 'inside', align: 'center', verticalAlign: 'middle' },
+      lineStyle: { opacity: 0.75 },
+      emphasis: {
+        focus: 'adjacency', scale: true,
+        lineStyle: { width: 3, opacity: 1 },
+        itemStyle: { shadowBlur: 24, shadowColor: 'rgba(255,255,255,0.3)' },
+      },
+      animationDuration: 900, animationEasingUpdate: 'quinticInOut',
     }],
   });
 
   _mapChart.off('click');
   _mapChart.on('click', params => {
-    if (params.data._pdata) showPlatformDetail(params.data._pdata);
-    else if (params.data._organized) showOrganizedDetail(params.data._attacks);
+    if (!params.data) return;
+    if (params.data._type === 'platform') showPlatformDetail(params.data._pdata);
+    else if (params.data._type === 'organized') showOrganizedDetail(params.data._attacks);
   });
+
+  _platDataMap = {};
+  data.platforms.forEach(p => { _platDataMap[p.platform] = p; });
+
+  _updateStatsBar(data);
+  showDefaultSidebar(data);
 
   const hasOrg = data.platforms.some(p => p.organized_count > 0);
   document.getElementById('map-gemini-notice').style.display = hasOrg ? 'none' : 'flex';
 }
 
 function showPlatformDetail(p) {
-  const snt = p.sentiment_breakdown, st = (snt.negative||0)+(snt.neutral||0)+(snt.positive||0)||1;
-  const sev = p.severity_breakdown;
+  if (!p) return;
+  const snt = p.sentiment_breakdown||{}, st = (snt.negative||0)+(snt.neutral||0)+(snt.positive||0)||1;
+  const sev = p.severity_breakdown||{};
+  const rc  = _riskColor(p);
+  const negPct = Math.round((snt.negative||0)/st*100);
+  const neuPct = Math.round((snt.neutral||0)/st*100);
+  const posPct = 100 - negPct - neuPct;
   const panel = document.getElementById('map-detail');
   panel.innerHTML = `
-    <div style="border-bottom:1px solid var(--db-border);padding-bottom:12px;margin-bottom:14px;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
-        <div style="width:10px;height:10px;border-radius:50%;background:${PLAT_COL[p.platform]||'#6b7280'};flex-shrink:0;"></div>
-        <span style="font-weight:800;font-size:14px;color:var(--db-text-1);">${PLAT_LABEL[p.platform]||p.platform}</span>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--db-text-3);margin-left:auto;">${p.total.toLocaleString()}건</span>
-      </div>
-      <div style="display:flex;gap:5px;flex-wrap:wrap;">
-        <span style="font-size:10px;padding:2px 8px;border-radius:12px;background:rgba(26,110,248,.10);color:#1a6ef8;font-weight:700;">${p.age_group}</span>
-        <span style="font-size:10px;padding:2px 8px;border-radius:12px;background:rgba(0,0,0,.06);color:var(--db-text-2);font-weight:600;">${p.tendency}</span>
-      </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--db-border);">
+      <button onclick="showDefaultSidebar(window._mapLastData)" style="background:none;border:none;cursor:pointer;padding:3px;color:var(--db-text-3);line-height:0;flex-shrink:0;" title="목록으로">
+        <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      </button>
+      <div style="width:9px;height:9px;border-radius:50%;background:${PLAT_COL[p.platform]||'#6b7280'};box-shadow:0 0 6px ${(PLAT_COL[p.platform]||'#6b7280')}bb;flex-shrink:0;"></div>
+      <span style="font-weight:800;font-size:14px;color:var(--db-text-1);">${PLAT_LABEL[p.platform]||p.platform}</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--db-text-3);margin-left:auto;">${p.total.toLocaleString()}건</span>
+    </div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px;">
+      <span style="font-size:10px;padding:2px 8px;border-radius:12px;background:rgba(26,110,248,.10);color:#1a6ef8;font-weight:700;">${p.age_group}</span>
+      <span style="font-size:10px;padding:2px 8px;border-radius:12px;background:rgba(0,0,0,.06);color:var(--db-text-2);font-weight:600;">${p.tendency}</span>
+      <span style="font-size:10px;padding:2px 8px;border-radius:12px;background:${rc}18;color:${rc};font-weight:700;">위험도 ${p.avg_risk_score}</span>
     </div>
     <div style="margin-bottom:14px;">
       <p style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--db-text-3);margin-bottom:8px;">감성 분포</p>
+      <div style="display:flex;gap:0;height:6px;border-radius:3px;overflow:hidden;margin-bottom:8px;">
+        <div style="flex:${negPct};background:#dc2626;transition:flex .8s;" title="부정 ${negPct}%"></div>
+        <div style="flex:${neuPct};background:#6b7280;" title="중립 ${neuPct}%"></div>
+        <div style="flex:${posPct};background:#16a34a;" title="긍정 ${posPct}%"></div>
+      </div>
       ${[['negative','부정','#dc2626'],['neutral','중립','#6b7280'],['positive','긍정','#16a34a']].map(([k,l,c])=>{
         const cnt=snt[k]||0, pct=Math.round(cnt/st*100);
-        return `<div style="margin-bottom:6px;"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;"><span style="color:${c};font-weight:700;">${l}</span><span style="font-family:'JetBrains Mono',monospace;color:var(--db-text-3);">${cnt} (${pct}%)</span></div><div style="height:4px;background:rgba(0,0,0,.08);border-radius:2px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${c};border-radius:2px;transition:width .6s;"></div></div></div>`;
+        return `<div style="margin-bottom:6px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+            <span style="color:${c};font-weight:700;">${l}</span>
+            <span style="font-family:'JetBrains Mono',monospace;color:var(--db-text-3);">${cnt} (${pct}%)</span>
+          </div>
+          <div style="height:4px;background:rgba(0,0,0,.08);border-radius:2px;overflow:hidden;">
+            <div style="height:100%;width:${pct}%;background:${c};border-radius:2px;transition:width .6s;"></div>
+          </div>
+        </div>`;
       }).join('')}
     </div>
-    ${p.top_emotions.length ? `<div style="margin-bottom:14px;"><p style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--db-text-3);margin-bottom:8px;">주요 감정</p><div style="display:flex;gap:5px;flex-wrap:wrap;">${p.top_emotions.map(e=>`<span style="font-size:11px;padding:4px 9px;border-radius:12px;background:rgba(0,0,0,.06);color:var(--db-text-2);font-weight:600;">${EMOT_ICON[e.emotion]||''} ${e.emotion} <span style="font-family:'JetBrains Mono',monospace;">${e.count}</span></span>`).join('')}</div></div>` : ''}
+    ${p.top_emotions&&p.top_emotions.length ? `<div style="margin-bottom:14px;">
+      <p style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--db-text-3);margin-bottom:8px;">주요 감정</p>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;">
+        ${p.top_emotions.map(e=>`<span style="font-size:11px;padding:4px 9px;border-radius:12px;background:rgba(0,0,0,.06);color:var(--db-text-2);font-weight:600;">${EMOT_ICON[e.emotion]||''} ${e.emotion} <span style="font-family:'JetBrains Mono',monospace;">${e.count}</span></span>`).join('')}
+      </div></div>` : ''}
     <div style="margin-bottom:14px;">
       <p style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--db-text-3);margin-bottom:8px;">심각도 분포</p>
       ${[['critical','#dc2626'],['high','#ea580c'],['medium','#d97706'],['low','#16a34a']].map(([s,c])=>{
-        const cnt=sev[s]||0; if(!cnt) return ''; const pct=Math.round(cnt/p.total*100);
-        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;"><span style="width:52px;font-size:9px;font-weight:700;color:${c};">${s.toUpperCase()}</span><div style="flex:1;height:4px;background:rgba(0,0,0,.08);border-radius:2px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${c};border-radius:2px;"></div></div><span style="width:36px;text-align:right;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--db-text-3);">${cnt}</span></div>`;
+        const cnt=sev[s]||0; if(!cnt) return '';
+        const pct=Math.round(cnt/p.total*100);
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+          <span style="width:52px;font-size:9px;font-weight:700;color:${c};">${s.toUpperCase()}</span>
+          <div style="flex:1;height:4px;background:rgba(0,0,0,.08);border-radius:2px;overflow:hidden;">
+            <div style="height:100%;width:${pct}%;background:${c};border-radius:2px;"></div>
+          </div>
+          <span style="width:36px;text-align:right;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--db-text-3);">${cnt}</span>
+        </div>`;
       }).join('')}
     </div>
-    ${p.organized_count > 0 ? `
-    <div>
-      <p style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#dc2626;margin-bottom:8px;">🚨 조직적 공격 ${p.organized_count}건</p>
-      ${p.organized_attacks.map(a=>`
+    ${p.organized_count > 0 ? `<div>
+      <p style="font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#dc2626;margin-bottom:8px;">⚠ 조직적 공격 ${p.organized_count}건</p>
+      ${(p.organized_attacks||[]).map(a=>`
         <div style="padding:9px 11px;background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.20);border-radius:6px;margin-bottom:7px;">
           <div style="display:flex;align-items:center;gap:5px;margin-bottom:4px;">
             <span style="font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:${SEV_COLOR[a.severity]||'#6b7280'}20;color:${SEV_COLOR[a.severity]||'#6b7280'};">${(a.severity||'').toUpperCase()}</span>
@@ -494,8 +672,7 @@ function showPlatformDetail(p) {
           <p style="font-size:11px;color:var(--db-text-2);line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">${a.content_preview}</p>
         </div>`).join('')}
       ${p.organized_count > 5 ? `<p style="font-size:10px;color:var(--db-text-3);text-align:center;margin-top:4px;">외 ${p.organized_count-5}건 더 있음</p>` : ''}
-    </div>` : `
-    <div style="padding:14px;background:rgba(0,0,0,.04);border-radius:6px;text-align:center;">
+    </div>` : `<div style="padding:12px;background:rgba(0,0,0,.04);border-radius:6px;text-align:center;">
       <p style="font-size:11px;color:var(--db-text-3);">조직적 공격이 감지되지 않았습니다.</p>
     </div>`}`;
 }
@@ -504,10 +681,13 @@ function showOrganizedDetail(attacks) {
   if (!attacks || !attacks.length) return;
   const panel = document.getElementById('map-detail');
   panel.innerHTML = `
-    <div style="border-bottom:1px solid var(--db-border);padding-bottom:12px;margin-bottom:14px;">
-      <p style="font-size:13px;font-weight:800;color:#dc2626;">🚨 조직적 공격 상세</p>
-      <p style="font-size:10px;color:var(--db-text-3);margin-top:3px;">L3 심층 분석으로 감지된 공격 목록</p>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--db-border);">
+      <button onclick="showDefaultSidebar(window._mapLastData)" style="background:none;border:none;cursor:pointer;padding:3px;color:var(--db-text-3);line-height:0;flex-shrink:0;" title="목록으로">
+        <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      </button>
+      <span style="font-size:13px;font-weight:800;color:#dc2626;">⚠ 조직적 공격 상세</span>
     </div>
+    <p style="font-size:10px;color:var(--db-text-3);margin-bottom:12px;">L3 심층 분석으로 감지된 공격 목록</p>
     ${attacks.map(a=>`
       <div style="padding:10px 12px;background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.20);border-radius:6px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;">
@@ -520,8 +700,7 @@ function showOrganizedDetail(attacks) {
 }
 
 function _mapError(el, msg) {
-  _mapLoaded = false;
-  _mapChart = null;
+  _mapLoaded = false; _mapChart = null;
   el.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;">
     <p style="font-size:12px;color:#E24B4A;">로드 실패: ${msg}</p>
     <button onclick="showMapTab()" style="padding:5px 14px;border-radius:5px;background:#1a6ef8;border:none;color:#fff;font-size:11px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">다시 시도</button>
@@ -531,18 +710,12 @@ function _mapError(el, msg) {
 async function loadThreatMap() {
   const el = document.getElementById('map-echarts');
   el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;"><p style="font-size:12px;color:var(--db-text-3);">데이터 로딩 중...</p></div>';
-
-  if (typeof echarts === 'undefined') {
-    _mapError(el, 'ECharts 라이브러리 로드 실패 — 페이지를 새로고침하세요');
-    return;
-  }
-
+  if (typeof echarts === 'undefined') { _mapError(el, 'ECharts 라이브러리 로드 실패 — 페이지를 새로고침하세요'); return; }
   try {
     const res = await fetch('/api/reports/threat-map');
     if (!res.ok) {
-      let detail = '';
-      try { const body = await res.json(); detail = body.detail || ''; } catch(_) {}
-      throw new Error(`HTTP ${res.status}${detail ? ': ' + detail : ''}`);
+      let detail = ''; try { const b = await res.json(); detail = b.detail||''; } catch(_) {}
+      throw new Error(`HTTP ${res.status}${detail ? ': '+detail : ''}`);
     }
     const data = await res.json();
     if (!data.total_threats) {
@@ -550,18 +723,17 @@ async function loadThreatMap() {
       return;
     }
     el.innerHTML = '';
+    window._mapLastData = data;
     renderThreatMap(data);
     if (_mapChart) _mapChart.resize();
-  } catch(e) {
-    _mapError(el, e.message || '알 수 없는 오류');
-  }
+  } catch(e) { _mapError(el, e.message || '알 수 없는 오류'); }
 }
 
 let _mapLoaded = false;
 window.showMapTab = function() {
   document.querySelectorAll('main > div > *:not(#map-panel)').forEach(el => { el.style.display = 'none'; });
-  document.getElementById('map-panel').style.display = 'block';
-  ['daily','weekly','monthly','archive'].forEach(t => _btnOff(document.getElementById('btn-' + t)));
+  document.getElementById('map-panel').style.display = 'flex';
+  ['daily','weekly','monthly','archive'].forEach(t => _btnOff(document.getElementById('btn-'+t)));
   _btnOn(document.getElementById('btn-map'));
   if (!_mapLoaded) { _mapLoaded = true; loadThreatMap(); }
   else if (_mapChart) { _mapChart.resize(); }
