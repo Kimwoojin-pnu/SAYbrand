@@ -1,4 +1,4 @@
-"""L2 텍스트 분석 — HyperCLOVA X → Gemini → KNU 감성 사전 폴백 (10-field sentiment)"""
+"""L2 텍스트 분석 — HyperCLOVA X → Gemini → KNU 감성 사전 폴백 (마케팅·기업 이미지 특화)"""
 from __future__ import annotations
 
 import asyncio
@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 _CACHE_TTL = 86400  # 24시간
 
 # ── HyperCLOVA용 상세 프롬프트 (유지) ──────────────────────────────────
-KR_SNS_ANALYSIS_PROMPT = """당신은 한국 SNS 브랜드 위협 분석 전문가입니다.
-주어진 텍스트가 특정 브랜드에 대한 위협인지 분석하세요.
+KR_SNS_ANALYSIS_PROMPT = """당신은 한국 SNS 브랜드·마케팅 위기 분석 전문가입니다.
+주어진 텍스트가 특정 브랜드의 이미지·마케팅에 위협이 되는지 분석하세요.
 
 ## 한국어 특성 반드시 고려
 
@@ -49,12 +49,26 @@ KR_SNS_ANALYSIS_PROMPT = """당신은 한국 SNS 브랜드 위협 분석 전문�
    - X(트위터): 실검 올리기·트렌딩 시도
    - 유튜브 댓글: 조직적 평점 테러
 
+## 마케팅·기업 이미지 위협 유형 (threat_type은 아래 중 가장 근접한 것 선택)
+- 불매운동: 소비자 집단 구매 거부 조직화
+- 캠페인역풍: 광고·이벤트가 역효과로 비판 대상이 됨
+- 경쟁사공격: 경쟁 브랜드의 의도적 비교·폄하
+- ESG위반제보: 환경·사회·지배구조 위반 주장·폭로
+- 갑질폭로: 직원·협력사 대상 갑질·불공정 행위 제보
+- 제품결함확산: 품질 불량·안전 문제 확산
+- 허위정보유포: 사실 왜곡·가짜뉴스 기반 비방
+- 브랜드사칭: 공식 계정·제품 사칭
+- 임직원비위: 임직원 비리·사생활 논란
+- 광고논란: 광고 콘텐츠 자체에 대한 반발
+- 소비자집단행동: 집단 민원·공론화 시도
+- 기타비방: 위 유형에 해당하지 않는 일반 비방
+
 ## 응답 형식 (반드시 순수 JSON만 출력, 설명 없음)
 
 {
   "threat_detected": true,
   "severity": "critical",
-  "threat_type": "위협 유형 한 줄 설명",
+  "threat_type": "위 목록 중 가장 근접한 유형",
   "confidence": 0.85,
   "summary": "위협 요약 한 줄 (한국어)",
   "bot_indicators": ["패턴1", "패턴2"],
@@ -71,15 +85,17 @@ emotion 값: "분노" | "공포" | "혐오" | "슬픔" | "놀람" | "기쁨" | "
 sentiment_score: -1.0 (극부정) ~ 1.0 (극긍정)
 """
 
-# ── Gemini용 10-field 프롬프트 ────────────────────────────────────────
-_GEMINI_L2_PROMPT = """한국 SNS 브랜드 위협 분석기. 반어법·초성·커뮤니티어 해석 필수.
+# ── Gemini용 마케팅 특화 프롬프트 ────────────────────────────────────────
+_GEMINI_L2_PROMPT = """한국 SNS 브랜드·마케팅 위기 분석기. 반어법·초성·커뮤니티어 해석 필수.
+threat_type은 아래 중 선택: 불매운동|캠페인역풍|경쟁사공격|ESG위반제보|갑질폭로|제품결함확산|허위정보유포|브랜드사칭|임직원비위|광고논란|소비자집단행동|기타비방
 JSON만 출력(설명 없음):
-{"sentiment":"negative|positive|neutral","emotion":"분노|공포|혐오|슬픔|놀람|기쁨|중립","sentiment_score":0.0,"threat_detected":false,"severity":"none|low|medium|high|critical","threat_type":"유형15자이내","confidence":0.0,"summary":"한줄요약","is_organized":false,"bot_indicators":[]}"""
+{"sentiment":"negative|positive|neutral","emotion":"분노|공포|혐오|슬픔|놀람|기쁨|중립","sentiment_score":0.0,"threat_detected":false,"severity":"none|low|medium|high|critical","threat_type":"위유형중선택","confidence":0.0,"summary":"한줄요약","is_organized":false,"bot_indicators":[]}"""
 
-# ── 배치 분석용 프롬프트 ────────────────────────────────────────────────
-_GEMINI_BATCH_PROMPT = """한국 SNS 위협 분석기. 각 번호 게시물 분석. 반어법·초성·커뮤니티어 해석.
+# ── 배치 분석용 마케팅 특화 프롬프트 ────────────────────────────────────────────────
+_GEMINI_BATCH_PROMPT = """한국 SNS 브랜드·마케팅 위기 분석기. 각 번호 게시물 분석. 반어법·초성·커뮤니티어 해석.
+threat_type은 아래 중 선택: 불매운동|캠페인역풍|경쟁사공격|ESG위반제보|갑질폭로|제품결함확산|허위정보유포|브랜드사칭|임직원비위|광고논란|소비자집단행동|기타비방
 JSON 배열만 출력(설명 없음):
-[{"sentiment":"negative|positive|neutral","emotion":"분노|공포|혐오|슬픔|놀람|기쁨|중립","sentiment_score":0.0,"threat_detected":false,"severity":"none|low|medium|high|critical","threat_type":"유형15자","confidence":0.0,"summary":"한줄요약","is_organized":false,"bot_indicators":[]},...]"""
+[{"sentiment":"negative|positive|neutral","emotion":"분노|공포|혐오|슬픔|놀람|기쁨|중립","sentiment_score":0.0,"threat_detected":false,"severity":"none|low|medium|high|critical","threat_type":"위유형중선택","confidence":0.0,"summary":"한줄요약","is_organized":false,"bot_indicators":[]},...]"""
 
 # urgency/severity → confidence 매핑
 _URGENCY_CONF: dict[str, float] = {

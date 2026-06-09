@@ -90,6 +90,16 @@ async def run_pipeline(
         print(f"[DISMISSED] 건너뜀 (경미 처리됨): {_url or _content_hash}")
         return None
 
+    # ── 중복 URL 체크 — 동일 URL 재삽입 방지 ─────────────────────────
+    if _url:
+        _dup_q = select(Threat.id).where(
+            Threat.source_url == _url,
+            Threat.user_id == user_id,
+        ).limit(1)
+        if (await db.execute(_dup_q)).scalar():
+            print(f"[DEDUP] 이미 존재하는 URL 건너뜀: {_url}")
+            return None
+
     # ── 프로파일 로드 ─────────────────────────────────────────────────
     profile = None
     if profile_id:
