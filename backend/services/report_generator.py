@@ -1,9 +1,12 @@
 """리포트 생성 서비스 — 일간/주간/월간 위협 요약 + PDF"""
 from __future__ import annotations
 
+import html
 import io
 import logging
-from datetime import datetime, timedelta, timezone
+import os
+import re
+from datetime import datetime, timedelta
 
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,6 +14,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.models.orm import Threat
 
 logger = logging.getLogger(__name__)
+
+# 이 파일 기준으로 번들 폰트 경로 결정
+_FONTS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "fonts")
+_BUNDLED_REGULAR = os.path.join(_FONTS_DIR, "NanumGothic.ttf")
+_BUNDLED_BOLD    = os.path.join(_FONTS_DIR, "NanumGothicBold.ttf")
+
+
+def _esc(text: object) -> str:
+    """ReportLab Paragraph XML 특수문자 이스케이프."""
+    return html.escape(str(text or ""), quote=False)
+
+
+def _clean(text: object, max_len: int = 200) -> str:
+    """텍스트 정리 후 이스케이프: 개행/탭→공백, 과도한 공백 제거, XML 이스케이프."""
+    s = str(text or "")[:max_len]
+    s = re.sub(r"[\r\n\t]+", " ", s)
+    s = re.sub(r" {2,}", " ", s).strip()
+    return html.escape(s, quote=False)
 
 
 def _period_range(period: str) -> tuple[datetime, str]:
@@ -216,28 +237,33 @@ async def generate_pdf_report(
             HRFlowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
         )
 
-        # ── 한글 폰트 등록 (맑은 고딕 우선, 없으면 나눔고딕, 없으면 Helvetica) ──
+        # ── 한글 폰트 등록 ──────────────────────────────────────────────────────
+        # 우선순위: 번들 폰트(backend/fonts/) → 시스템 폰트 → Helvetica 폴백
         _FONT_CANDIDATES = [
-            ("C:/Windows/Fonts/malgun.ttf",   "C:/Windows/Fonts/malgunbd.ttf"),   # Windows 맑은 고딕
-            ("C:/Windows/Fonts/NanumGothic.ttf", "C:/Windows/Fonts/NanumGothicBold.ttf"),
+            (_BUNDLED_REGULAR, _BUNDLED_BOLD),                                          # 번들 (항상 존재해야 함)
+            ("C:/Windows/Fonts/malgun.ttf",   "C:/Windows/Fonts/malgunbd.ttf"),        # Windows
             ("/usr/share/fonts/truetype/nanum/NanumGothic.ttf",
-             "/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf"),               # Linux
+             "/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf"),                   # Linux 시스템
         ]
         KR = "Helvetica"
         KR_BOLD = "Helvetica-Bold"
+        _registered = pdfmetrics.getRegisteredFontNames()
         for reg_path, bold_path in _FONT_CANDIDATES:
+            if not os.path.exists(reg_path):
+                continue
             try:
-                import os
-                if os.path.exists(reg_path):
-                    pdfmetrics.registerFont(TTFont("KoreanFont", reg_path))
-                    KR = "KoreanFont"
-                    if os.path.exists(bold_path):
-                        pdfmetrics.registerFont(TTFont("KoreanFontBold", bold_path))
-                        KR_BOLD = "KoreanFontBold"
-                    else:
-                        KR_BOLD = KR
-                    break
-            except Exception:
+                if "SAYKorean" not in _registered:
+                    pdfmetrics.registerFont(TTFont("SAYKorean", reg_path))
+                KR = "SAYKorean"
+                if os.path.exists(bold_path):
+                    if "SAYKoreanBold" not in _registered:
+                        pdfmetrics.registerFont(TTFont("SAYKoreanBold", bold_path))
+                    KR_BOLD = "SAYKoreanBold"
+                else:
+                    KR_BOLD = KR
+                break
+            except Exception as _fe:
+                logger.warning("폰트 등록 실패 (%s): %s", reg_path, _fe)
                 continue
 
         NAVY = colors.HexColor("#0c1428")
@@ -263,9 +289,9 @@ async def generate_pdf_report(
 
         # 헤더
         story.append(Paragraph("SAYbrand 브랜드 보호 서비스", ST_NORMAL))
-        story.append(Paragraph(data["label"], ST_TITLE))
+        story.append(Paragraph(_esc(data["label"]), ST_TITLE))
         story.append(Paragraph(
-            f"기간: {data['period']}   생성: {data['generated_at'][:10]}",
+            f"기간: {_esc(data['period'])}   생성: {_esc(data['generated_at'][:10])}",
             ST_SMALL
         ))
         story.append(Spacer(1, 8*mm))
@@ -328,22 +354,41 @@ async def generate_pdf_report(
         if unresolved:
             story.append(Paragraph("미해결 위협 (우선순위 순)", ST_H2))
             SEV_COLOR = {"critical": "#E24B4A", "high": "#BA7517", "medium": "#185FA5", "low": "#1D9E75"}
-            for th in unresolved:
-                sc = SEV_COLOR.get(th["severity"], "#555555")
-                preview = (th.get("content_preview") or "")[:80]
+            for i, th in enumerate(unresolved):
+                sc = SEV_COLOR.get(th.get("severity", ""), "#555555")
+                preview = _clean(th.get("content_preview") or "", max_len=120)
+                platform = _esc(th.get("platform") or "")
+                sev_label = _esc(th.get("severity") or "")
+                # 동일 ParagraphStyle 이름 충돌 방지 위해 index 포함
                 story.append(Paragraph(
-                    f'[{th["platform"]}] {preview}',
-                    ParagraphStyle("ThreatRow", fontName=KR, fontSize=9, leading=13,
-                                   leftIndent=6, borderPad=3,
+                    f"[{platform}] [{sev_label}] {preview}",
+                    ParagraphStyle(f"ThreatRow{i}", fontName=KR, fontSize=9, leading=14,
+                                   leftIndent=6, borderPad=4,
                                    borderColor=colors.HexColor(sc), borderWidth=0,
                                    borderLeftWidth=3)
                 ))
-                if th.get("source_url"):
+                url = th.get("source_url") or ""
+                if url:
                     story.append(Paragraph(
-                        f'원본: {th["source_url"]}',
+                        f"원본: {_esc(url[:100])}",
                         ST_SMALL
                     ))
                 story.append(Spacer(1, 2*mm))
+            story.append(Spacer(1, 4*mm))
+
+        # 부정적 언급 샘플
+        neg_samples = data.get("negative_samples", [])
+        if neg_samples:
+            story.append(Paragraph("부정적 언급 샘플", ST_H2))
+            for i, ns in enumerate(neg_samples):
+                platform = _esc(ns.get("platform") or "")
+                content = _clean(ns.get("content") or "", max_len=120)
+                story.append(Paragraph(
+                    f"[{platform}] {content}",
+                    ParagraphStyle(f"NegRow{i}", fontName=KR, fontSize=9, leading=14,
+                                   leftIndent=6, textColor=colors.HexColor("#BA7517"))
+                ))
+                story.append(Spacer(1, 1*mm))
             story.append(Spacer(1, 4*mm))
 
         # 해결 완료 위협
@@ -351,9 +396,12 @@ async def generate_pdf_report(
         if resolved_threats:
             story.append(Paragraph("해결 완료된 위협", ST_H2))
             for t in resolved_threats:
-                note = f" — {t['note']}" if t.get("note") else ""
+                platform = _esc(t.get("platform") or "")
+                method = _esc(t.get("resolution_method") or "기타")
+                note_raw = t.get("note") or ""
+                note = f" — {_clean(note_raw, 80)}" if note_raw else ""
                 story.append(Paragraph(
-                    f"[{t['platform']}] 해결방법: {t['resolution_method'] or '기타'}{note}",
+                    f"[{platform}] 해결방법: {method}{note}",
                     ST_NORMAL
                 ))
             story.append(Spacer(1, 4*mm))
