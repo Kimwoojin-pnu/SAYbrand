@@ -48,23 +48,6 @@ async def health():
     return {"status": "ok"}
 
 
-@app.get("/_test_gemini")
-async def test_gemini_endpoint():
-    """임시 검증 엔드포인트 — Vercel에서 Gemini 실제 호출 확인용"""
-    from backend.services.analyzers.l2_text import call_l2_with_fallback
-    try:
-        result = await call_l2_with_fallback("이 브랜드 서비스 진짜 최악이다 환불도 안해줘")
-        return {
-            "model": result.get("_meta", {}).get("model", "unknown"),
-            "is_mock": result.get("is_mock", True),
-            "summary": result.get("summary", ""),
-            "sentiment": result.get("sentiment", ""),
-            "severity": result.get("severity", ""),
-        }
-    except Exception as e:
-        return {"error": str(e)}
-
-
 @app.get("/saybrand-logo.png")
 async def saybrand_logo():
     return FileResponse("saybrand-logo.png", media_type="image/png")
