@@ -31,6 +31,7 @@ export const api = {
   riskScore: () => apiFetch("/risk-score"),
   trend: () => apiFetch("/trend"),
   platformStats: () => apiFetch("/platform-stats"),
+  threatTypeStats: () => apiFetch("/threat-type-stats"),
   threats: (params = {}) => {
     const qs = new URLSearchParams(
       Object.fromEntries(Object.entries(params).filter(([, v]) => v != null && v !== ""))

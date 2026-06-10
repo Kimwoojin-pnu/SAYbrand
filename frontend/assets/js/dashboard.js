@@ -281,6 +281,128 @@ async function renderPlatformStats() {
   requestAnimationFrame(() => el.querySelectorAll("[data-pct]").forEach(b => { b.style.width = b.getAttribute("data-pct") + "%"; }));
 }
 
+// ── 위협 현황 맵 ──────────────────────────────────────────────────────────────
+
+const _SEV_COLOR = {
+  critical: { bg: "rgba(226,75,74,0.13)", text: "#E24B4A", border: "rgba(226,75,74,0.35)" },
+  high:     { bg: "rgba(186,117,23,0.13)", text: "#BA7517", border: "rgba(186,117,23,0.35)" },
+  medium:   { bg: "rgba(24,95,165,0.13)",  text: "#185FA5", border: "rgba(24,95,165,0.35)" },
+  low:      { bg: "rgba(29,158,117,0.13)", text: "#1D9E75", border: "rgba(29,158,117,0.35)" },
+  none:     { bg: "rgba(0,0,0,.06)",       text: "rgba(12,20,40,.45)", border: "rgba(0,0,0,.12)" },
+};
+
+const _TYPE_LABEL = {
+  keyword_match: "키워드 매칭", reputation_attack: "평판 공격",
+  organized_rumor: "조직적 루머", negative_comment: "부정 댓글",
+  viral_rumor: "바이럴 루머", account_impersonation: "계정 사칭",
+  logo_spoof: "로고 도용", competitor_mention: "경쟁사 언급",
+  불매운동: "불매운동", 캠페인역풍: "캠페인 역풍", 경쟁사공격: "경쟁사 공격",
+  ESG위반제보: "ESG 위반", 갑질폭로: "갑질 폭로", 제품결함확산: "제품 결함",
+  허위정보유포: "허위정보", 브랜드사칭: "브랜드 사칭", 임직원비위: "임직원 비위",
+  광고논란: "광고 논란", 소비자집단행동: "소비자 집단행동", 기타비방: "기타 비방",
+};
+
+let _threatMapData = { by_type: [], by_platform: {} };
+let _selectedPlatform = null;
+
+function _renderThreatTags(types) {
+  const el = document.getElementById("threat-map-tags");
+  if (!el) return;
+  if (!types || !types.length) {
+    el.innerHTML = `<span style="font-size:11px;color:rgba(12,20,40,.35);">데이터 없음</span>`;
+    return;
+  }
+  const maxCount = Math.max(...types.map(t => t.count));
+  el.innerHTML = types.map(t => {
+    const c = _SEV_COLOR[t.max_severity] || _SEV_COLOR.none;
+    const sizeRatio = Math.sqrt(t.count / maxCount);
+    const fs = Math.round(10 + sizeRatio * 8);
+    const px = Math.round(7 + sizeRatio * 6);
+    const py = Math.round(4 + sizeRatio * 3);
+    const label = _TYPE_LABEL[t.threat_type] || t.threat_type;
+    return `<span title="${label}: ${t.count}건" style="
+      display:inline-flex;align-items:center;gap:5px;
+      padding:${py}px ${px}px;border-radius:20px;
+      background:${c.bg};color:${c.text};
+      border:1px solid ${c.border};
+      font-size:${fs}px;font-weight:700;cursor:default;
+      transition:transform .15s;
+    " onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">
+      <span style="width:${Math.round(4+sizeRatio*3)}px;height:${Math.round(4+sizeRatio*3)}px;border-radius:50%;background:${c.text};flex-shrink:0;"></span>
+      ${label}
+      <span style="font-size:${fs-2}px;opacity:.7;font-family:'JetBrains Mono',monospace;">${t.count}</span>
+    </span>`;
+  }).join("");
+}
+
+async function loadThreatMap() {
+  try { _threatMapData = await api.threatTypeStats(); } catch (_) { return; }
+  const { by_type, by_platform } = _threatMapData;
+
+  // 플랫폼 노드
+  const platEl = document.getElementById("threat-map-platforms");
+  const filterEl = document.getElementById("threat-map-platform-filters");
+  if (!platEl || !filterEl) return;
+
+  const platforms = Object.keys(by_platform).filter(p => by_platform[p].length);
+  const platTotals = {};
+  platforms.forEach(p => { platTotals[p] = by_platform[p].reduce((s, t) => s + t.count, 0); });
+  const maxPlatCount = Math.max(...Object.values(platTotals), 1);
+
+  platEl.innerHTML = platforms.map(p => {
+    const m = PLATFORM_META[p] || { name: p, abbr: p[0].toUpperCase(), color: "#6B7280" };
+    const cnt = platTotals[p] || 0;
+    const barPct = Math.round(cnt / maxPlatCount * 100);
+    const active = _selectedPlatform === p;
+    return `<div onclick="selectThreatMapPlatform('${p}')" style="
+      display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;cursor:pointer;
+      background:${active ? m.color + '18' : 'transparent'};
+      border:1px solid ${active ? m.color + '55' : 'transparent'};
+      transition:background .15s;
+    " onmouseover="this.style.background='${m.color}12'" onmouseout="this.style.background='${active ? m.color + '18' : 'transparent'}'">
+      <span style="width:24px;height:24px;border-radius:5px;background:${m.color}22;color:${m.color};font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${m.abbr}</span>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+          <span style="font-size:11px;font-weight:700;">${m.name}</span>
+          <span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:rgba(12,20,40,.5);">${cnt}</span>
+        </div>
+        <div style="height:2px;background:rgba(0,0,0,.06);border-radius:2px;">
+          <div style="height:100%;width:${barPct}%;background:${m.color};border-radius:2px;transition:width .8s ease;"></div>
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+
+  // 전체 버튼
+  filterEl.innerHTML = `<button onclick="selectThreatMapPlatform(null)" style="
+    padding:3px 10px;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;
+    background:${_selectedPlatform === null ? '#1a6ef8' : 'rgba(0,0,0,.04)'};
+    color:${_selectedPlatform === null ? '#fff' : 'rgba(12,20,40,.55)'};
+    border:1px solid ${_selectedPlatform === null ? '#1a6ef8' : 'rgba(0,0,0,.08)'};
+    transition:all .15s;font-family:'NanumSquare',sans-serif;
+  ">전체</button>`;
+
+  _renderThreatTags(by_type);
+}
+
+window.selectThreatMapPlatform = function(platform) {
+  _selectedPlatform = platform;
+  const labelEl = document.getElementById("threat-map-platform-label");
+  if (labelEl) {
+    const m = platform ? (PLATFORM_META[platform] || { name: platform }) : null;
+    labelEl.textContent = m ? m.name : "전체 플랫폼";
+  }
+  if (platform && _threatMapData.by_platform[platform]) {
+    const types = _threatMapData.by_platform[platform].map(t => ({
+      threat_type: t.threat_type, count: t.count, max_severity: "high",
+    }));
+    _renderThreatTags(types);
+  } else {
+    _renderThreatTags(_threatMapData.by_type);
+  }
+  loadThreatMap();
+};
+
 // ── Mock 배지 ─────────────────────────────────────────────────────────────────
 function updateMockBadge(stats) {
   const badge = document.getElementById("mock-banner");
@@ -564,7 +686,7 @@ async function initDashboard() {
     document.getElementById("last-updated").textContent = new Date().toLocaleTimeString("ko-KR");
     await initTrendChart();
     await renderPlatformStats();
-    await Promise.all([initSentimentChart(), loadShareOfVoice()]);
+    await Promise.all([initSentimentChart(), loadShareOfVoice(), loadThreatMap()]);
     startPolling();
   } catch (e) { console.error("Dashboard init failed:", e); }
 }

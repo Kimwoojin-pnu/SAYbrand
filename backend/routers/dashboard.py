@@ -480,6 +480,73 @@ async def get_platform_stats(
     ]
 
 
+@router.get("/threat-type-stats")
+async def get_threat_type_stats(
+    request: Request,
+    org: Organization | None = Depends(optional_current_org),
+    db: AsyncSession = Depends(get_db),
+):
+    """위협 유형별 건수 + 플랫폼별 분포 반환."""
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return {"by_type": [], "by_platform": {}}
+
+    def _apply(q):
+        if org is not None:
+            return q.where(Threat.org_id == org.id)
+        return q.where(Threat.user_id == user_id)
+
+    # 유형별 건수 + 대표 심각도
+    type_q = _apply(
+        select(Threat.threat_type, Threat.severity, func.count(Threat.id))
+        .group_by(Threat.threat_type, Threat.severity)
+    )
+    rows = (await db.execute(type_q)).all()
+
+    _sev_order = {"critical": 4, "high": 3, "medium": 2, "low": 1, "none": 0, "feedback": 0}
+    type_map: dict[str, dict] = {}
+    for ttype, sev, cnt in rows:
+        if not ttype:
+            ttype = "keyword_match"
+        if ttype not in type_map:
+            type_map[ttype] = {"count": 0, "max_severity": "none"}
+        type_map[ttype]["count"] += cnt
+        if _sev_order.get(sev, 0) > _sev_order.get(type_map[ttype]["max_severity"], 0):
+            type_map[ttype]["max_severity"] = sev
+
+    total = sum(v["count"] for v in type_map.values()) or 1
+    by_type = sorted(
+        [{"threat_type": k, "count": v["count"], "pct": round(v["count"] / total * 100, 1),
+          "max_severity": v["max_severity"]} for k, v in type_map.items()],
+        key=lambda x: x["count"], reverse=True,
+    )[:12]
+
+    # 플랫폼 × 유형 매트릭스
+    matrix_q = _apply(
+        select(Threat.platform, Threat.threat_type, func.count(Threat.id))
+        .group_by(Threat.platform, Threat.threat_type)
+    )
+    matrix_rows = (await db.execute(matrix_q)).all()
+    by_platform: dict[str, list] = {}
+    for plat, ttype, cnt in matrix_rows:
+        if not ttype:
+            ttype = "keyword_match"
+        if plat not in by_platform:
+            by_platform[plat] = {}
+        by_platform[plat][ttype] = by_platform[plat].get(ttype, 0) + cnt
+
+    # 플랫폼별 상위 5개 유형만 반환
+    by_platform_sorted = {
+        p: sorted(
+            [{"threat_type": t, "count": c} for t, c in types.items()],
+            key=lambda x: x["count"], reverse=True,
+        )[:5]
+        for p, types in by_platform.items()
+    }
+
+    return {"by_type": by_type, "by_platform": by_platform_sorted}
+
+
 class ScanRequest(BaseModel):
     keywords: list[str] = []
     platforms: str = "all"
