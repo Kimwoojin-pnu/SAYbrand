@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#1a6ef8" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+  <script src="/assets/js/pwa.js" defer></script>
   <title>SAYbrand — 브랜드 리스크 대시보드</title>
   <script>(function(){var t=localStorage.getItem('db-theme')||'dark';document.documentElement.setAttribute('data-theme',t);}());</script>
   <link rel="stylesheet" href="/assets/css/custom.css" />
@@ -98,6 +102,12 @@
           <p id="user-email" style="font-size:10px;color:rgba(255,255,255,0.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></p>
         </div>
       </div>
+      <button data-pwa-install class="db-nav-item" style="display:none;padding:5px 8px;font-size:11px;width:100%;text-align:left;background:none;border:none;cursor:pointer;">
+        <svg style="width:13px;height:13px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        앱으로 설치
+      </button>
       <a href="/settings" class="db-nav-item" style="padding:5px 8px;font-size:11px;">
         <svg style="width:13px;height:13px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"/>

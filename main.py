@@ -65,6 +65,20 @@ async def saybrand_logo2():
     return FileResponse("saybrand-logo2.png", media_type="image/png")
 
 
+@app.get("/manifest.json")
+async def pwa_manifest():
+    return FileResponse("frontend/manifest.json", media_type="application/manifest+json")
+
+
+@app.get("/sw.js")
+async def pwa_service_worker():
+    return FileResponse(
+        "frontend/sw.js",
+        media_type="application/javascript",
+        headers={"Service-Worker-Allowed": "/"},
+    )
+
+
 @app.get("/")
 async def root():
     return FileResponse("frontend/pages/landing.html")

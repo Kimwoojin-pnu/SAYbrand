@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#1a6ef8" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+  <script src="/assets/js/pwa.js" defer></script>
   <title>SAYbrand — AI 브랜드 보호 플랫폼</title>
   <meta name="description" content="사칭 계정, 가짜뉴스, 조직적 공격까지 — SAYbrand AI가 SNS 전 영역에서 위협을 사전 탐지하고 즉각 대응 전략을 제안합니다." />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
@@ -43,6 +47,7 @@
             <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
           </svg>
         </button>
+        <button data-pwa-install class="ld-btn ld-btn--outlined ld-btn--sm" style="display:none;">앱 설치</button>
         <a href="/login" class="ld-btn ld-btn--outlined ld-btn--sm">로그인</a>
         <a href="/login" class="ld-btn ld-btn--dark ld-btn--sm">무료로 시작</a>
       </div>
@@ -62,6 +67,7 @@
   <a href="#pipeline">솔루션</a>
   <a href="#pricing">요금</a>
   <a href="#footer">자료실</a>
+  <a href="#" data-pwa-install style="display:none;">앱으로 설치하기</a>
   <a href="/login" style="color:#1d5fa8;font-weight:700;border:none;">로그인 / 무료로 시작 →</a>
 </div>
 
@@ -219,23 +225,23 @@
 <!-- ────────────────────────────────────────────────────────────────── -->
 <section class="ld-section--sm ld-section--alt animate-section">
   <div class="ld-container">
-    <p class="ld-stats-tagline">이미 수천 개 브랜드가 SAYbrand로 지켜지고 있습니다</p>
+    <p class="ld-stats-tagline">AI가 SNS 전 영역을 24시간 감시하며 브랜드 위협을 실시간으로 분류합니다</p>
     <div class="ld-stats-grid">
       <div class="ld-stat-item">
-        <div class="ld-stat-number" data-count="12400" data-suffix="+">12,400+</div>
-        <div class="ld-stat-label">모니터링 키워드</div>
+        <div class="ld-stat-number" data-count="5" data-suffix="개">5개</div>
+        <div class="ld-stat-label">플랫폼 통합 모니터링</div>
       </div>
       <div class="ld-stat-item">
-        <div class="ld-stat-number" data-count="9.2" data-suffix="M">9.2M</div>
-        <div class="ld-stat-label">일일 분석 콘텐츠</div>
+        <div class="ld-stat-number" data-count="20" data-suffix="+">20+</div>
+        <div class="ld-stat-label">위협 유형 자동 분류</div>
       </div>
       <div class="ld-stat-item">
-        <div class="ld-stat-number" data-count="47" data-suffix="초">47초</div>
-        <div class="ld-stat-label">평균 위협 탐지 시간</div>
+        <div class="ld-stat-number" data-count="3" data-suffix="단계">3단계</div>
+        <div class="ld-stat-label">AI 분석 파이프라인</div>
       </div>
       <div class="ld-stat-item">
-        <div class="ld-stat-number" data-count="67" data-prefix="NPS ">NPS 67</div>
-        <div class="ld-stat-label">고객 만족도</div>
+        <div class="ld-stat-number" data-count="24" data-suffix="/7">24/7</div>
+        <div class="ld-stat-label">자동 감시 · 주기적 재분석</div>
       </div>
     </div>
   </div>
@@ -310,7 +316,7 @@
 <!-- ────────────────────────────────────────────────────────────────── -->
 <!-- ⑤ 피처 B — 모듈 B 가짜뉴스 분석                                 -->
 <!-- ────────────────────────────────────────────────────────────────── -->
-<section class="ld-section ld-section--alt animate-section">
+<section class="ld-section ld-section--alt animate-section" id="module-b">
   <div class="ld-container">
     <div class="ld-feature">
 
@@ -381,6 +387,153 @@
         </div>
       </div>
 
+    </div>
+  </div>
+</section>
+
+
+<!-- ────────────────────────────────────────────────────────────────── -->
+<!-- ⑤-2 피처 C — 모듈 C 감성·여론 분류                              -->
+<!-- ────────────────────────────────────────────────────────────────── -->
+<section class="ld-section animate-section" id="module-c">
+  <div class="ld-container">
+    <div class="ld-feature">
+
+      <!-- Text -->
+      <div class="ld-feature-text">
+        <p class="ld-label ld-label--accent">MODULE C · SENTIMENT AI</p>
+        <h2 class="ld-h2">진짜 위협과<br>단순 불만을 구분합니다</h2>
+        <p class="ld-body ld-feature-body">
+          14,854개 한국어 감성 어휘 사전(KNU)과 Gemini 폴백 분석으로
+          게시물의 감성·의도를 자동 분류합니다. 단순 피드백은 위협 목록에서
+          분리하고, 실제 위협만 빠르게 에스컬레이션합니다.
+        </p>
+        <ul class="ld-checklist">
+          <li>14,854개 한국어 감성사전 기반 1차 분류</li>
+          <li>Gemini 2.5 Flash 폴백으로 정밀 분석</li>
+          <li>Critical~Feedback 5단계 위협 등급 자동 분류</li>
+          <li>오탐 자동 다운그레이드로 알림 피로도 감소</li>
+        </ul>
+      </div>
+
+      <!-- Visual: Sentiment classification demo -->
+      <div>
+        <div class="ld-sentiment-demo feature-card">
+          <div class="sentiment-demo-header">
+            <span class="sentiment-demo-title">감성 분류 결과</span>
+            <span class="sentiment-demo-live">LIVE</span>
+          </div>
+          <div class="sentiment-demo-body">
+            <div class="sentiment-demo-row">
+              <span class="sentiment-badge critical">CRITICAL</span>
+              <div>
+                <p class="sentiment-demo-content">"환불 안 해주면 다 같이 불매운동 갑니다"</p>
+                <p class="sentiment-demo-meta">조직적 루머 · Naver · 위협 점수 78</p>
+              </div>
+            </div>
+            <div class="sentiment-demo-row">
+              <span class="sentiment-badge medium">MEDIUM</span>
+              <div>
+                <p class="sentiment-demo-content">"이 브랜드 광고 너무 과장된 거 아니에요?"</p>
+                <p class="sentiment-demo-meta">광고 논란 · X · 위협 점수 42</p>
+              </div>
+            </div>
+            <div class="sentiment-demo-row">
+              <span class="sentiment-badge feedback">FEEDBACK</span>
+              <div>
+                <p class="sentiment-demo-content">"배송이 좀 느린 것 같아요 ㅠㅠ"</p>
+                <p class="sentiment-demo-meta">단순 피드백 · 위협 목록에서 자동 제외</p>
+              </div>
+            </div>
+          </div>
+          <div class="sentiment-demo-footer">
+            KNU 감성사전 14,854개 어휘 + Gemini 2.5 Flash 폴백 분석
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ────────────────────────────────────────────────────────────────── -->
+<!-- ⑤-3 위협 인텔리전스 맵                                            -->
+<!-- ────────────────────────────────────────────────────────────────── -->
+<section class="ld-section ld-section--alt animate-section" id="threat-map">
+  <div class="ld-container">
+    <div style="text-align:center;">
+      <p class="ld-label ld-label--accent">THREAT INTELLIGENCE MAP</p>
+      <h2 class="ld-h2 ld-h2--center">위협을 한눈에 파악하는<br>실시간 인텔리전스 맵</h2>
+      <p class="ld-body" style="max-width:560px;margin:16px auto 0;text-align:center;">
+        플랫폼별 위협 분포와 20여 가지 위협 유형을 한 화면에서 확인하고,
+        클릭 한 번으로 특정 플랫폼의 위협 패턴을 드릴다운합니다.
+      </p>
+    </div>
+
+    <div class="ld-map-demo feature-card">
+      <div class="ld-map-header">
+        <span class="ld-map-title">위협 현황 맵</span>
+        <span class="ld-map-live">LIVE</span>
+      </div>
+      <div class="ld-map-body">
+
+        <!-- 플랫폼 노드 -->
+        <div class="ld-map-platforms">
+          <div class="ld-map-platform-row">
+            <span class="ld-map-platform-icon" style="background:rgba(228,64,95,.15);color:#E4405F;">IG</span>
+            <div class="ld-map-platform-info">
+              <div class="ld-map-platform-top"><span>Instagram</span><span>128</span></div>
+              <div class="ld-map-platform-bar"><div style="width:100%;background:#E4405F;"></div></div>
+            </div>
+          </div>
+          <div class="ld-map-platform-row">
+            <span class="ld-map-platform-icon" style="background:rgba(3,199,90,.15);color:#03C75A;">N</span>
+            <div class="ld-map-platform-info">
+              <div class="ld-map-platform-top"><span>Naver</span><span>96</span></div>
+              <div class="ld-map-platform-bar"><div style="width:75%;background:#03C75A;"></div></div>
+            </div>
+          </div>
+          <div class="ld-map-platform-row">
+            <span class="ld-map-platform-icon" style="background:rgba(0,0,0,.15);color:#64748b;">X</span>
+            <div class="ld-map-platform-info">
+              <div class="ld-map-platform-top"><span>X</span><span>61</span></div>
+              <div class="ld-map-platform-bar"><div style="width:48%;background:#64748b;"></div></div>
+            </div>
+          </div>
+          <div class="ld-map-platform-row">
+            <span class="ld-map-platform-icon" style="background:rgba(255,0,0,.15);color:#FF0000;">YT</span>
+            <div class="ld-map-platform-info">
+              <div class="ld-map-platform-top"><span>YouTube</span><span>34</span></div>
+              <div class="ld-map-platform-bar"><div style="width:27%;background:#FF0000;"></div></div>
+            </div>
+          </div>
+          <div class="ld-map-platform-row">
+            <span class="ld-map-platform-icon" style="background:rgba(0,0,0,.15);color:#64748b;">TT</span>
+            <div class="ld-map-platform-info">
+              <div class="ld-map-platform-top"><span>TikTok</span><span>19</span></div>
+              <div class="ld-map-platform-bar"><div style="width:15%;background:#64748b;"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 위협 유형 태그 클라우드 -->
+        <div>
+          <p class="ld-map-tags-label">전체 플랫폼 · 위협 유형</p>
+          <div class="ld-map-tags-cloud">
+            <span class="ld-map-tag critical">브랜드 사칭 <em>34</em></span>
+            <span class="ld-map-tag critical">계정 사칭 <em>29</em></span>
+            <span class="ld-map-tag high">조직적 루머 <em>27</em></span>
+            <span class="ld-map-tag high">불매운동 <em>22</em></span>
+            <span class="ld-map-tag medium">평판 공격 <em>19</em></span>
+            <span class="ld-map-tag medium">광고 논란 <em>15</em></span>
+            <span class="ld-map-tag medium">경쟁사 언급 <em>12</em></span>
+            <span class="ld-map-tag low">부정 댓글 <em>9</em></span>
+            <span class="ld-map-tag low">기타 비방 <em>6</em></span>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 </section>
@@ -630,7 +783,9 @@
         <ul class="ld-footer-links">
           <li><a href="/dashboard">대시보드</a></li><!-- TODO: 페이지 추가 시 링크 업데이트 -->
           <li><a href="#features">모듈 A — 사칭 탐지</a></li>
-          <li><a href="#features">모듈 B — 가짜뉴스</a></li>
+          <li><a href="#module-b">모듈 B — 가짜뉴스</a></li>
+          <li><a href="#module-c">모듈 C — 감성 분류</a></li>
+          <li><a href="#threat-map">위협 인텔리전스 맵</a></li>
           <li><a href="#pipeline">API 연동</a></li>
         </ul>
       </div>

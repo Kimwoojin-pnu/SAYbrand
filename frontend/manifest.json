@@ -1,0 +1,32 @@
+{
+  "name": "SAYbrand — AI 브랜드 보호 플랫폼",
+  "short_name": "SAYbrand",
+  "description": "사칭 계정, 가짜뉴스, 조직적 공격까지 — AI가 SNS 전 영역에서 브랜드 위협을 실시간으로 탐지하고 대응합니다.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a0f1e",
+  "theme_color": "#1a6ef8",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "/assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
