@@ -401,8 +401,8 @@
           </div>
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
             <div id="btn-upgrade" style="display:none;gap:6px;">
-              <a href="/billing/checkout?plan=starter" style="padding:8px 14px;border-radius:7px;background:#1a6ef8;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;text-decoration:none;">Starter 업그레이드</a>
-              <a href="/billing/checkout?plan=pro" style="padding:8px 14px;border-radius:7px;background:#0c1428;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;text-decoration:none;">Pro 업그레이드</a>
+              <button id="btn-upgrade-starter" onclick="changePlan('starter')" style="padding:8px 14px;border-radius:7px;background:#1a6ef8;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">Starter 업그레이드</button>
+              <button id="btn-upgrade-pro" onclick="changePlan('pro')" style="padding:8px 14px;border-radius:7px;background:#0c1428;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">Pro 업그레이드</button>
             </div>
             <button id="btn-sync-plan" onclick="syncSubscription()" style="padding:8px 14px;border-radius:7px;border:1px solid rgba(0,0,0,.12);background:transparent;color:rgba(12,20,40,.55);font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">구독 동기화</button>
           </div>
@@ -1177,8 +1177,40 @@ async function loadPlanInfo() {
 
     if (tier === 'free') {
       document.getElementById('btn-upgrade').style.display = 'flex';
+      document.getElementById('btn-upgrade-starter').style.display = 'inline-block';
+      document.getElementById('btn-upgrade-pro').style.display = 'inline-block';
+    } else if (tier === 'starter') {
+      document.getElementById('btn-upgrade').style.display = 'flex';
+      document.getElementById('btn-upgrade-starter').style.display = 'none';
+      document.getElementById('btn-upgrade-pro').style.display = 'inline-block';
     }
   } catch (_) {}
+}
+
+async function changePlan(plan) {
+  const btn = document.getElementById(`btn-upgrade-${plan}`);
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '처리 중...';
+  try {
+    const res = await fetch(`/billing/change-plan?plan=${plan}`, { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.detail || '플랜 변경 중 오류가 발생했습니다.');
+      return;
+    }
+    if (data.checkout_required) {
+      location.href = data.checkout_url;
+      return;
+    }
+    alert(`✓ ${data.message}`);
+    await loadPlanInfo();
+  } catch (e) {
+    alert('플랜 변경 중 오류: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
 }
 
 // ── 계정 탈퇴 ──────────────────────────────────────────────────────────────────

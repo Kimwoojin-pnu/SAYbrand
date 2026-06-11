@@ -90,6 +90,63 @@ async def checkout(
     return RedirectResponse(url)
 
 
+@router.post("/change-plan")
+async def change_plan(
+    plan: str,
+    user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """이미 활성 구독이 있는 경우 Polar 구독의 상품을 변경(업그레이드/다운그레이드)한다.
+    활성 구독이 없으면 새 결제(checkout)로 안내한다."""
+    target_product_id = {
+        "starter": settings.polar_product_id_starter,
+        "pro": settings.polar_product_id_pro,
+    }.get(plan)
+    if not target_product_id:
+        raise HTTPException(400, "잘못된 플랜입니다.")
+
+    result = await db.execute(select(User).where(User.id == user["id"]))
+    db_user = result.scalar_one_or_none()
+    if not db_user:
+        raise HTTPException(404, "User not found")
+
+    org_result = await db.execute(
+        select(Organization).where(Organization.owner_user_id == db_user.id).limit(1)
+    )
+    org = org_result.scalar_one_or_none()
+    subscription_id = org.polar_subscription_id if org else None
+
+    if not subscription_id or not settings.polar_access_token:
+        return {
+            "checkout_required": True,
+            "checkout_url": f"/billing/checkout?plan={plan}",
+        }
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
+            resp = await client.patch(
+                f"{settings.polar_server_url}/v1/subscriptions/{subscription_id}",
+                json={"product_id": target_product_id},
+                headers={"Authorization": f"Bearer {settings.polar_access_token}"},
+            )
+        print(f"[BILLING] change-plan API 응답: {resp.status_code} — {resp.text[:200]}")
+        if resp.status_code != 200:
+            raise HTTPException(502, f"Polar API 오류: {resp.status_code}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[BILLING] change-plan 오류: {e}")
+        raise HTTPException(500, f"플랜 변경 중 오류: {str(e)}")
+
+    await _apply_subscription(
+        db_user, org, plan,
+        customer_id=db_user.polar_customer_id,
+        subscription_id=subscription_id,
+        db=db,
+    )
+    return {"checkout_required": False, "tier": plan, "message": f"{plan} 플랜으로 변경되었습니다."}
+
+
 @router.get("/success")
 async def billing_success(
     request: Request,
