@@ -941,6 +941,9 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 .ld-map-tag.medium   { color: #d97706; background: rgba(217,119,6,.10); border-color: rgba(217,119,6,.25); }
 .ld-map-tag.low      { color: #16a34a; background: rgba(22,163,74,.10); border-color: rgba(22,163,74,.25); }
 
+.ld-map-platform-icon--x      { background: rgba(71,85,105,.12);  color: #475569; }
+.ld-map-platform-icon--tiktok { background: rgba(236,72,153,.12); color: #ec4899; }
+
 /* ── Pricing ────────────────────────────────────────────────────────── */
 .ld-pricing-grid {
   display: grid;
@@ -1581,3 +1584,6 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 [data-theme="dark"] .ld-map-tag.high     { background: rgba(234,88,12,.18); border-color: rgba(234,88,12,.35); }
 [data-theme="dark"] .ld-map-tag.medium   { background: rgba(217,119,6,.18); border-color: rgba(217,119,6,.35); }
 [data-theme="dark"] .ld-map-tag.low      { background: rgba(22,163,74,.18); border-color: rgba(22,163,74,.35); }
+[data-theme="dark"] .sentiment-demo-live { background: rgba(22,163,74,.18); border-color: rgba(22,163,74,.35); }
+[data-theme="dark"] .ld-map-platform-icon--x      { background: rgba(148,163,184,.18); color: #cbd5e1; }
+[data-theme="dark"] .ld-map-platform-icon--tiktok { background: rgba(236,72,153,.20);  color: #f472b6; }
