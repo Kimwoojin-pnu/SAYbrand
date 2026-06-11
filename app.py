@@ -159,3 +159,8 @@ async def join_org_page(request: Request):
     if not request.session.get("user_id"):
         return RedirectResponse("/login")
     return FileResponse("frontend/pages/join.html")
+
+
+@app.get("/products")
+async def products_page():
+    return FileResponse("frontend/pages/products/index.html")
