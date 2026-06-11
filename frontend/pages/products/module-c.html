@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#1a6ef8" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+  <script src="/assets/js/pwa.js" defer></script>
+  <title>모듈 C — 감성·여론 분류 | SAYbrand</title>
+  <meta name="description" content="14,854개 한국어 감성 어휘 사전(KNU)과 Gemini 폴백 분석으로 게시물의 감성·의도를 자동 분류해 진짜 위협과 단순 피드백을 구분합니다." />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="/assets/css/landing.css" />
+  <link rel="stylesheet" href="/assets/css/products.css" />
+  <script>(function(){var t=localStorage.getItem('ld-theme')||'dark';document.documentElement.setAttribute('data-theme',t);}());</script>
+</head>
+<body>
+
+<nav class="ld-nav" id="ld-nav">
+  <div class="ld-container">
+    <div class="ld-nav-inner">
+
+      <a href="/" class="ld-nav-logo">
+        <img src="/saybrand-logo2.png" alt="" class="ld-nav-logo-img"
+             onerror="this.style.display='none'" />
+        <span class="ld-nav-logo-text">SAYbrand</span>
+      </a>
+
+      <ul class="ld-nav-links">
+        <li><a href="/#features">제품</a></li>
+        <li><a href="/#pipeline">솔루션</a></li>
+        <li><a href="/#pricing">요금</a></li>
+        <li><a href="/#footer">자료실</a></li>
+      </ul>
+
+      <div class="ld-nav-actions">
+        <button class="ld-theme-toggle" id="theme-toggle" aria-label="다크모드 전환">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </button>
+        <button data-pwa-install class="ld-btn ld-btn--outlined ld-btn--sm" style="display:none;">앱 설치</button>
+        <a href="/login" class="ld-btn ld-btn--outlined ld-btn--sm">로그인</a>
+        <a href="/login" class="ld-btn ld-btn--dark ld-btn--sm">무료로 시작</a>
+      </div>
+
+      <button class="ld-nav-hamburger" id="hamburger" aria-label="메뉴">
+        <span></span><span></span><span></span>
+      </button>
+
+    </div>
+  </div>
+</nav>
+
+<div class="ld-mobile-menu" id="mobile-menu">
+  <a href="/#features">제품</a>
+  <a href="/#pipeline">솔루션</a>
+  <a href="/#pricing">요금</a>
+  <a href="/#footer">자료실</a>
+  <a href="#" data-pwa-install style="display:none;">앱으로 설치하기</a>
+  <a href="/login" style="color:#1d5fa8;font-weight:700;border:none;">로그인 / 무료로 시작 →</a>
+</div>
+
+
+<!-- ────────────────────────────────────────────────────────────────── -->
+<!-- 히어로                                                              -->
+<!-- ────────────────────────────────────────────────────────────────── -->
+<section class="pd-hero ld-container">
+  <a href="/#module-c" class="pd-hero-back">← 제품 목록으로</a>
+  <p class="ld-label ld-label--accent">MODULE C · SENTIMENT AI</p>
+  <h1 class="ld-h1">진짜 위협과<br>단순 불만을 구분합니다</h1>
+  <p class="ld-body pd-hero-desc">
+    14,854개 한국어 감성 어휘 사전(KNU)과 Gemini 폴백 분석으로
+    게시물의 감성·의도를 자동 분류합니다. 단순 피드백은 위협 목록에서
+    분리하고, 실제 위협만 빠르게 에스컬레이션합니다.
+  </p>
+  <div class="pd-hero-actions">
+    <a href="/login" class="ld-btn ld-btn--dark ld-btn--lg">무료 체험 시작</a>
+    <a href="mailto:sales@saybrand.ai" class="ld-btn ld-btn--outlined ld-btn--lg">영업팀 문의</a>
+  </div>
+</section>
+
+
+<!-- ────────────────────────────────────────────────────────────────── -->
+<!-- 작동 방식                                                            -->
+<!-- ────────────────────────────────────────────────────────────────── -->
+<section class="ld-section ld-section--alt animate-section">
+  <div class="ld-container">
+    <div class="pd-section-head">
+      <p class="ld-label ld-label--accent">HOW IT WORKS</p>
+      <h2 class="ld-h2 ld-h2--center">4단계로 위협 등급을 분류합니다</h2>
+    </div>
+
+    <div class="pd-steps">
+      <div class="pd-step">
+        <span class="pd-step-num">1</span>
+        <h3>게시물 수집</h3>
+        <p>브랜드 관련 키워드가 포함된 게시물과 댓글을 플랫폼별로 수집합니다.</p>
+      </div>
+      <div class="pd-step">
+        <span class="pd-step-num">2</span>
+        <h3>KNU 감성사전 1차 분류</h3>
+        <p>14,854개 한국어 감성 어휘 사전을 기반으로 게시물의 감성(긍정/부정/중립)을 1차 분류합니다.</p>
+      </div>
+      <div class="pd-step">
+        <span class="pd-step-num">3</span>
+        <h3>Gemini 2.5 Flash 폴백 분석</h3>
+        <p>1차 분류로 판단이 어려운 경우 Gemini 2.5 Flash가 문맥을 고려해 정밀 분석합니다.</p>
+      </div>
+      <div class="pd-step">
+        <span class="pd-step-num">4</span>
+        <h3>5단계 위협 등급 분류</h3>
+        <p>분석 결과를 Critical · High · Medium · Low · Feedback 5단계로 분류해 위협 목록에 반영합니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ────────────────────────────────────────────────────────────────── -->
+<!-- 핵심 기능 + 데모                                                     -->
+<!-- ────────────────────────────────────────────────────────────────── -->
+<section class="ld-section animate-section">
+  <div class="ld-container">
+    <div class="ld-feature">
+
+      <div class="ld-feature-text">
+        <p class="ld-label ld-label--accent">KEY FEATURES</p>
+        <h2 class="ld-h2">감성 분류로<br>알림 피로도를 줄입니다</h2>
+        <ul class="ld-checklist">
+          <li>14,854개 한국어 감성사전 기반 1차 분류</li>
+          <li>Gemini 2.5 Flash 폴백으로 정밀 분석</li>
+          <li>Critical~Feedback 5단계 위협 등급 자동 분류</li>
+          <li>오탐 자동 다운그레이드로 알림 피로도 감소</li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="ld-sentiment-demo feature-card">
+          <div class="sentiment-demo-header">
+            <span class="sentiment-demo-title">감성 분류 결과</span>
+            <span class="sentiment-demo-live">LIVE</span>
+          </div>
+          <div class="sentiment-demo-body">
+            <div class="sentiment-demo-row">
+              <span class="sentiment-badge critical">CRITICAL</span>
+              <div>
+                <p class="sentiment-demo-content">"환불 안 해주면 다 같이 불매운동 갑니다"</p>
+                <p class="sentiment-demo-meta">조직적 루머 · Naver · 위협 점수 78</p>
+              </div>
+            </div>
+            <div class="sentiment-demo-row">
+              <span class="sentiment-badge medium">MEDIUM</span>
+              <div>
+                <p class="sentiment-demo-content">"이 브랜드 광고 너무 과장된 거 아니에요?"</p>
+                <p class="sentiment-demo-meta">광고 논란 · X · 위협 점수 42</p>
+              </div>
+            </div>
+            <div class="sentiment-demo-row">
+              <span class="sentiment-badge feedback">FEEDBACK</span>
+              <div>
+                <p class="sentiment-demo-content">"배송이 좀 느린 것 같아요 ㅠㅠ"</p>
+                <p class="sentiment-demo-meta">단순 피드백 · 위협 목록에서 자동 제외</p>
+              </div>
+            </div>
+          </div>
+          <div class="sentiment-demo-footer">
+            KNU 감성사전 14,854개 어휘 + Gemini 2.5 Flash 폴백 분석
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ────────────────────────────────────────────────────────────────── -->
+<!-- 활용 시나리오                                                        -->
+<!-- ────────────────────────────────────────────────────────────────── -->
+<section class="ld-section ld-section--alt animate-section">
+  <div class="ld-container">
+    <div class="pd-section-head">
+      <p class="ld-label ld-label--accent">USE CASES</p>
+      <h2 class="ld-h2 ld-h2--center">이런 상황에서 활용합니다</h2>
+    </div>
+
+    <div class="pd-scenarios">
+      <div class="pd-scenario">
+        <p class="pd-scenario-title">단순 배송 불만과 불매운동 루머 구분</p>
+        <p>
+          "배송이 느리다"는 단순 피드백과 "불매운동 갑니다"와 같은 조직적 루머성 게시물은
+          겉으로는 둘 다 부정적이지만 위협 수준이 다릅니다. 모듈 C는 KNU 감성사전과
+          Gemini 폴백 분석으로 두 유형을 구분해, 단순 피드백은 위협 목록에서 제외하고
+          루머성 게시물만 에스컬레이션합니다.
+        </p>
+      </div>
+      <div class="pd-scenario">
+        <p class="pd-scenario-title">광고 논란성 게시물의 위협도 평가</p>
+        <p>
+          광고 표현에 대한 논란이 발생했을 때, 단순 의견 제시 수준인지 브랜드 평판에
+          실질적 영향을 줄 수 있는 수준인지를 위협 점수로 환산해 우선순위를 정할 수 있도록 돕습니다.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ────────────────────────────────────────────────────────────────── -->
+<!-- FAQ                                                                  -->
+<!-- ────────────────────────────────────────────────────────────────── -->
+<section class="ld-section animate-section">
+  <div class="ld-container">
+    <div class="pd-section-head">
+      <p class="ld-label ld-label--accent">FAQ</p>
+      <h2 class="ld-h2 ld-h2--center">자주 묻는 질문</h2>
+    </div>
+
+    <div class="pd-faq">
+      <details>
+        <summary>KNU 감성사전이란 무엇인가요?</summary>
+        <p class="pd-faq-answer">
+          군산대학교에서 공개한 한국어 감성 어휘 사전으로, 14,854개의 어휘에 대한
+          긍정/부정/중립 극성 정보를 담고 있습니다. 비용 없이 1차 감성 분류에 활용됩니다.
+        </p>
+      </details>
+      <details>
+        <summary>Gemini로 분석되는 항목은 어떤 기준인가요?</summary>
+        <p class="pd-faq-answer">
+          KNU 감성사전만으로 명확하게 분류되지 않는 게시물(반어법, 복합 감정 등)이
+          Gemini 2.5 Flash 폴백 분석으로 넘어가 문맥을 고려한 재분류가 이루어집니다.
+        </p>
+      </details>
+      <details>
+        <summary>Critical~Feedback 등급은 어떻게 나뉘나요?</summary>
+        <p class="pd-faq-answer">
+          감성·의도 분석 결과와 위협 점수를 함께 고려해 Critical, High, Medium, Low,
+          Feedback 5단계로 분류합니다. Feedback으로 분류된 항목은 위협 목록에서 자동 제외됩니다.
+        </p>
+      </details>
+      <details>
+        <summary>감성 분류 결과를 직접 수정할 수 있나요?</summary>
+        <p class="pd-faq-answer">
+          네. 위협 목록에서 각 항목의 분류 결과를 확인하고 상태를 직접 변경하거나
+          재분석을 요청할 수 있습니다.
+        </p>
+      </details>
+    </div>
+  </div>
+</section>
+
+
+<!-- ────────────────────────────────────────────────────────────────── -->
+<!-- 마무리 CTA                                                           -->
+<!-- ────────────────────────────────────────────────────────────────── -->
+<section class="ld-cta-section animate-section">
+  <div class="ld-container">
+    <h2 class="ld-h2 ld-h2--center">
+      지금 5분 안에<br>브랜드 보호를 시작하세요
+    </h2>
+    <p class="ld-cta-sub">신용카드 없이 14일 무료 체험</p>
+    <div class="ld-cta-actions">
+      <a href="/login" class="ld-btn ld-btn--dark ld-btn--lg">무료 체험 시작</a>
+      <a href="mailto:sales@saybrand.ai" class="ld-btn ld-btn--outlined ld-btn--lg">영업팀 문의</a>
+    </div>
+  </div>
+</section>
+
+
+<footer class="ld-footer" id="footer">
+  <div class="ld-container">
+    <div class="ld-footer-grid">
+
+      <div>
+        <div class="ld-footer-logo">
+          <img src="/saybrand-logo2.png" alt="" class="ld-footer-logo-img"
+               onerror="this.style.display='none'" />
+          <span class="ld-footer-logo-text">SAYbrand</span>
+        </div>
+        <p class="ld-footer-mission">
+          AI가 SNS 전 영역을 24시간 감시해<br>
+          브랜드를 사칭·공격으로부터 지킵니다.
+        </p>
+        <div class="ld-footer-socials">
+          <a href="#" class="ld-footer-social" aria-label="X">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.259 5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+          </a>
+          <a href="#" class="ld-footer-social" aria-label="LinkedIn">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/>
+              <circle cx="4" cy="4" r="2"/>
+            </svg>
+          </a>
+          <a href="#" class="ld-footer-social" aria-label="GitHub">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <div>
+        <p class="ld-footer-col-title">제품</p>
+        <ul class="ld-footer-links">
+          <li><a href="/dashboard">대시보드</a></li>
+          <li><a href="/products/module-a">모듈 A — 사칭 탐지</a></li>
+          <li><a href="/products/module-b">모듈 B — 가짜뉴스</a></li>
+          <li><a href="/products/module-c">모듈 C — 감성 분류</a></li>
+          <li><a href="/products/threat-map">위협 인텔리전스 맵</a></li>
+          <li><a href="/products/pipeline">API 연동</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <p class="ld-footer-col-title">회사</p>
+        <ul class="ld-footer-links">
+          <li><a href="/#">소개</a></li>
+          <li><a href="#">채용</a></li>
+          <li><a href="#">블로그</a></li>
+          <li><a href="#">보도자료</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <p class="ld-footer-col-title">지원</p>
+        <ul class="ld-footer-links">
+          <li><a href="#">고객센터</a></li>
+          <li><a href="#">보안 정책</a></li>
+          <li><a href="#">개인정보처리방침</a></li>
+          <li><a href="#">서비스 이용약관</a></li>
+        </ul>
+      </div>
+
+    </div>
+
+    <div class="ld-footer-bottom">
+      <p class="ld-footer-copy">© 2026 SAYbrand. All rights reserved.</p>
+      <div class="ld-footer-legal">
+        <a href="#">이용약관</a>
+        <a href="#">개인정보처리방침</a>
+        <a href="#">쿠키 정책</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+<script>
+(function () {
+  'use strict';
+
+  var animSections = document.querySelectorAll('.animate-section');
+  if (animSections.length) {
+    var sectionObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          sectionObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    animSections.forEach(function (el) { sectionObserver.observe(el); });
+  }
+
+  var themeToggle = document.getElementById('theme-toggle');
+  themeToggle.addEventListener('click', function () {
+    var current = document.documentElement.getAttribute('data-theme');
+    var next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('ld-theme', next);
+  });
+
+  var nav = document.getElementById('ld-nav');
+  window.addEventListener('scroll', function () {
+    nav.classList.toggle('scrolled', window.scrollY > 40);
+  }, { passive: true });
+
+  var hamburger = document.getElementById('hamburger');
+  var mobileMenu = document.getElementById('mobile-menu');
+  hamburger.addEventListener('click', function () {
+    mobileMenu.classList.toggle('open');
+  });
+  mobileMenu.querySelectorAll('a').forEach(function (a) {
+    a.addEventListener('click', function () { mobileMenu.classList.remove('open'); });
+  });
+
+  document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      var target = document.querySelector(a.getAttribute('href'));
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+
+})();
+</script>
+
+</body></html>
