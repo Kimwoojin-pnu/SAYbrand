@@ -1187,7 +1187,21 @@ async function loadPlanInfo() {
   } catch (_) {}
 }
 
+const PLAN_PRICE = {
+  starter: '₩49,000',
+  pro: '₩149,000',
+};
+
 async function changePlan(plan) {
+  const planLabel = PLAN_INFO[plan]?.name || plan;
+  const price = PLAN_PRICE[plan] || '';
+  const confirmed = confirm(
+    `${planLabel}으로 변경합니다.\n\n` +
+    `지금 당장 추가 비용은 청구되지 않으며, 다음 결제일부터 ${price}/월이 청구됩니다.\n\n` +
+    `계속할까요?`
+  );
+  if (!confirmed) return;
+
   const btn = document.getElementById(`btn-upgrade-${plan}`);
   const original = btn.textContent;
   btn.disabled = true;
