@@ -56,3 +56,6 @@ logs/
 
 .vercel
 .env*
+
+# Git worktrees (작업 공간)
+.worktrees/
