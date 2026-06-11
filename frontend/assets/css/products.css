@@ -1,0 +1,145 @@
+/* ── Product Detail Page — Hero ───────────────────────────────────────── */
+.pd-hero {
+  padding: 160px 0 72px;
+  text-align: center;
+}
+.pd-hero-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ld-text-2);
+  margin-bottom: 28px;
+}
+.pd-hero-back:hover { color: var(--ld-brand); }
+.pd-hero-desc {
+  max-width: 640px;
+  margin: 16px auto 32px;
+  text-align: center;
+}
+.pd-hero-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ── Step Cards ────────────────────────────────────────────────────────── */
+.pd-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-top: 56px;
+}
+.pd-step {
+  background: var(--ld-surface);
+  border: 1px solid var(--ld-border);
+  border-radius: var(--ld-radius-md);
+  padding: 24px 20px;
+}
+.pd-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(29,95,168,.10);
+  color: var(--ld-brand);
+  font-weight: 800;
+  font-size: 14px;
+  margin-bottom: 14px;
+}
+.pd-step h3 {
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 8px;
+  color: var(--ld-text);
+}
+.pd-step p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ld-text-2);
+}
+
+/* ── Scenarios ─────────────────────────────────────────────────────────── */
+.pd-scenarios {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 40px;
+}
+.pd-scenario {
+  background: var(--ld-surface-50);
+  border: 1px solid var(--ld-border);
+  border-radius: var(--ld-radius-md);
+  padding: 24px 28px;
+}
+.pd-scenario-title {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ld-text);
+  margin-bottom: 8px;
+}
+.pd-scenario p {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--ld-text-2);
+}
+
+/* ── FAQ ───────────────────────────────────────────────────────────────── */
+.pd-faq {
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.pd-faq details {
+  background: var(--ld-surface);
+  border: 1px solid var(--ld-border);
+  border-radius: var(--ld-radius-md);
+  padding: 18px 22px;
+}
+.pd-faq summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ld-text);
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.pd-faq summary::-webkit-details-marker { display: none; }
+.pd-faq summary::after {
+  content: '+';
+  font-weight: 400;
+  color: var(--ld-text-3);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.pd-faq details[open] summary::after { content: '\2212'; }
+.pd-faq-answer {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--ld-text-2);
+  margin-top: 12px;
+}
+
+/* ── Section title helper (non-centered pages) ───────────────────────── */
+.pd-section-head {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .pd-steps { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .pd-steps { grid-template-columns: 1fr; }
+  .pd-hero { padding: 120px 0 48px; }
+}

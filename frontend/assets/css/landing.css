@@ -1587,3 +1587,18 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 [data-theme="dark"] .sentiment-demo-live { background: rgba(22,163,74,.18); border-color: rgba(22,163,74,.35); }
 [data-theme="dark"] .ld-map-platform-icon--x      { background: rgba(148,163,184,.18); color: #cbd5e1; }
 [data-theme="dark"] .ld-map-platform-icon--tiktok { background: rgba(236,72,153,.20);  color: #f472b6; }
+
+/* ── Feature section "자세히 보기" link ──────────────────────────────── */
+.ld-feature-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 20px;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ld-brand);
+  transition: gap .15s;
+}
+.ld-feature-more:hover { gap: 10px; }
+
+.ld-feature-more--dark { color: #4fa3f5; }
