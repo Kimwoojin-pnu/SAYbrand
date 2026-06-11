@@ -159,3 +159,28 @@ async def join_org_page(request: Request):
     if not request.session.get("user_id"):
         return RedirectResponse("/login")
     return FileResponse("frontend/pages/join.html")
+
+
+@app.get("/products/module-a")
+async def product_module_a_page():
+    return FileResponse("frontend/pages/products/module-a.html")
+
+
+@app.get("/products/module-b")
+async def product_module_b_page():
+    return FileResponse("frontend/pages/products/module-b.html")
+
+
+@app.get("/products/module-c")
+async def product_module_c_page():
+    return FileResponse("frontend/pages/products/module-c.html")
+
+
+@app.get("/products/threat-map")
+async def product_threat_map_page():
+    return FileResponse("frontend/pages/products/threat-map.html")
+
+
+@app.get("/products/pipeline")
+async def product_pipeline_page():
+    return FileResponse("frontend/pages/products/pipeline.html")
