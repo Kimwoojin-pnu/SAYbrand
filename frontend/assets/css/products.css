@@ -135,6 +135,55 @@
   margin: 0 auto;
 }
 
+/* ── Tab Navigation ───────────────────────────────────────────────────── */
+.pd-tabs-bar {
+  padding: 96px 0 0;
+}
+.pd-tabs-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ld-text-2);
+  margin-bottom: 24px;
+}
+.pd-tabs-back:hover { color: var(--ld-brand); }
+.pd-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--ld-border);
+}
+.pd-tab {
+  appearance: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ld-text-2);
+  padding: 14px 20px;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color .15s, border-color .15s;
+  white-space: nowrap;
+}
+.pd-tab:hover { color: var(--ld-text); }
+.pd-tab.active {
+  color: var(--ld-brand);
+  border-bottom-color: var(--ld-brand);
+}
+.pd-panel { display: none; }
+.pd-panel.active { display: block; }
+.pd-panel .pd-hero { padding-top: 40px; }
+
+@media (max-width: 640px) {
+  .pd-tab { padding: 12px 14px; font-size: 13px; }
+}
+
 /* ── Responsive ────────────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .pd-steps { grid-template-columns: repeat(2, 1fr); }
