@@ -126,7 +126,10 @@ async def change_plan(
         async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
             resp = await client.patch(
                 f"{settings.polar_server_url}/v1/subscriptions/{subscription_id}",
-                json={"product_id": target_product_id},
+                json={
+                    "product_id": target_product_id,
+                    "proration_behavior": "next_period",
+                },
                 headers={"Authorization": f"Bearer {settings.polar_access_token}"},
             )
         print(f"[BILLING] change-plan API 응답: {resp.status_code} — {resp.text[:200]}")
