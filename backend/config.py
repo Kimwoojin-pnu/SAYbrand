@@ -101,6 +101,9 @@ class Settings(BaseSettings):
     # 데모 모드 — Google OAuth 없이 seed 유저로 자동 로그인
     demo_mode: bool = False
 
+    # 고객센터 게시판 — 답변 권한을 가진 운영자 이메일 (콤마 구분)
+    support_admin_emails: str = ""
+
     class Config:
         env_file = ".env"
 

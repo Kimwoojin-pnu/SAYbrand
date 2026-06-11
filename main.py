@@ -10,12 +10,12 @@ from starlette.middleware.sessions import SessionMiddleware
 from backend.config import settings
 from backend.middleware.rate_limiter import rate_limit_middleware
 from backend.routers import dashboard
-from backend.routers import auth, billing, orgs, profile, keywords, reports, assistant, webhooks, competitor_keywords
+from backend.routers import auth, billing, orgs, profile, keywords, reports, assistant, webhooks, competitor_keywords, support
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    from backend.db.database import engine
+    from backend.db.database import engine, Base
     if engine is not None:
         db_url = os.environ.get("DATABASE_URL", "")
         if "postgresql" in db_url or "postgres" in db_url:
@@ -24,10 +24,26 @@ async def lifespan(app: FastAPI):
                 "ALTER TABLE threats ADD COLUMN IF NOT EXISTS resolution_type VARCHAR(50)",
                 "ALTER TABLE threats ADD COLUMN IF NOT EXISTS resolution_method VARCHAR(200)",
                 "ALTER TABLE threats ADD COLUMN IF NOT EXISTS resolution_note TEXT",
+                """CREATE TABLE IF NOT EXISTS support_posts (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL REFERENCES users(id),
+                    user_name VARCHAR(200) DEFAULT '',
+                    title VARCHAR(200) NOT NULL,
+                    content TEXT NOT NULL,
+                    status VARCHAR(20) DEFAULT 'pending',
+                    admin_reply TEXT,
+                    admin_reply_by VARCHAR(200),
+                    answered_at TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT NOW(),
+                    updated_at TIMESTAMP DEFAULT NOW()
+                )""",
             ]
             async with engine.begin() as conn:
                 for stmt in _migrations:
                     await conn.execute(text(stmt))
+        else:
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
     yield
 
 
@@ -48,6 +64,7 @@ app.include_router(reports.router)
 app.include_router(assistant.router)
 app.include_router(webhooks.router)
 app.include_router(competitor_keywords.router)
+app.include_router(support.router)
 
 
 @app.get("/health")
@@ -164,3 +181,10 @@ async def join_org_page(request: Request):
 @app.get("/products")
 async def products_page():
     return FileResponse("frontend/pages/products/index.html")
+
+
+@app.get("/support")
+async def support_page(request: Request):
+    if not request.session.get("user_id"):
+        return RedirectResponse("/login")
+    return FileResponse("frontend/pages/support.html")

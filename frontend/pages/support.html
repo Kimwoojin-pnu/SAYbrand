@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#1a6ef8" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+  <script src="/assets/js/pwa.js" defer></script>
+  <title>SAYbrand — 고객센터</title>
+  <script>(function(){var t=localStorage.getItem('db-theme')||'dark';document.documentElement.setAttribute('data-theme',t);}());</script>
+  <link rel="stylesheet" href="/assets/css/custom.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{brand:{500:'#1a6ef8',600:'#1558cc'}}}}}</script>
+</head>
+<body data-page="support" style="font-family:'NanumSquare','Noto Sans KR',sans-serif;background:var(--db-bg);color:var(--db-text-1);">
+
+<div style="display:flex;height:100vh;overflow:hidden;">
+
+  <!-- Sidebar -->
+  <aside style="background:#0c1428;width:200px;flex-shrink:0;display:flex;flex-direction:column;">
+    <a href="/" style="display:flex;align-items:center;gap:10px;padding:18px 16px;border-bottom:1px solid rgba(255,255,255,0.08);text-decoration:none;">
+      <div style="width:34px;height:34px;overflow:hidden;flex-shrink:0;"><img src="/saybrand-logo2.png" alt="" style="width:34px;height:auto;display:block;filter:brightness(1.8);" onerror="this.parentElement.style.display='none'" /></div>
+      <span style="font-weight:700;font-size:15px;color:#ffffff;letter-spacing:-.02em;line-height:1;">SAYbrand</span>
+    </a>
+    <nav style="flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:2px;">
+      <a href="/dashboard" class="db-nav-item"><svg style="width:16px;height:16px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>대시보드</a>
+      <a href="/threats" class="db-nav-item"><svg style="width:16px;height:16px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>현재 위협</a>
+      <a href="/actions" class="db-nav-item"><svg style="width:16px;height:16px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>처리해야할 사항</a>
+      <a href="/brand-image" class="db-nav-item"><svg style="width:16px;height:16px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg>브랜드 이미지</a>
+      <a href="/negative-mentions" class="db-nav-item"><svg style="width:16px;height:16px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>피드백</a>
+      <a href="/reports" class="db-nav-item"><svg style="width:16px;height:16px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>보고서</a>
+      <a href="/history" class="db-nav-item"><svg style="width:16px;height:16px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>처리 내역</a>
+    </nav>
+    <div style="padding:12px 14px;border-top:1px solid rgba(255,255,255,0.08);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <img id="user-avatar" src="" alt="" style="width:26px;height:26px;border-radius:50%;object-fit:cover;flex-shrink:0;display:none;" />
+        <div id="user-avatar-fallback" style="width:26px;height:26px;border-radius:50%;background:#1a6ef8;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;flex-shrink:0;">?</div>
+        <div style="min-width:0;"><p id="user-name" style="font-size:11px;color:#fff;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">로딩 중...</p><p id="user-email" style="font-size:10px;color:rgba(255,255,255,0.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></p></div>
+      </div>
+      <a href="/support" class="db-nav-item db-nav-active" style="padding:5px 8px;font-size:11px;"><svg style="width:13px;height:13px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>고객센터</a>
+      <a href="/settings" class="db-nav-item" style="padding:5px 8px;font-size:11px;"><svg style="width:13px;height:13px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41M20 12h2M2 12h2M12 20v2M12 2v2"/></svg>설정</a>
+      <a href="/auth/logout" class="db-nav-item" style="padding:5px 8px;font-size:11px;"><svg style="width:13px;height:13px;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>로그아웃</a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="db-main" style="flex:1;overflow-y:auto;background:var(--db-bg);">
+    <header class="db-topheader" style="position:sticky;top:0;z-index:10;background:var(--db-surface);border-bottom:1px solid var(--db-border);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <h1 style="font-weight:800;font-size:15px;color:var(--db-text-1);letter-spacing:-.02em;">고객센터</h1>
+        <p style="font-size:10px;color:var(--db-text-3);margin-top:1px;">문의사항을 등록하고 답변을 확인하세요</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button id="btn-new-post" style="display:flex;align-items:center;gap:5px;padding:6px 13px;border-radius:6px;background:#1a6ef8;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">
+          <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          새 문의
+        </button>
+        <button class="db-theme-toggle" id="theme-toggle" aria-label="다크모드 전환">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div style="padding:20px;">
+      <div id="post-list" class="space-y-3">
+        <p style="font-size:12px;color:var(--db-text-3);text-align:center;padding:32px 0;">로딩 중...</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- New Post Modal -->
+<div id="new-post-modal" style="display:none;position:fixed;inset:0;background:rgba(12,20,40,0.5);z-index:60;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+  <div style="background:var(--db-surface);border-radius:12px;padding:24px;width:480px;max-width:calc(100vw - 40px);box-shadow:rgba(12,20,40,.22) 0 20px 60px;">
+    <h3 style="font-weight:800;font-size:15px;color:var(--db-text-1);margin-bottom:14px;">새 문의 작성</h3>
+    <label style="font-size:11px;font-weight:700;color:var(--db-text-3);display:block;margin-bottom:5px;">제목</label>
+    <input id="new-post-title" type="text" placeholder="제목을 입력하세요" style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--db-border);font-size:12px;font-family:'NanumSquare',sans-serif;outline:none;box-sizing:border-box;color:var(--db-text-1);background:var(--db-bg);margin-bottom:12px;" />
+    <label style="font-size:11px;font-weight:700;color:var(--db-text-3);display:block;margin-bottom:5px;">내용</label>
+    <textarea id="new-post-content" rows="6" placeholder="문의 내용을 입력하세요" style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--db-border);font-size:12px;font-family:'NanumSquare',sans-serif;resize:none;outline:none;box-sizing:border-box;color:var(--db-text-1);background:var(--db-bg);"></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
+      <button onclick="closeNewPostModal()" style="padding:8px 18px;border-radius:6px;border:1px solid var(--db-border);background:transparent;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;color:var(--db-text-2);">취소</button>
+      <button onclick="submitNewPost()" style="padding:8px 18px;border-radius:6px;border:none;background:#1a6ef8;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">등록</button>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div id="detail-modal" style="display:none;position:fixed;inset:0;background:rgba(12,20,40,0.5);z-index:60;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+  <div style="background:var(--db-surface);border-radius:12px;padding:24px;width:560px;max-width:calc(100vw - 40px);max-height:calc(100vh - 80px);overflow-y:auto;box-shadow:rgba(12,20,40,.22) 0 20px 60px;">
+    <div id="detail-content"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:16px;">
+      <button onclick="closeDetailModal()" style="padding:8px 18px;border-radius:6px;border:1px solid var(--db-border);background:transparent;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;color:var(--db-text-2);">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+const BASE = '/api/support';
+
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(BASE + path, {
+    headers: { 'Content-Type': 'application/json', ...opts.headers },
+    ...opts,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || 'API Error');
+  }
+  return res.status === 204 ? null : res.json();
+}
+
+// ── User info ──────────────────────────────────────────────────────
+fetch('/auth/me').then(r => {
+  if (!r.ok) { location.href = '/login'; return; }
+  return r.json();
+}).then(user => {
+  if (!user) return;
+  document.getElementById('user-name').textContent = user.name || user.email;
+  document.getElementById('user-email').textContent = user.email;
+  if (user.avatar_url) {
+    const img = document.getElementById('user-avatar');
+    img.src = user.avatar_url;
+    img.style.display = 'block';
+    document.getElementById('user-avatar-fallback').style.display = 'none';
+  } else {
+    document.getElementById('user-avatar-fallback').textContent = (user.name || user.email || '?')[0].toUpperCase();
+  }
+}).catch(() => { location.href = '/login'; });
+
+// ── Theme toggle ───────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  var toggle = document.getElementById('theme-toggle');
+  if (toggle) toggle.addEventListener('click', function() {
+    var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('db-theme', next);
+  });
+});
+
+// ── Post list ──────────────────────────────────────────────────────
+function fmtDate(s) {
+  const d = new Date(s);
+  return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function statusBadge(status) {
+  if (status === 'answered') {
+    return `<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;background:rgba(29,158,117,0.12);color:#1D9E75;">답변완료</span>`;
+  }
+  return `<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;background:rgba(186,117,23,0.12);color:#BA7517;">답변대기</span>`;
+}
+
+async function loadPosts() {
+  const list = document.getElementById('post-list');
+  try {
+    const posts = await apiFetch('');
+    if (!posts.length) {
+      list.innerHTML = '<p style="font-size:12px;color:var(--db-text-3);text-align:center;padding:32px 0;">등록된 문의가 없습니다. 새 문의를 작성해 보세요.</p>';
+      return;
+    }
+    list.innerHTML = posts.map(p => `
+      <div class="db-card post-card" data-id="${p.id}" style="padding:14px 18px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+        <div style="min-width:0;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            ${statusBadge(p.status)}
+            <p style="font-weight:700;font-size:13px;color:var(--db-text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(p.title)}</p>
+          </div>
+          <p style="font-size:11px;color:var(--db-text-3);">${escapeHtml(p.user_name)} · ${fmtDate(p.created_at)}</p>
+        </div>
+        <span style="font-size:11px;color:#4fa3f5;font-weight:700;flex-shrink:0;">자세히 →</span>
+      </div>
+    `).join('');
+    document.querySelectorAll('.post-card').forEach(card => {
+      card.addEventListener('click', () => openDetail(Number(card.dataset.id)));
+    });
+  } catch (e) {
+    list.innerHTML = `<p style="font-size:12px;color:#dc2626;text-align:center;padding:32px 0;">불러오기 실패: ${escapeHtml(e.message)}</p>`;
+  }
+}
+
+function escapeHtml(s) {
+  const div = document.createElement('div');
+  div.textContent = s ?? '';
+  return div.innerHTML;
+}
+
+// ── New post modal ─────────────────────────────────────────────────
+window.closeNewPostModal = function() {
+  document.getElementById('new-post-modal').style.display = 'none';
+  document.getElementById('new-post-title').value = '';
+  document.getElementById('new-post-content').value = '';
+};
+
+document.getElementById('btn-new-post').addEventListener('click', () => {
+  document.getElementById('new-post-modal').style.display = 'flex';
+});
+
+window.submitNewPost = async function() {
+  const title = document.getElementById('new-post-title').value.trim();
+  const content = document.getElementById('new-post-content').value.trim();
+  if (!title || !content) {
+    alert('제목과 내용을 입력해 주세요');
+    return;
+  }
+  try {
+    await apiFetch('', { method: 'POST', body: JSON.stringify({ title, content }) });
+    closeNewPostModal();
+    loadPosts();
+  } catch (e) {
+    alert('등록 실패: ' + e.message);
+  }
+};
+
+// ── Detail modal ───────────────────────────────────────────────────
+window.closeDetailModal = function() {
+  document.getElementById('detail-modal').style.display = 'none';
+};
+
+async function openDetail(id) {
+  const modal = document.getElementById('detail-modal');
+  const content = document.getElementById('detail-content');
+  content.innerHTML = '<p style="font-size:12px;color:var(--db-text-3);text-align:center;padding:24px 0;">로딩 중...</p>';
+  modal.style.display = 'flex';
+  try {
+    const post = await apiFetch(`/${id}`);
+    content.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        ${statusBadge(post.status)}
+        <h3 style="font-weight:800;font-size:15px;color:var(--db-text-1);">${escapeHtml(post.title)}</h3>
+      </div>
+      <p style="font-size:11px;color:var(--db-text-3);margin-bottom:14px;">${escapeHtml(post.user_name)} · ${fmtDate(post.created_at)}</p>
+      <p style="font-size:13px;color:var(--db-text-1);line-height:1.6;white-space:pre-wrap;background:var(--db-bg);border:1px solid var(--db-border);border-radius:8px;padding:14px;">${escapeHtml(post.content)}</p>
+      ${post.admin_reply ? `
+        <div style="margin-top:14px;">
+          <p style="font-size:11px;font-weight:700;color:#4fa3f5;margin-bottom:6px;">운영자 답변 (${escapeHtml(post.admin_reply_by || '')} · ${fmtDate(post.answered_at)})</p>
+          <p style="font-size:13px;color:var(--db-text-1);line-height:1.6;white-space:pre-wrap;background:rgba(79,163,245,0.06);border:1px solid rgba(79,163,245,0.2);border-radius:8px;padding:14px;">${escapeHtml(post.admin_reply)}</p>
+        </div>
+      ` : ''}
+      <div style="margin-top:16px;">
+        <label style="font-size:11px;font-weight:700;color:var(--db-text-3);display:block;margin-bottom:5px;">${post.admin_reply ? '답변 수정' : '답변 작성'} (운영자 전용)</label>
+        <textarea id="reply-input" rows="4" placeholder="답변을 입력하세요" style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--db-border);font-size:12px;font-family:'NanumSquare',sans-serif;resize:none;outline:none;box-sizing:border-box;color:var(--db-text-1);background:var(--db-bg);">${escapeHtml(post.admin_reply || '')}</textarea>
+        <button onclick="submitReply(${post.id})" style="margin-top:8px;padding:7px 16px;border-radius:6px;border:none;background:#1a6ef8;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">답변 등록</button>
+      </div>
+    `;
+  } catch (e) {
+    content.innerHTML = `<p style="font-size:12px;color:#dc2626;text-align:center;padding:24px 0;">불러오기 실패: ${escapeHtml(e.message)}</p>`;
+  }
+}
+
+window.submitReply = async function(id) {
+  const reply = document.getElementById('reply-input').value.trim();
+  if (!reply) {
+    alert('답변 내용을 입력해 주세요');
+    return;
+  }
+  try {
+    await apiFetch(`/${id}/reply`, { method: 'POST', body: JSON.stringify({ reply }) });
+    closeDetailModal();
+    loadPosts();
+  } catch (e) {
+    alert('답변 등록 실패: ' + e.message);
+  }
+};
+
+loadPosts();
+</script>
+
+</body>
+</html>

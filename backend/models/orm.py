@@ -285,6 +285,23 @@ class ArchivedThreat(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime)
 
 
+class SupportPost(Base):
+    """고객센터 Q&A 게시판"""
+    __tablename__ = "support_posts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"))
+    user_name: Mapped[str] = mapped_column(String(200), default="")
+    title: Mapped[str] = mapped_column(String(200))
+    content: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(20), default="pending")  # pending|answered
+    admin_reply: Mapped[str | None] = mapped_column(Text, nullable=True)
+    admin_reply_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    answered_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class ActivityLog(Base):
     """팀 활동 내역 — 최대 7일, 오너만 삭제 가능"""
     __tablename__ = "activity_logs"
