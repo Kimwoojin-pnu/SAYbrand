@@ -120,9 +120,8 @@ async def join_with_code(code: str, user_id: int, db: AsyncSession) -> dict:
                 "upgrade_required": True,
             }
 
-    # 초대코드로 참여 시 invite_mode와 무관하게 즉시 활성화
-    # (코드 발급 자체가 사전 승인이므로 별도 승인 불필요)
-    initial_status = "active"
+    # invite_mode가 "open"이면 즉시 활성화, 그 외(approval 등)면 관리자 승인 대기
+    initial_status = "active" if org.invite_mode == "open" else "pending"
     member = OrganizationMember(
         org_id=invite.org_id,
         user_id=user_id,
