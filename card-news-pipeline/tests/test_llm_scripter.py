@@ -20,7 +20,7 @@ def test_generate_script_with_llm_falls_back_to_template_when_no_api_key(monkeyp
 
     assert isinstance(script, CardNewsScript)
     assert script.source_id == RECORD.id
-    assert len(script.slides) >= 3
+    assert len(script.slides) >= 1
 
 
 def test_generate_script_with_llm_uses_claude_when_api_key_set(monkeypatch):

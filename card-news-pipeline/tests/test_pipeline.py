@@ -12,9 +12,14 @@ def test_run_pipeline_generates_script_and_slide_files(tmp_path):
         assert path.stat().st_size > 0
 
 
-def test_run_pipeline_returns_none_when_every_record_already_used(tmp_path):
-    used_ids = {record.id for record in load_sample_threats()}
+def test_run_pipeline_returns_none_when_every_record_already_used(tmp_path, monkeypatch):
+    from unittest.mock import patch
+    from cardnews.mock_data import load_sample_threats as _load_sample
 
-    result = run_pipeline(tmp_path, used_ids=used_ids)
+    sample = _load_sample()
+    used_ids = {record.id for record in sample}
+
+    with patch("cardnews.pipeline.load_threats", return_value=sample):
+        result = run_pipeline(tmp_path, used_ids=used_ids)
 
     assert result is None

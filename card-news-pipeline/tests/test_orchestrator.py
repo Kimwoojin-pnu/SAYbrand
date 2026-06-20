@@ -54,6 +54,7 @@ def test_generate_video_returns_script_slides_and_video(tmp_path):
 
 def test_request_review_returns_none_without_webhook_env(tmp_path, monkeypatch):
     monkeypatch.delenv("DISCORD_WEBHOOK_URL", raising=False)
+    monkeypatch.delenv("DISCORD_ALERT_WEBHOOK_URL", raising=False)
     result = GenerationResult(script=_sample_script(), slide_paths=[], video_path=tmp_path / "v.mp4")
 
     assert request_review(result, tmp_path) is None

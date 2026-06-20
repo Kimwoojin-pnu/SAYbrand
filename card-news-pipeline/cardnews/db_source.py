@@ -21,8 +21,8 @@ _QUERY = """
     WHERE content_preview IS NOT NULL
       AND detected_at >= NOW() - INTERVAL '14 days'
       AND severity IN ('critical', 'high', 'medium')
-    ORDER BY risk_score DESC NULLS LAST
-    LIMIT 20
+    ORDER BY detected_at DESC NULLS LAST, risk_score DESC NULLS LAST
+    LIMIT 100
 """
 
 
