@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+output/*.png
+output/*.mp4
+output/review_status.json
+output/*.db
+output/*.jsonl
+.env
+client_secret*.json
