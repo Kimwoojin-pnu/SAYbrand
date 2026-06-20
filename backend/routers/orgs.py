@@ -334,7 +334,7 @@ async def approve_member(
         member.status = "active"
         member.joined_at = datetime.utcnow()
     else:
-        member.status = "rejected"
+        await db.delete(member)
 
     await db.commit()
     return {"success": True, "action": action}
