@@ -124,6 +124,33 @@ async def create_org(
     return await _org_out(org, user["id"], db)
 
 
+@router.get("/my-pending")
+async def my_pending_requests(
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """현재 사용자의 승인 대기 중인 가입 요청 목록"""
+    rows = (
+        await db.execute(
+            select(OrganizationMember, Organization)
+            .join(Organization, Organization.id == OrganizationMember.org_id)
+            .where(
+                OrganizationMember.user_id == user["id"],
+                OrganizationMember.status == "pending",
+            )
+        )
+    ).all()
+    return [
+        {
+            "org_id": org.id,
+            "org_name": org.name,
+            "role": m.role,
+            "requested_at": m.created_at,
+        }
+        for m, org in rows
+    ]
+
+
 @router.get("", response_model=list[OrgOut])
 async def my_orgs(
     user: dict = Depends(get_current_user),
