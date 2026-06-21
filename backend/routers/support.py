@@ -24,6 +24,7 @@ def _is_admin(email: str) -> bool:
 class SupportPostCreate(BaseModel):
     title: str
     content: str
+    category: str = "general"
 
 
 class SupportReplyCreate(BaseModel):
@@ -35,6 +36,7 @@ class SupportPostListItem(BaseModel):
     title: str
     user_name: str
     status: str
+    category: str = "general"
     created_at: datetime
 
     class Config:
@@ -47,6 +49,7 @@ class SupportPostDetail(BaseModel):
     content: str
     user_name: str
     status: str
+    category: str = "general"
     admin_reply: str | None
     admin_reply_by: str | None
     answered_at: datetime | None
@@ -56,12 +59,20 @@ class SupportPostDetail(BaseModel):
         from_attributes = True
 
 
+@router.get("/is-admin")
+async def check_is_admin(user: dict = Depends(get_current_user)):
+    return {"is_admin": _is_admin(user.get("email", ""))}
+
+
 @router.get("", response_model=list[SupportPostListItem])
 async def list_posts(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
 ):
-    result = await db.execute(select(SupportPost).order_by(SupportPost.created_at.desc()))
+    stmt = select(SupportPost).order_by(SupportPost.created_at.desc())
+    if not _is_admin(user.get("email", "")):
+        stmt = stmt.where(SupportPost.category != "sales")
+    result = await db.execute(stmt)
     return result.scalars().all()
 
 
@@ -76,11 +87,13 @@ async def create_post(
     if not title or not content:
         raise HTTPException(status_code=400, detail="제목과 내용을 입력해 주세요")
 
+    category = body.category if body.category in ("general", "sales") else "general"
     post = SupportPost(
         user_id=user["id"],
         user_name=user.get("name") or user.get("email") or "익명",
         title=title,
         content=content,
+        category=category,
         status="pending",
     )
     db.add(post)
@@ -98,6 +111,8 @@ async def get_post(
     result = await db.execute(select(SupportPost).where(SupportPost.id == post_id))
     post = result.scalar_one_or_none()
     if not post:
+        raise HTTPException(status_code=404, detail="게시글을 찾을 수 없습니다")
+    if post.category == "sales" and not _is_admin(user.get("email", "")):
         raise HTTPException(status_code=404, detail="게시글을 찾을 수 없습니다")
     return post
 

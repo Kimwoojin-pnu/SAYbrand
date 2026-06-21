@@ -75,6 +75,10 @@
 <div id="new-post-modal" style="display:none;position:fixed;inset:0;background:rgba(12,20,40,0.5);z-index:60;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
   <div style="background:var(--db-surface);border-radius:12px;padding:24px;width:480px;max-width:calc(100vw - 40px);box-shadow:rgba(12,20,40,.22) 0 20px 60px;">
     <h3 style="font-weight:800;font-size:15px;color:var(--db-text-1);margin-bottom:14px;">새 문의 작성</h3>
+    <div id="new-post-category-label" style="display:none;margin-bottom:12px;padding:8px 12px;border-radius:6px;background:rgba(234,88,12,0.08);border:1px solid rgba(234,88,12,0.25);">
+      <span style="font-size:11px;font-weight:700;color:#ea580c;">영업 문의</span>
+      <span style="font-size:11px;color:var(--db-text-2);margin-left:6px;">영업팀 문의로 등록됩니다. 관리자만 확인 가능합니다.</span>
+    </div>
     <label style="font-size:11px;font-weight:700;color:var(--db-text-3);display:block;margin-bottom:5px;">제목</label>
     <input id="new-post-title" type="text" placeholder="제목을 입력하세요" style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--db-border);font-size:12px;font-family:'NanumSquare',sans-serif;outline:none;box-sizing:border-box;color:var(--db-text-1);background:var(--db-bg);margin-bottom:12px;" />
     <label style="font-size:11px;font-weight:700;color:var(--db-text-3);display:block;margin-bottom:5px;">내용</label>
@@ -98,6 +102,8 @@
 
 <script type="module">
 const BASE = '/api/support';
+let _isAdmin = false;
+let _pendingCategory = 'general';
 
 async function apiFetch(path, opts = {}) {
   const res = await fetch(BASE + path, {
@@ -113,7 +119,11 @@ async function apiFetch(path, opts = {}) {
 
 // ── User info ──────────────────────────────────────────────────────
 fetch('/auth/me').then(r => {
-  if (!r.ok) { location.href = '/login'; return; }
+  if (!r.ok) {
+    sessionStorage.setItem('afterLoginRedirect', location.href);
+    location.href = '/login';
+    return;
+  }
   return r.json();
 }).then(user => {
   if (!user) return;
@@ -127,7 +137,15 @@ fetch('/auth/me').then(r => {
   } else {
     document.getElementById('user-avatar-fallback').textContent = (user.name || user.email || '?')[0].toUpperCase();
   }
-}).catch(() => { location.href = '/login'; });
+  // is-admin 확인 후 초기화
+  apiFetch('/is-admin').then(r => {
+    _isAdmin = r.is_admin;
+    init();
+  }).catch(() => init());
+}).catch(() => {
+  sessionStorage.setItem('afterLoginRedirect', location.href);
+  location.href = '/login';
+});
 
 // ── Theme toggle ───────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
@@ -138,6 +156,17 @@ document.addEventListener('DOMContentLoaded', function() {
     localStorage.setItem('db-theme', next);
   });
 });
+
+// ── Init: ?category=sales 자동 처리 ──────────────────────────────
+function init() {
+  const params = new URLSearchParams(location.search);
+  const cat = params.get('category');
+  if (cat === 'sales') {
+    _pendingCategory = 'sales';
+    openNewPostModal();
+  }
+  loadPosts();
+}
 
 // ── Post list ──────────────────────────────────────────────────────
 function fmtDate(s) {
@@ -150,6 +179,10 @@ function statusBadge(status) {
     return `<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;background:rgba(29,158,117,0.12);color:#1D9E75;">답변완료</span>`;
   }
   return `<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;background:rgba(186,117,23,0.12);color:#BA7517;">답변대기</span>`;
+}
+
+function salesBadge() {
+  return `<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;background:rgba(234,88,12,0.12);color:#ea580c;">영업 문의</span>`;
 }
 
 async function loadPosts() {
@@ -165,6 +198,7 @@ async function loadPosts() {
         <div style="min-width:0;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
             ${statusBadge(p.status)}
+            ${p.category === 'sales' ? salesBadge() : ''}
             <p style="font-weight:700;font-size:13px;color:var(--db-text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(p.title)}</p>
           </div>
           <p style="font-size:11px;color:var(--db-text-3);">${escapeHtml(p.user_name)} · ${fmtDate(p.created_at)}</p>
@@ -187,14 +221,27 @@ function escapeHtml(s) {
 }
 
 // ── New post modal ─────────────────────────────────────────────────
+function openNewPostModal() {
+  const modal = document.getElementById('new-post-modal');
+  const label = document.getElementById('new-post-category-label');
+  if (_pendingCategory === 'sales') {
+    label.style.display = 'block';
+  } else {
+    label.style.display = 'none';
+  }
+  modal.style.display = 'flex';
+}
+
 window.closeNewPostModal = function() {
   document.getElementById('new-post-modal').style.display = 'none';
   document.getElementById('new-post-title').value = '';
   document.getElementById('new-post-content').value = '';
+  _pendingCategory = 'general';
 };
 
 document.getElementById('btn-new-post').addEventListener('click', () => {
-  document.getElementById('new-post-modal').style.display = 'flex';
+  _pendingCategory = 'general';
+  openNewPostModal();
 });
 
 window.submitNewPost = async function() {
@@ -205,7 +252,7 @@ window.submitNewPost = async function() {
     return;
   }
   try {
-    await apiFetch('', { method: 'POST', body: JSON.stringify({ title, content }) });
+    await apiFetch('', { method: 'POST', body: JSON.stringify({ title, content, category: _pendingCategory }) });
     closeNewPostModal();
     loadPosts();
   } catch (e) {
@@ -228,6 +275,7 @@ async function openDetail(id) {
     content.innerHTML = `
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
         ${statusBadge(post.status)}
+        ${post.category === 'sales' ? salesBadge() : ''}
         <h3 style="font-weight:800;font-size:15px;color:var(--db-text-1);">${escapeHtml(post.title)}</h3>
       </div>
       <p style="font-size:11px;color:var(--db-text-3);margin-bottom:14px;">${escapeHtml(post.user_name)} · ${fmtDate(post.created_at)}</p>
@@ -238,11 +286,13 @@ async function openDetail(id) {
           <p style="font-size:13px;color:var(--db-text-1);line-height:1.6;white-space:pre-wrap;background:rgba(79,163,245,0.06);border:1px solid rgba(79,163,245,0.2);border-radius:8px;padding:14px;">${escapeHtml(post.admin_reply)}</p>
         </div>
       ` : ''}
-      <div style="margin-top:16px;">
-        <label style="font-size:11px;font-weight:700;color:var(--db-text-3);display:block;margin-bottom:5px;">${post.admin_reply ? '답변 수정' : '답변 작성'} (운영자 전용)</label>
-        <textarea id="reply-input" rows="4" placeholder="답변을 입력하세요" style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--db-border);font-size:12px;font-family:'NanumSquare',sans-serif;resize:none;outline:none;box-sizing:border-box;color:var(--db-text-1);background:var(--db-bg);">${escapeHtml(post.admin_reply || '')}</textarea>
-        <button onclick="submitReply(${post.id})" style="margin-top:8px;padding:7px 16px;border-radius:6px;border:none;background:#1a6ef8;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">답변 등록</button>
-      </div>
+      ${_isAdmin ? `
+        <div style="margin-top:16px;">
+          <label style="font-size:11px;font-weight:700;color:var(--db-text-3);display:block;margin-bottom:5px;">${post.admin_reply ? '답변 수정' : '답변 작성'} (운영자 전용)</label>
+          <textarea id="reply-input" rows="4" placeholder="답변을 입력하세요" style="width:100%;padding:9px 11px;border-radius:7px;border:1px solid var(--db-border);font-size:12px;font-family:'NanumSquare',sans-serif;resize:none;outline:none;box-sizing:border-box;color:var(--db-text-1);background:var(--db-bg);">${escapeHtml(post.admin_reply || '')}</textarea>
+          <button onclick="submitReply(${post.id})" style="margin-top:8px;padding:7px 16px;border-radius:6px;border:none;background:#1a6ef8;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">답변 등록</button>
+        </div>
+      ` : ''}
     `;
   } catch (e) {
     content.innerHTML = `<p style="font-size:12px;color:#dc2626;text-align:center;padding:24px 0;">불러오기 실패: ${escapeHtml(e.message)}</p>`;
@@ -264,7 +314,6 @@ window.submitReply = async function(id) {
   }
 };
 
-loadPosts();
 </script>
 
 </body>

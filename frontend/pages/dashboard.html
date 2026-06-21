@@ -870,6 +870,12 @@ function bpToast(msg, isErr = false) {
     return r.json();
   }).then(user => {
     if (!user) return;
+    const redirect = sessionStorage.getItem('afterLoginRedirect');
+    if (redirect) {
+      sessionStorage.removeItem('afterLoginRedirect');
+      location.href = redirect;
+      return;
+    }
     document.getElementById('user-name').textContent = user.name || user.email;
     document.getElementById('user-email').textContent = user.email;
     if (user.avatar_url) {
