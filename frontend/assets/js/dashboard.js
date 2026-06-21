@@ -714,14 +714,14 @@ window.sendAssistantMessage = async function() {
   messages.scrollTop = messages.scrollHeight;
 
   const loadingBubble = document.createElement("div");
-  loadingBubble.style.cssText = "background:rgba(26,110,248,.08);border-radius:8px;padding:8px 12px;font-size:12px;color:rgba(12,20,40,.5);";
+  loadingBubble.style.cssText = "background:rgba(26,110,248,.08);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--db-text-2,rgba(12,20,40,.55));";
   loadingBubble.textContent = "분석 중...";
   messages.appendChild(loadingBubble);
   messages.scrollTop = messages.scrollHeight;
 
   try {
     const result = await assistantApi.chat(text);
-    loadingBubble.style.cssText = "background:rgba(26,110,248,.08);border-radius:8px;padding:10px 12px;font-size:12px;color:#0c1428;line-height:1.5;";
+    loadingBubble.style.cssText = "background:rgba(26,110,248,.08);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--db-text-1,#0c1428);line-height:1.5;";
     loadingBubble.textContent = result.reply;
   } catch (e) {
     loadingBubble.textContent = "오류가 발생했습니다. 다시 시도해주세요.";
