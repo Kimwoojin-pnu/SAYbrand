@@ -63,6 +63,10 @@ async def _org_out(org: Organization, user_id: int, db: AsyncSession) -> OrgOut:
         my_role=my_role,
         member_count=member_count,
         member_limit=tier_limit,
+        white_label_enabled=org.white_label_enabled or False,
+        white_label_brand_name=org.white_label_brand_name,
+        white_label_color=org.white_label_color,
+        white_label_logo_url=org.white_label_logo_url,
     )
 
 
@@ -188,6 +192,8 @@ async def update_org_settings(
         org.white_label_brand_name = data["white_label_brand_name"] or None
     if "white_label_color" in data:
         org.white_label_color = data["white_label_color"] or None
+    if "white_label_logo_url" in data:
+        org.white_label_logo_url = data["white_label_logo_url"] or None
     await db.commit()
     return {"ok": True}
 

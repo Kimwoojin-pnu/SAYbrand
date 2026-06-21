@@ -293,5 +293,6 @@ document.addEventListener('DOMContentLoaded',()=>{
 <script>
   fetch('/auth/me').then(r=>{if(!r.ok){location.href='/login';return;}return r.json();}).then(user=>{if(!user)return;document.getElementById('user-name').textContent=user.name||user.email;document.getElementById('user-email').textContent=user.email;if(user.avatar_url){const i=document.getElementById('user-avatar');i.src=user.avatar_url;i.style.display='block';document.getElementById('user-avatar-fallback').style.display='none';}else{document.getElementById('user-avatar-fallback').textContent=(user.name||user.email||'?')[0].toUpperCase();}}).catch(()=>{location.href='/login';});
 </script>
+<script src="/assets/js/white-label.js" defer></script>
 </body>
 </html>

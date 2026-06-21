@@ -120,8 +120,8 @@ async def join_with_code(code: str, user_id: int, db: AsyncSession) -> dict:
                 "upgrade_required": True,
             }
 
-    # invite_mode가 "open"이면 즉시 활성화, 그 외(approval 등)면 관리자 승인 대기
-    initial_status = "active" if org.invite_mode == "open" else "pending"
+    # viewer는 무조건 즉시 활성, member/admin은 무조건 승인 대기
+    initial_status = "active" if invite.role_to_assign == "viewer" else "pending"
     member = OrganizationMember(
         org_id=invite.org_id,
         user_id=user_id,

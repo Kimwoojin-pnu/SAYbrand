@@ -359,6 +359,42 @@
         </div>
       </div>
 
+      <!-- ── 화이트 라벨 섹션 ───────────────────────────────────────────── -->
+      <div style="margin-top:24px;" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div style="padding:14px 20px;border-bottom:1px solid rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <h2 style="font-weight:700;font-size:14px;color:#0c1428;">화이트 라벨</h2>
+            <p style="font-size:11px;color:rgba(12,20,40,.40);margin-top:2px;">대시보드에 자체 브랜드명·색상·로고를 적용합니다</p>
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+            <span style="font-size:11px;color:rgba(12,20,40,.5);">사용</span>
+            <input type="checkbox" id="wl-enabled" style="width:16px;height:16px;cursor:pointer;" />
+          </label>
+        </div>
+        <div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+            <div style="flex:1;min-width:180px;">
+              <label style="font-size:11px;font-weight:700;color:rgba(12,20,40,.5);display:block;margin-bottom:4px;">브랜드명</label>
+              <input id="wl-brand-name" type="text" placeholder="예: MyBrand" style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid rgba(0,0,0,.12);font-size:12px;font-family:'NanumSquare',sans-serif;" />
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:rgba(12,20,40,.5);display:block;margin-bottom:4px;">브랜드 색상</label>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <input id="wl-color-picker" type="color" value="#1a6ef8" style="width:36px;height:34px;border:1px solid rgba(0,0,0,.12);border-radius:5px;cursor:pointer;padding:2px;" />
+                <input id="wl-color-text" type="text" value="#1a6ef8" placeholder="#1a6ef8" style="width:80px;padding:8px 8px;border-radius:6px;border:1px solid rgba(0,0,0,.12);font-size:12px;font-family:'JetBrains Mono',monospace;" />
+              </div>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:rgba(12,20,40,.5);display:block;margin-bottom:4px;">로고 URL (선택)</label>
+            <input id="wl-logo-url" type="url" placeholder="https://..." style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid rgba(0,0,0,.12);font-size:12px;font-family:'NanumSquare',sans-serif;" />
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button id="wl-save-btn" style="padding:8px 18px;border-radius:6px;background:#1a6ef8;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">저장</button>
+          </div>
+        </div>
+      </div>
+
       <!-- ── 경쟁사 키워드 섹션 ──────────────────────────────────────────── -->
       <div style="margin-top:24px;" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <div style="padding:14px 20px;border-bottom:1px solid rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between;">
@@ -1196,7 +1232,57 @@ document.getElementById('slack-test-btn').addEventListener('click', async () => 
 });
 
 loadSlackSettings();
+</script>
 
+<script>
+// ── 화이트 라벨 ────────────────────────────────────────────────────────────────
+async function loadWhiteLabelSettings() {
+  try {
+    const orgs = await fetch('/api/orgs').then(r => r.ok ? r.json() : []);
+    if (!orgs.length) return;
+    const org = orgs[0];
+    window._wlOrgId = org.id;
+    document.getElementById('wl-enabled').checked = !!org.white_label_enabled;
+    if (org.white_label_brand_name) document.getElementById('wl-brand-name').value = org.white_label_brand_name;
+    if (org.white_label_color) {
+      document.getElementById('wl-color-picker').value = org.white_label_color;
+      document.getElementById('wl-color-text').value = org.white_label_color;
+    }
+    if (org.white_label_logo_url) document.getElementById('wl-logo-url').value = org.white_label_logo_url;
+  } catch (_) {}
+}
+
+document.getElementById('wl-color-picker').addEventListener('input', e => {
+  document.getElementById('wl-color-text').value = e.target.value;
+});
+document.getElementById('wl-color-text').addEventListener('input', e => {
+  if (/^#[0-9a-fA-F]{6}$/.test(e.target.value))
+    document.getElementById('wl-color-picker').value = e.target.value;
+});
+
+document.getElementById('wl-save-btn').addEventListener('click', async () => {
+  if (!window._wlOrgId) { showKwToast('조직 정보를 불러오는 중입니다.', true); return; }
+  const payload = {
+    white_label_enabled: document.getElementById('wl-enabled').checked,
+    white_label_brand_name: document.getElementById('wl-brand-name').value.trim() || null,
+    white_label_color: document.getElementById('wl-color-text').value.trim() || null,
+    white_label_logo_url: document.getElementById('wl-logo-url').value.trim() || null,
+  };
+  try {
+    const res = await fetch(`/api/orgs/${window._wlOrgId}/settings`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || '저장 실패');
+    showKwToast('화이트 라벨 설정이 저장되었습니다.');
+  } catch (e) { showKwToast(e.message, true); }
+});
+
+loadWhiteLabelSettings();
+</script>
+
+<script>
 // ── 경쟁사 키워드 ─────────────────────────────────────────────────────────────
 async function loadCompetitorKeywords() {
   const el = document.getElementById('comp-list');
@@ -1466,5 +1552,6 @@ document.getElementById('activity-log-modal').addEventListener('click', function
   if (e.target === this) this.style.display = 'none';
 });
 </script>
+<script src="/assets/js/white-label.js" defer></script>
 </body>
 </html>

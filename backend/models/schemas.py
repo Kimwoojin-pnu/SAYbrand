@@ -198,6 +198,10 @@ class OrgOut(BaseModel):
     my_role: Optional[str] = None
     member_count: Optional[int] = None
     member_limit: Optional[int] = None
+    white_label_enabled: bool = False
+    white_label_brand_name: Optional[str] = None
+    white_label_color: Optional[str] = None
+    white_label_logo_url: Optional[str] = None
 
     model_config = {"from_attributes": True}
 
