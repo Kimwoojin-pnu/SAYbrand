@@ -1,0 +1,336 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>데이터베이스 스키마 &mdash; SAYbrand 기술 문서</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=f2239762" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=bd95bda3"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="배포 &amp; 운영" href="deployment.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            SAYbrand
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">제품 개요</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">제품 개요</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#id2">제품 정의</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#id5">타겟 고객</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#id6">3대 핵심 모듈</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#a">모듈 A — 브랜드 사칭 탐지</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#b">모듈 B — 가짜뉴스·루머 분석</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#c">모듈 C — 임직원 평판 모니터링</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#id7">커버 플랫폼</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#id8">알림 체계</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#id9">가격 모델</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#kpi">성공 지표 (KPI)</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">기술 아키텍처</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">시스템 아키텍처</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id2">기술 스택</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id3">전체 데이터 흐름</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id4">프론트엔드 페이지 구성</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id5">디자인 시스템</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#celery">비동기 워커 (Celery)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ai_pipeline.html">AI 분석 파이프라인</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ai_pipeline.html#id1">3계층 설계 원칙</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ai_pipeline.html#l1">L1 — 규칙 기반 필터</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ai_pipeline.html#l1-18">L1 카테고리 매핑 (18개)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ai_pipeline.html#l2-ai">L2 — AI 감성·의도 분석</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ai_pipeline.html#id2">폴백 체인</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ai_pipeline.html#id3">한국어 특화 처리</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ai_pipeline.html#id4">12개 마케팅 위기 카테고리</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ai_pipeline.html#id5">배치 처리</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ai_pipeline.html#l3">L3 — 심층 대응 분석</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ai_pipeline.html#id6">폴백 체인</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ai_pipeline.html#id7">출력 필드</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ai_pipeline.html#id8">조직적 공격 탐지</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="risk_scoring.html">리스크 스코어링 엔진</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="risk_scoring.html#id2">점수 계산 공식</a></li>
+<li class="toctree-l2"><a class="reference internal" href="risk_scoring.html#id3">가중치 테이블</a></li>
+<li class="toctree-l2"><a class="reference internal" href="risk_scoring.html#recency-weight">최신성 가중치 (recency_weight)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="risk_scoring.html#velocity-bonus">확산 속도 보너스 (velocity_bonus)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="risk_scoring.html#overall-score">전체 브랜드 점수 (Overall Score)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="risk_scoring.html#id4">업종별 알림 임계값</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">기능 상세</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="collectors.html">데이터 수집기</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="collectors.html#id2">수집기 구현 상태</a></li>
+<li class="toctree-l2"><a class="reference internal" href="collectors.html#id3">컴플라이언스 처리</a></li>
+<li class="toctree-l2"><a class="reference internal" href="collectors.html#orchestrator">Orchestrator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="collectors.html#rawpost">RawPost 공통 데이터 구조</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reports.html">보고서 시스템</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reports.html#pdf-reportlab">PDF 보고서 (ReportLab)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reports.html#ppt-python-pptx">PPT 보고서 (python-pptx)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reports.html#id2">보고서 데이터 구성</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="organization.html">조직 관리 시스템</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="organization.html#id2">구독 티어별 제한</a></li>
+<li class="toctree-l2"><a class="reference internal" href="organization.html#rbac">멤버 역할 (RBAC)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="organization.html#id3">가입 플로우</a></li>
+<li class="toctree-l2"><a class="reference internal" href="organization.html#id4">온보딩 3단계</a></li>
+<li class="toctree-l2"><a class="reference internal" href="organization.html#id5">화이트라벨 지원</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API 레퍼런스</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api_reference.html">API 레퍼런스</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#id1">인증</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#api-dashboard">대시보드 <code class="docutils literal notranslate"><span class="pre">/api/dashboard</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#api-reports">보고서 <code class="docutils literal notranslate"><span class="pre">/api/reports</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#auth">인증 <code class="docutils literal notranslate"><span class="pre">/auth</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#api-orgs">조직 <code class="docutils literal notranslate"><span class="pre">/api/orgs</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#billing">결제 <code class="docutils literal notranslate"><span class="pre">/billing</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#id2">기타</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">배포 &amp; 운영</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="deployment.html">배포 &amp; 운영</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#id2">듀얼 배포 구성</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#vercel">Vercel 주의사항</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#railway">Railway 설정</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#id3">환경 변수 목록</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#id4">로컬 개발 환경</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#polar-svix">Polar 결제 Svix 웹훅 서명 검증</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">데이터베이스 스키마</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#sqlalchemy-2-0-orm">주요 테이블 (SQLAlchemy 2.0 ORM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#threats">threats — 위협 정보 (핵심)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#users">users — 사용자</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#organizations">organizations — 조직</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#customer-profiles">customer_profiles — 브랜드 프로파일</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#customer-aliases">customer_aliases — 브랜드 별칭</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#customer-executives-module-c">customer_executives — 임직원 (Module C)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#usage-logs-ai-api">usage_logs — AI API 비용 추적</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#archived-threats">archived_threats — 조치 완료 보관함</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#invite-codes">invite_codes — 초대 코드</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SAYbrand</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">데이터베이스 스키마</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/database.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>데이터베이스 스키마<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<section id="sqlalchemy-2-0-orm">
+<h2>주요 테이블 (SQLAlchemy 2.0 ORM)<a class="headerlink" href="#sqlalchemy-2-0-orm" title="Link to this heading"></a></h2>
+<section id="threats">
+<h3>threats — 위협 정보 (핵심)<a class="headerlink" href="#threats" title="Link to this heading"></a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>id, user_id, org_id
+module          : A(사칭) / B(루머) / C(임직원)
+threat_type     : account_impersonation / organized_rumor / ...
+severity        : critical / high / medium / low / feedback
+platform        : instagram / youtube / x / tiktok / naver
+source_account, source_url, content_preview
+confidence      : 0.0–1.0 (AI 신뢰도)
+risk_score      : 0–100 (리스크 스코어)
+ai_analysis     : L3 분석 텍스트
+ai_response_suggestion : PR 대응 문구
+bot_probability : 0.0–1.0
+is_organized    : bool (조직적 공격 여부)
+sentiment       : positive / neutral / negative
+emotion         : 분노 / 공포 / 혐오 / 슬픔 / 놀람 / 기쁨 / 중립
+sentiment_score : -1.0–1.0
+reach_estimate  : 추정 도달 수
+status          : active / dismissed / resolved
+resolution_type : false_positive / real_resolved
+resolution_method, resolution_note
+detected_at, updated_at
+</pre></div>
+</div>
+</section>
+<section id="users">
+<h3>users — 사용자<a class="headerlink" href="#users" title="Link to this heading"></a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>id, name, email, company
+user_type           : google
+google_id, avatar_url
+polar_customer_id
+subscription_status : free / active / canceled
+subscription_tier   : free / starter / pro / enterprise
+created_at
+</pre></div>
+</div>
+</section>
+<section id="organizations">
+<h3>organizations — 조직<a class="headerlink" href="#organizations" title="Link to this heading"></a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>id, name, slug, owner_user_id
+invite_mode         : approval / open
+subscription_tier, subscription_status
+slack_webhook_url
+white_label_enabled, white_label_logo_url
+white_label_brand_name, white_label_color
+created_at
+</pre></div>
+</div>
+</section>
+<section id="customer-profiles">
+<h3>customer_profiles — 브랜드 프로파일<a class="headerlink" href="#customer-profiles" title="Link to this heading"></a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>id, user_id, org_id
+profile_type  : company / individual
+display_name, industry, description, logo_url
+dart_corp_code, wikidata_id
+</pre></div>
+</div>
+</section>
+<section id="customer-aliases">
+<h3>customer_aliases — 브랜드 별칭<a class="headerlink" href="#customer-aliases" title="Link to this heading"></a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>id, profile_id
+alias         : 실제 별칭 텍스트
+alias_type    : official / nickname / abbreviation / english
+weight        : 1.0 기본 (L1 필터 가중치)
+</pre></div>
+</div>
+</section>
+<section id="customer-executives-module-c">
+<h3>customer_executives — 임직원 (Module C)<a class="headerlink" href="#customer-executives-module-c" title="Link to this heading"></a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>id, profile_id, name, role
+photo_url
+priority      : 1=CEO / 2=임원 / 3=일반
+</pre></div>
+</div>
+</section>
+<section id="usage-logs-ai-api">
+<h3>usage_logs — AI API 비용 추적<a class="headerlink" href="#usage-logs-ai-api" title="Link to this heading"></a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>id, user_id, profile_id
+model         : hyperclova / gemini / claude / mock
+layer         : L2_text / L2_image / L3
+tokens_in, tokens_out, cost_usd
+created_at
+</pre></div>
+</div>
+</section>
+<section id="archived-threats">
+<h3>archived_threats — 조치 완료 보관함<a class="headerlink" href="#archived-threats" title="Link to this heading"></a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>id, original_threat_id
+severity, threat_type, platform
+action_taken, resolution_note
+archived_at
+expires_at    : archived_at + 90일 (자동 삭제)
+</pre></div>
+</div>
+</section>
+<section id="invite-codes">
+<h3>invite_codes — 초대 코드<a class="headerlink" href="#invite-codes" title="Link to this heading"></a></h3>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>id, org_id, code (20자 고유)
+role_to_assign, expires_at
+max_uses      : 0 = 무제한
+uses_count, is_active
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="deployment.html" class="btn btn-neutral float-left" title="배포 &amp; 운영" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, SAYbrand Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

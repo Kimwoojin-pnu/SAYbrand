@@ -452,12 +452,15 @@ async def generate_pdf_report(
         }
 
         # ── 스타일 ──────────────────────────────────────────────────────────────
+        # 유효 너비 = A4(210mm) - 좌우 마진(각 15mm) = 180mm
+        TW = A4[0] - 30 * mm  # 테이블 전체 너비 (~180mm)
+
         def ST(name, font=None, size=10, leading=15, color=None, bold=False, **kw):
             fn = kw.pop("fontName", KR_BOLD if bold else (font or KR))
             fs = kw.pop("fontSize", size)
             return ParagraphStyle(
                 name, fontName=fn, fontSize=fs, leading=leading,
-                textColor=color or colors.black, **kw
+                textColor=color or colors.black, wordWrap='CJK', **kw
             )
 
         ST_BODY    = ST("Body",   size=10, leading=16)
@@ -626,7 +629,7 @@ async def generate_pdf_report(
             ["오탐 처리", str(s["false_positive_count"]),
              "봇 의심", str(s.get("bot_count", 0))],
         ]
-        cover_kpi_tbl = Table(cover_kpi, colWidths=[40 * mm, 28 * mm, 40 * mm, 28 * mm])
+        cover_kpi_tbl = Table(cover_kpi, colWidths=[50 * mm, 40 * mm, 50 * mm, 40 * mm])
         cover_kpi_tbl.setStyle(TableStyle([
             ("FONTNAME",      (0, 0), (-1, -1), KR),
             ("FONTNAME",      (0, 0), (0, -1), KR_BOLD),
@@ -678,7 +681,7 @@ async def generate_pdf_report(
             ["조직적 공격", f"{s.get('organized_count', 0):,}건",
              "봇 의심 계정", f"{s.get('bot_count', 0):,}건"],
         ]
-        kpi_tbl = Table(kpi_rows, colWidths=[48 * mm, 30 * mm, 48 * mm, 30 * mm])
+        kpi_tbl = Table(kpi_rows, colWidths=[55 * mm, 35 * mm, 55 * mm, 35 * mm])
         kpi_tbl.setStyle(TableStyle([
             ("BACKGROUND",    (0, 0), (-1, 0), C_NAVY),
             ("TEXTCOLOR",     (0, 0), (-1, 0), C_WHITE),
@@ -750,10 +753,10 @@ async def generate_pdf_report(
                              color=SEV_COLOR.get(sev, C_NAVY))),
                 f"{cnt:,}",
                 f"{ratio*100:.1f}%",
-                _bar(ratio, 55, SEV_COLOR.get(sev, C_BLUE)),
+                _bar(ratio, 83, SEV_COLOR.get(sev, C_BLUE)),
             ])
         if len(sev_rows) > 1:
-            sev_tbl = Table(sev_rows, colWidths=[42 * mm, 20 * mm, 18 * mm, 58 * mm])
+            sev_tbl = Table(sev_rows, colWidths=[55 * mm, 20 * mm, 18 * mm, 87 * mm])
             sev_tbl.setStyle(_tbl_style(C_NAVY))
             story.append(sev_tbl)
         story.append(Spacer(1, 4 * mm))
@@ -768,10 +771,10 @@ async def generate_pdf_report(
                 PLAT_KO.get(plat, _esc(plat)),
                 f"{cnt:,}",
                 f"{ratio*100:.1f}%",
-                _bar(ratio, 55, C_BLUE),
+                _bar(ratio, 83, C_BLUE),
             ])
         if len(plat_rows) > 1:
-            plat_tbl = Table(plat_rows, colWidths=[42 * mm, 20 * mm, 18 * mm, 58 * mm])
+            plat_tbl = Table(plat_rows, colWidths=[55 * mm, 20 * mm, 18 * mm, 87 * mm])
             plat_tbl.setStyle(_tbl_style(C_BLUE))
             story.append(plat_tbl)
         story.append(Spacer(1, 4 * mm))
@@ -788,9 +791,9 @@ async def generate_pdf_report(
                     _clean(tt["type"], 40),
                     f"{tt['count']:,}",
                     f"{ratio*100:.1f}%",
-                    _bar(tt["count"] / max_t, 55, C_PURPLE),
+                    _bar(tt["count"] / max_t, 68, C_PURPLE),
                 ])
-            type_tbl = Table(type_rows, colWidths=[58 * mm, 16 * mm, 18 * mm, 46 * mm])
+            type_tbl = Table(type_rows, colWidths=[72 * mm, 18 * mm, 18 * mm, 72 * mm])
             type_tbl.setStyle(_tbl_style(C_PURPLE))
             story.append(type_tbl)
 
@@ -819,9 +822,9 @@ async def generate_pdf_report(
                              color=senti_color.get(sk, C_NAVY))),
                 f"{cnt:,}",
                 f"{ratio*100:.1f}%",
-                _bar(ratio, 55, senti_color.get(sk, C_BLUE)),
+                _bar(ratio, 83, senti_color.get(sk, C_BLUE)),
             ])
-        senti_tbl = Table(senti_rows, colWidths=[42 * mm, 20 * mm, 18 * mm, 58 * mm])
+        senti_tbl = Table(senti_rows, colWidths=[55 * mm, 20 * mm, 18 * mm, 87 * mm])
         senti_tbl.setStyle(_tbl_style(C_NAVY))
         story.append(senti_tbl)
         story.append(Spacer(1, 4 * mm))
@@ -845,9 +848,9 @@ async def generate_pdf_report(
                                  color=emo_color_map.get(emo, C_NAVY))),
                     f"{cnt:,}",
                     f"{ratio*100:.1f}%",
-                    _bar(ratio, 55, emo_color_map.get(emo, C_BLUE)),
+                    _bar(ratio, 83, emo_color_map.get(emo, C_BLUE)),
                 ])
-            emo_tbl = Table(emo_rows, colWidths=[42 * mm, 20 * mm, 18 * mm, 58 * mm])
+            emo_tbl = Table(emo_rows, colWidths=[55 * mm, 20 * mm, 18 * mm, 87 * mm])
             emo_tbl.setStyle(_tbl_style(C_BLUE))
             story.append(emo_tbl)
             story.append(Spacer(1, 4 * mm))
@@ -863,7 +866,7 @@ async def generate_pdf_report(
                     _esc(ns.get("emotion") or "—"),
                     _clean(ns.get("content") or "", 120),
                 ])
-            neg_tbl = Table(neg_rows, colWidths=[22 * mm, 18 * mm, 98 * mm])
+            neg_tbl = Table(neg_rows, colWidths=[26 * mm, 22 * mm, 132 * mm])
             neg_tbl.setStyle(_tbl_style(C_AMBER))
             story.append(neg_tbl)
 
@@ -884,7 +887,7 @@ async def generate_pdf_report(
             ["조직적 공격 탐지", f"{org_cnt:,}건", f"{org_ratio*100:.1f}%"],
             ["봇 의심 계정 발생", f"{bot_cnt:,}건", f"{bot_ratio*100:.1f}%"],
         ]
-        org_tbl = Table(threat_summary_rows, colWidths=[60 * mm, 40 * mm, 38 * mm])
+        org_tbl = Table(threat_summary_rows, colWidths=[80 * mm, 55 * mm, 45 * mm])
         org_tbl.setStyle(_tbl_style(C_RED))
         story.append(org_tbl)
         story.append(Spacer(1, 4 * mm))
@@ -907,7 +910,7 @@ async def generate_pdf_report(
                     f"{pos_n:,} ({pos_n/tot_n*100:.0f}%)",
                     f"{tot_n:,}",
                 ])
-            ps_tbl = Table(ps_rows, colWidths=[28 * mm, 36 * mm, 36 * mm, 36 * mm, 22 * mm])
+            ps_tbl = Table(ps_rows, colWidths=[30 * mm, 40 * mm, 40 * mm, 40 * mm, 30 * mm])
             ps_tbl.setStyle(_tbl_style(C_PURPLE))
             story.append(ps_tbl)
 
@@ -940,7 +943,7 @@ async def generate_pdf_report(
                 bot_p = th.get("bot_probability")
                 is_org = th.get("is_organized")
                 emotion_txt = _esc(th.get("emotion") or "—")
-                url = _esc((th.get("source_url") or "")[:120])
+                url = _esc((th.get("source_url") or "")[:60])
                 detected = (th.get("detected_at") or "")[:10]
                 ai_sugg = _clean(th.get("ai_response_suggestion") or "", 300)
 
@@ -955,7 +958,7 @@ async def generate_pdf_report(
                                       ST(f"TH{idx}Score", fontName=KR, fontSize=9,
                                          color=C_DGRAY, alignment=2)),
                         ]],
-                        colWidths=[110 * mm, 48 * mm],
+                        colWidths=[126 * mm, 54 * mm],
                     ),
                 ]
                 card_items[0].setStyle(TableStyle([
@@ -976,7 +979,7 @@ async def generate_pdf_report(
                     flags.append("조직적 공격")
                 detail_rows.append(["감정", emotion_txt, "특이사항", _esc(", ".join(flags) if flags else "—")])
 
-                dtl_tbl = Table(detail_rows, colWidths=[14 * mm, 72 * mm, 14 * mm, 58 * mm])
+                dtl_tbl = Table(detail_rows, colWidths=[16 * mm, 80 * mm, 16 * mm, 68 * mm])
                 dtl_tbl.setStyle(TableStyle([
                     ("FONTNAME",      (0, 0), (-1, -1), KR),
                     ("FONTNAME",      (0, 0), (0, -1), KR_BOLD),
@@ -1037,7 +1040,7 @@ async def generate_pdf_report(
                     _clean(t.get("resolution_method") or "기타", 30),
                     _esc((t.get("updated_at") or "")[:10]),
                 ])
-            res_tbl = Table(res_rows, colWidths=[8 * mm, 20 * mm, 22 * mm, 34 * mm, 38 * mm, 20 * mm])
+            res_tbl = Table(res_rows, colWidths=[10 * mm, 25 * mm, 26 * mm, 42 * mm, 53 * mm, 24 * mm])
             res_tbl.setStyle(_tbl_style(C_GREEN))
             story.append(res_tbl)
 
@@ -1077,7 +1080,7 @@ async def generate_pdf_report(
             ["총 수집 건수", f"{s['total_threats']:,}건 (오탐 포함 전체 수집량 기준)"],
             ["분석 엔진", "L1 키워드 필터 → L2 KNU 감성 사전 + Gemini AI → L3 Claude Haiku 심층 분석"],
         ]
-        mon_tbl = Table(mon_rows, colWidths=[36 * mm, 122 * mm])
+        mon_tbl = Table(mon_rows, colWidths=[45 * mm, 135 * mm])
         mon_tbl.setStyle(TableStyle([
             ("FONTNAME",      (0, 0), (-1, -1), KR),
             ("FONTNAME",      (0, 0), (0, -1), KR_BOLD),

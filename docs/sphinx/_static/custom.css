@@ -1,0 +1,36 @@
+/* SAYbrand Sphinx 커스텀 스타일 */
+:root {
+    --brand-navy: #0c1428;
+    --brand-blue: #1a6ef8;
+}
+
+.wy-side-nav-search {
+    background-color: var(--brand-navy) !important;
+}
+
+.wy-nav-content-wrap {
+    background: #f8fafc;
+}
+
+h1, h2, h3 {
+    color: var(--brand-navy);
+}
+
+.rst-content code {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: var(--brand-blue);
+    font-size: 0.88em;
+}
+
+.rst-content .highlight pre {
+    background: #0c1428;
+}
+
+/* 위협 등급 배지 */
+.badge-critical { background: #dc2626; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; font-weight: 700; }
+.badge-high     { background: #ea580c; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; font-weight: 700; }
+.badge-medium   { background: #d97706; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; font-weight: 700; }
+.badge-low      { background: #16a34a; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; font-weight: 700; }

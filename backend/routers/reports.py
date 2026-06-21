@@ -13,6 +13,7 @@ from backend.db.database import get_db
 from backend.middleware.auth import get_current_user
 from backend.middleware.org_context import optional_current_org
 from backend.models.orm import ActivityLog, ArchivedThreat, CustomerProfile, Organization, Threat
+from backend.services.pptx_generator import generate_pptx_report
 from backend.services.report_generator import generate_pdf_report, generate_report
 
 logger = logging.getLogger(__name__)
@@ -236,6 +237,26 @@ async def delete_archive(
     await db.delete(archive)
     await db.commit()
     return {"id": archive_id, "deleted": True}
+
+
+@router.get("/{period}/pptx")
+async def get_report_pptx(
+    period: str,
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+    org: Organization | None = Depends(optional_current_org),
+):
+    if period not in _VALID_PERIODS:
+        raise HTTPException(status_code=400, detail=f"period must be one of {_VALID_PERIODS}")
+    pptx_bytes = await generate_pptx_report(user["id"], period, db, org_id=org.id if org else None)
+    if not pptx_bytes:
+        raise HTTPException(status_code=500, detail="python-pptx 미설치 — 서버에 pip install python-pptx 필요")
+    filename = f"saybrand_{period}_report_{datetime.now().strftime('%Y%m%d')}.pptx"
+    return Response(
+        content=pptx_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.get("/{period}")
