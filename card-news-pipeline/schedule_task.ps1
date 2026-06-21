@@ -5,8 +5,8 @@ $tasks = @(
     @{
         Name    = "CardNews-Generate"
         Script  = "run.py"
-        Hour    = 9
-        Minute  = 0
+        Hour    = 12
+        Minute  = 30
         Comment = "Generate card news and send to Discord"
     },
     @{
