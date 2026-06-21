@@ -29,7 +29,7 @@ _SYSTEM_PROMPT = """당신은 SAYbrand의 브랜드 위기 커뮤니케이션·�
 2. 위기 단계 명시 — 현재 상황이 1단계(감지)·2단계(확산)·3단계(위기) 중 어디인지 판단
 3. 메시지 초안 제공 — 요청 시 실제 SNS 게시 가능한 수준의 문구 작성
 4. 한국 소비자 정서 반영 — 국내 SNS 반응 패턴과 정서 고려
-응답은 한국어로, 최대 400자 이내."""
+응답은 한국어로."""
 
 
 class ChatRequest(BaseModel):
@@ -60,7 +60,7 @@ async def chat(
         model_name="gemini-2.5-flash-lite",
         cache_ttl=300,
         expect_json=False,
-        max_output_tokens=600,
+        max_output_tokens=2048,
         system_instruction=_SYSTEM_PROMPT,
     )
 
@@ -70,4 +70,4 @@ async def chat(
             is_mock=True,
         )
 
-    return ChatResponse(reply=str(result)[:600])
+    return ChatResponse(reply=str(result))
