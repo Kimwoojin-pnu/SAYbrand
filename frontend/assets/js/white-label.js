@@ -36,36 +36,48 @@
     return '#' + f(0) + f(8) + f(4);
   }
 
-  // delta: 양수=밝게, 음수=어둡게
   function shiftL(hex, delta) {
     var hsl = hexToHsl(hex);
     return hslToHex(hsl[0], hsl[1], Math.max(0, Math.min(100, hsl[2] + delta)));
+  }
+
+  // WCAG 상대 휘도 — L > 0.179 이면 배경이 밝은 것 → 어두운 글씨 사용
+  function contrastColor(hex) {
+    var c = hexToRgb(hex);
+    function lin(v) { v /= 255; return v <= 0.04045 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4); }
+    var L = 0.2126*lin(c[0]) + 0.7152*lin(c[1]) + 0.0722*lin(c[2]);
+    return L > 0.179 ? '#0c1428' : '#ffffff';
   }
 
   // ── CSS 생성 ──────────────────────────────────────────────────────────
   function buildCss(color) {
     var rgb   = hexToRgb(color);
     var r = rgb[0], g = rgb[1], b = rgb[2];
-    var dark  = shiftL(color, -10);  // hover / 강조 (brand-600 상당)
-    var light = shiftL(color, +10);  // 선택 상태 (brand-400 상당)
+    var dark    = shiftL(color, -10);
+    var light   = shiftL(color, +10);
+    var textClr = contrastColor(color);       // 브랜드 배경 위 글씨 색
+    var textDark = contrastColor(dark);       // dark shade 배경 위 글씨 색
 
     var lines = [
-      // CSS 변수 — 전체 팔레트 노출
+      // CSS 변수
       ':root {',
       '  --brand-500: ' + color + ';',
       '  --brand-600: ' + dark  + ';',
       '  --brand-400: ' + light + ';',
       '  --clr-brand: ' + color + ';',
+      '  --brand-text: ' + textClr + ';',
       '}',
 
-      // ── 단색 배경 ──
+      // ── 단색 배경 + 글씨 대비 ──
       '[style*="background:#1a6ef8"],[style*="background: #1a6ef8"],' +
       '[style*="background-color:#1a6ef8"],[style*="background-color: #1a6ef8"] ' +
-      '{ background-color:' + color + ' !important; background:' + color + ' !important; }',
+      '{ background-color:' + color + ' !important; background:' + color + ' !important;' +
+      '  color:' + textClr + ' !important; }',
 
-      // hover/dark shade (#1558cc) — 버튼 hover 등
+      // dark shade 배경
       '[style*="background:#1558cc"],[style*="background: #1558cc"] ' +
-      '{ background-color:' + dark + ' !important; background:' + dark + ' !important; }',
+      '{ background-color:' + dark + ' !important; background:' + dark + ' !important;' +
+      '  color:' + textDark + ' !important; }',
 
       // ── 텍스트 ──
       '[style*="color:#1a6ef8"],[style*="color: #1a6ef8"] { color:' + color + ' !important; }',
@@ -98,26 +110,29 @@
       '[style*="background:rgba(26,110,248,.12)"]' +
       '{ background-color:rgba(' + r + ',' + g + ',' + b + ',0.12) !important; }',
 
-      // ── hover 클래스 ──
-      '.btn-primary { background:' + color + ' !important; }',
-      '.btn-primary:hover { background:' + dark  + ' !important; }',
+      // rgba tint 안의 글씨는 브랜드 색으로 (뱃지/태그)
+      '[style*="rgba(26,110,248"][style*="color:#1a6ef8"]' +
+      '{ color:' + color + ' !important; }',
 
-      // ── AI 어시스턴트 버튼 box-shadow ──
-      '#btn-assistant { box-shadow:0 4px 16px rgba(' + r + ',' + g + ',' + b + ',0.4) !important; }',
+      // ── AI 어시스턴트 버튼 box-shadow + 글씨 ──
+      '#btn-assistant { box-shadow:0 4px 16px rgba(' + r + ',' + g + ',' + b + ',0.4) !important;' +
+      ' color:' + textClr + ' !important; }',
+
+      // ── 버튼 클래스 ──
+      '.btn-primary { background:' + color + ' !important; color:' + textClr + ' !important; }',
+      '.btn-primary:hover { background:' + dark + ' !important; color:' + textDark + ' !important; }',
 
       // ── 네비게이션 활성 ──
       '.db-nav-active { border-left-color:' + color + ' !important; color:' + color + ' !important; }',
 
-      // ── 클래스 기반 (custom.css) ──
+      // ── CSS 클래스 기반 (custom.css) ──
       '.toast-notification.info { border-left-color:' + color + ' !important; }',
       '.bp-input:focus, .bp-select:focus, .bp-textarea:focus { border-color:' + color + ' !important; }',
 
-      // ── 선택/active 상태 배경 ──
+      // ── 선택/active 상태 ──
       '.path-card.selected { border-color:' + color + ' !important; background:rgba(' + r + ',' + g + ',' + b + ',0.1) !important; }',
       '.type-btn.selected  { border-color:' + color + ' !important; background:rgba(' + r + ',' + g + ',' + b + ',0.12) !important; color:' + color + ' !important; }',
       'input:focus, select:focus { border-color:' + color + ' !important; }',
-
-      // ── step dot (온보딩) ──
       '.step-dot.active { background:' + color + ' !important; }',
     ];
     return lines.join('\n');
@@ -126,16 +141,59 @@
   // ── 적용 ─────────────────────────────────────────────────────────────
   function applyConfig(cfg) {
     if (!cfg) return;
+
     if (cfg.color) {
+      // CSS 주입
       var el = document.getElementById('wl-override');
       if (!el) { el = document.createElement('style'); el.id = 'wl-override'; document.head.appendChild(el); }
       el.textContent = buildCss(cfg.color);
+
+      var textClr = contrastColor(cfg.color);
+      var dark    = shiftL(cfg.color, -10);
+      var textDark = contrastColor(dark);
+
+      // meta theme-color (모바일 브라우저 상단)
+      var meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', cfg.color);
+
+      // _btnOn monkey-patch (reports.html — JS 직접 할당은 CSS 선택자에 안 걸림)
+      if (typeof window._btnOn === 'function' && !window._btnOn._wl) {
+        var _orig = window._btnOn;
+        window._btnOn = function (b) {
+          _orig(b);
+          if (b) { b.style.background = cfg.color; b.style.color = textClr; }
+        };
+        window._btnOn._wl = true;
+      }
+
+      // _buildGraphData monkey-patch (ECharts 브랜드 노드 색상)
+      if (typeof window._buildGraphData === 'function' && !window._buildGraphData._wl) {
+        var _origGraph = window._buildGraphData;
+        var _rgb = hexToRgb(cfg.color);
+        window._buildGraphData = function (data) {
+          var result = _origGraph(data);
+          // 중심 브랜드 노드를 찾아 색상 교체
+          if (result && result.nodes) {
+            result.nodes.forEach(function (node) {
+              if (node._type === 'brand' && node.itemStyle) {
+                node.itemStyle.color = cfg.color;
+                node.itemStyle.shadowColor = 'rgba(' + _rgb[0] + ',' + _rgb[1] + ',' + _rgb[2] + ',0.6)';
+                if (node.label) node.label.color = textClr;
+              }
+            });
+          }
+          return result;
+        };
+        window._buildGraphData._wl = true;
+      }
     }
+
     if (cfg.brand_name) {
       var nameEl = document.querySelector('aside a[href="/"] span');
       if (nameEl) nameEl.textContent = cfg.brand_name;
       document.title = document.title.replace(/SAYbrand/g, cfg.brand_name);
     }
+
     if (cfg.logo_url) {
       var logoEl = document.querySelector('aside a[href="/"] img');
       if (logoEl) { logoEl.src = cfg.logo_url; logoEl.onerror = null; }
