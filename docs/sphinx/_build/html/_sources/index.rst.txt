@@ -45,6 +45,7 @@ SAYbrand 기술 문서
    collectors
    reports
    organization
+   card_news
 
 .. toctree::
    :maxdepth: 2

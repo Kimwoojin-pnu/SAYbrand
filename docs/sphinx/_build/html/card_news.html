@@ -1,0 +1,422 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>카드뉴스 자동 생성 파이프라인 &mdash; SAYbrand 기술 문서</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=f2239762" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=bd95bda3"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API 레퍼런스" href="api_reference.html" />
+    <link rel="prev" title="조직 관리 시스템" href="organization.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            SAYbrand
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">제품 개요</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="overview.html">제품 개요</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#id2">제품 정의</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#id5">타겟 고객</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#id6">3대 핵심 모듈</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#a">모듈 A — 브랜드 사칭 탐지</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#b">모듈 B — 가짜뉴스·루머 분석</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html#c">모듈 C — 임직원 평판 모니터링</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#id7">커버 플랫폼</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#id8">알림 체계</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#id9">가격 모델</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#kpi">성공 지표 (KPI)</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">기술 아키텍처</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">시스템 아키텍처</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id2">기술 스택</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id3">전체 데이터 흐름</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id4">프론트엔드 페이지 구성</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#id5">디자인 시스템</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#celery">비동기 워커 (Celery)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ai_pipeline.html">AI 분석 파이프라인</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ai_pipeline.html#id1">3계층 설계 원칙</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ai_pipeline.html#l1">L1 — 규칙 기반 필터</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ai_pipeline.html#l1-18">L1 카테고리 매핑 (18개)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ai_pipeline.html#l2-ai">L2 — AI 감성·의도 분석</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ai_pipeline.html#id2">폴백 체인</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ai_pipeline.html#id3">한국어 특화 처리</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ai_pipeline.html#id4">12개 마케팅 위기 카테고리</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ai_pipeline.html#id5">배치 처리</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ai_pipeline.html#l3">L3 — 심층 대응 분석</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ai_pipeline.html#id6">폴백 체인</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ai_pipeline.html#id7">출력 필드</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ai_pipeline.html#id8">조직적 공격 탐지</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="risk_scoring.html">리스크 스코어링 엔진</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="risk_scoring.html#id2">점수 계산 공식</a></li>
+<li class="toctree-l2"><a class="reference internal" href="risk_scoring.html#id3">가중치 테이블</a></li>
+<li class="toctree-l2"><a class="reference internal" href="risk_scoring.html#recency-weight">최신성 가중치 (recency_weight)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="risk_scoring.html#velocity-bonus">확산 속도 보너스 (velocity_bonus)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="risk_scoring.html#overall-score">전체 브랜드 점수 (Overall Score)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="risk_scoring.html#id4">업종별 알림 임계값</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">기능 상세</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="collectors.html">데이터 수집기</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="collectors.html#id2">수집기 구현 상태</a></li>
+<li class="toctree-l2"><a class="reference internal" href="collectors.html#id3">컴플라이언스 처리</a></li>
+<li class="toctree-l2"><a class="reference internal" href="collectors.html#orchestrator">Orchestrator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="collectors.html#rawpost">RawPost 공통 데이터 구조</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reports.html">보고서 시스템</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reports.html#pdf-reportlab">PDF 보고서 (ReportLab)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reports.html#ppt-python-pptx">PPT 보고서 (python-pptx)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reports.html#id2">보고서 데이터 구성</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="organization.html">조직 관리 시스템</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="organization.html#id2">구독 티어별 제한</a></li>
+<li class="toctree-l2"><a class="reference internal" href="organization.html#rbac">멤버 역할 (RBAC)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="organization.html#id3">가입 플로우</a></li>
+<li class="toctree-l2"><a class="reference internal" href="organization.html#id4">온보딩 3단계</a></li>
+<li class="toctree-l2"><a class="reference internal" href="organization.html#id5">화이트라벨 지원</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">카드뉴스 자동 생성 파이프라인</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">전체 흐름</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">모듈별 역할</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#db">DB 쿼리</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">소재 선택 알고리즘</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#llm">LLM 스크립트 생성</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#youtube">YouTube 업로드</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">환경 변수</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id6">실행 및 테스트</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API 레퍼런스</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api_reference.html">API 레퍼런스</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#id1">인증</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#api-dashboard">대시보드 <code class="docutils literal notranslate"><span class="pre">/api/dashboard</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#api-reports">보고서 <code class="docutils literal notranslate"><span class="pre">/api/reports</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#auth">인증 <code class="docutils literal notranslate"><span class="pre">/auth</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#api-orgs">조직 <code class="docutils literal notranslate"><span class="pre">/api/orgs</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#billing">결제 <code class="docutils literal notranslate"><span class="pre">/billing</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference.html#id2">기타</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">배포 &amp; 운영</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="deployment.html">배포 &amp; 운영</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#id2">듀얼 배포 구성</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#vercel">Vercel 주의사항</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#railway">Railway 설정</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#id3">환경 변수 목록</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#id4">로컬 개발 환경</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#polar-svix">Polar 결제 Svix 웹훅 서명 검증</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="database.html">데이터베이스 스키마</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="database.html#sqlalchemy-2-0-orm">주요 테이블 (SQLAlchemy 2.0 ORM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="database.html#threats">threats — 위협 정보 (핵심)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="database.html#users">users — 사용자</a></li>
+<li class="toctree-l3"><a class="reference internal" href="database.html#organizations">organizations — 조직</a></li>
+<li class="toctree-l3"><a class="reference internal" href="database.html#customer-profiles">customer_profiles — 브랜드 프로파일</a></li>
+<li class="toctree-l3"><a class="reference internal" href="database.html#customer-aliases">customer_aliases — 브랜드 별칭</a></li>
+<li class="toctree-l3"><a class="reference internal" href="database.html#customer-executives-module-c">customer_executives — 임직원 (Module C)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="database.html#usage-logs-ai-api">usage_logs — AI API 비용 추적</a></li>
+<li class="toctree-l3"><a class="reference internal" href="database.html#archived-threats">archived_threats — 조치 완료 보관함</a></li>
+<li class="toctree-l3"><a class="reference internal" href="database.html#invite-codes">invite_codes — 초대 코드</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SAYbrand</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content style-external-links">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">카드뉴스 자동 생성 파이프라인</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/card_news.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="id1">
+<h1>카드뉴스 자동 생성 파이프라인<a class="headerlink" href="#id1" title="Link to this heading"></a></h1>
+<p>SAYbrand가 탐지한 브랜드 위협 데이터를 자동으로 유튜브 쇼츠용 카드뉴스 영상으로 변환하는 독립 파이프라인.</p>
+<p>위치: <code class="docutils literal notranslate"><span class="pre">card-news-pipeline/</span></code></p>
+<section id="id2">
+<h2>전체 흐름<a class="headerlink" href="#id2" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>[PostgreSQL 위협 DB]
+    │ db_source.py — 최근 14일, critical/high/medium, 최신순 LIMIT 100
+    ▼
+[selector.py — 소재 선택]
+    │ 오늘 데이터 우선 → 1일 전 → 2일 전 → 3일 전 → 전체 최고점
+    ▼
+[llm_scripter.py — 스크립트 생성]
+    │ Claude Haiku 4.5 (API 키 없을 때 템플릿 폴백)
+    │ 1슬라이드, headline ≤ 20자, body ≤ 150자, 태그 5개
+    ▼
+[renderer.py — 슬라이드 렌더링]
+    │ Playwright Chromium, 1080×1920 (쇼츠 세로형 규격)
+    │ Pixazo API로 히어로 이미지 생성 (없으면 플레이스홀더)
+    ▼
+[video.py — 영상 조립]
+    │ FFmpeg — 슬라이드 PNG → MP4, assets/bgm/*.mp3 믹싱
+    ▼
+[discord_review.py — 검수 요청]
+    │ Discord Webhook 전송, review_status.json 저장
+    ▼
+[youtube_upload.py — YouTube 업로드]
+    └ OAuth2 Refresh Token, 비공개(private), #Shorts 태그 자동 추가
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h2>모듈별 역할<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>모듈</p></th>
+<th class="head"><p>역할</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">db_source.py</span></code></p></td>
+<td><p>PostgreSQL 쿼리 / 환경변수 없으면 mock_data 폴백</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">selector.py</span></code></p></td>
+<td><p>오늘 날짜 우선 후보 선택, used_ids 중복 제거</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">llm_scripter.py</span></code></p></td>
+<td><p>Claude Haiku 4.5 JSON 스크립트 생성</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">scripter.py</span></code></p></td>
+<td><p>LLM 실패 시 규칙 기반 템플릿 스크립트</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">renderer.py</span></code></p></td>
+<td><p>Playwright로 HTML → PNG 슬라이드 렌더링</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">slide_template.py</span></code></p></td>
+<td><p>슬라이드 HTML 템플릿 빌더</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">pixazo_image_generator.py</span></code></p></td>
+<td><p>Pixazo API 히어로 이미지 생성</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">video.py</span></code></p></td>
+<td><p>FFmpeg MP4 조립 + BGM 믹싱</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">orchestrator.py</span></code></p></td>
+<td><p>전체 파이프라인 조율 + Discord 검수 요청</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">discord_review.py</span></code></p></td>
+<td><p>Discord Webhook 검수 메시지 전송</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">review_status.py</span></code></p></td>
+<td><p>검수 상태 JSON 저장/읽기</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">youtube_upload.py</span></code></p></td>
+<td><p>YouTube Data API v3 업로드</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">alerts.py</span></code></p></td>
+<td><p>파이프라인 오류 알림</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">run_log.py</span></code></p></td>
+<td><p>실행 이력 로깅</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">store.py</span></code></p></td>
+<td><p>used_ids 영속화 (중복 방지)</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="db">
+<h2>DB 쿼리<a class="headerlink" href="#db" title="Link to this heading"></a></h2>
+<div class="highlight-sql notranslate"><div class="highlight"><pre><span></span><span class="k">SELECT</span><span class="w"> </span><span class="n">id</span><span class="p">::</span><span class="nb">text</span><span class="p">,</span>
+<span class="w">       </span><span class="k">COALESCE</span><span class="p">(</span><span class="n">threat_type</span><span class="p">,</span><span class="w"> </span><span class="n">severity</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;위협&#39;</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">category</span><span class="p">,</span>
+<span class="w">       </span><span class="k">COALESCE</span><span class="p">(</span>
+<span class="w">           </span><span class="k">NULLIF</span><span class="p">(</span><span class="k">CASE</span><span class="w"> </span><span class="k">WHEN</span><span class="w"> </span><span class="n">ai_analysis</span><span class="w"> </span><span class="k">LIKE</span><span class="w"> </span><span class="s1">&#39;[Mock]%&#39;</span><span class="w"> </span><span class="k">THEN</span><span class="w"> </span><span class="k">NULL</span>
+<span class="w">                       </span><span class="k">ELSE</span><span class="w"> </span><span class="n">ai_analysis</span><span class="w"> </span><span class="k">END</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;&#39;</span><span class="p">),</span>
+<span class="w">           </span><span class="n">content_preview</span>
+<span class="w">       </span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">summary</span><span class="p">,</span>
+<span class="w">       </span><span class="n">risk_score</span><span class="p">::</span><span class="nb">int</span><span class="p">,</span>
+<span class="w">       </span><span class="n">detected_at</span><span class="p">::</span><span class="nb">date</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">threats</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">content_preview</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
+<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">detected_at</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">INTERVAL</span><span class="w"> </span><span class="s1">&#39;14 days&#39;</span>
+<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">severity</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;critical&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;high&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;medium&#39;</span><span class="p">)</span>
+<span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">detected_at</span><span class="w"> </span><span class="k">DESC</span><span class="w"> </span><span class="n">NULLS</span><span class="w"> </span><span class="k">LAST</span><span class="p">,</span><span class="w"> </span><span class="n">risk_score</span><span class="w"> </span><span class="k">DESC</span><span class="w"> </span><span class="n">NULLS</span><span class="w"> </span><span class="k">LAST</span>
+<span class="k">LIMIT</span><span class="w"> </span><span class="mi">100</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Mock AI 분석(<code class="docutils literal notranslate"><span class="pre">[Mock]</span></code> 접두어)은 <code class="docutils literal notranslate"><span class="pre">content_preview</span></code> 로 대체</p></li>
+<li><p>최신순 정렬 후 위험도 내림차순 — 오늘 데이터가 항상 먼저 로드됨</p></li>
+</ul>
+</section>
+<section id="id4">
+<h2>소재 선택 알고리즘<a class="headerlink" href="#id4" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># selector.py</span>
+<span class="k">for</span> <span class="n">days_back</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]:</span>
+    <span class="n">pool</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">detected_at</span> <span class="o">==</span> <span class="n">today</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">days_back</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="n">pool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">pool</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">impact_score</span><span class="p">)</span>
+
+<span class="c1"># 최근 3일 내 없으면 전체 최고점</span>
+<span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">impact_score</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="llm">
+<h2>LLM 스크립트 생성<a class="headerlink" href="#llm" title="Link to this heading"></a></h2>
+<p>Claude Haiku 4.5가 아래 JSON 형식으로 스크립트를 생성합니다.</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;카드뉴스 제목&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;slides&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="nt">&quot;headline&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;20자 이내 헤드라인&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;body&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;150자 이내 본문&quot;</span><span class="p">}</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;유튜브 설명문&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;tags&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;태그1&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;태그2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;태그3&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;태그4&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;태그5&quot;</span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>API 키 없을 때는 <code class="docutils literal notranslate"><span class="pre">scripter.py</span></code> 의 규칙 기반 템플릿으로 자동 폴백.</p>
+</section>
+<section id="youtube">
+<h2>YouTube 업로드<a class="headerlink" href="#youtube" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># youtube_upload.py — 비공개 업로드</span>
+<span class="n">body</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;snippet&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">status</span><span class="o">.</span><span class="n">title</span><span class="p">,</span>
+        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="n">status</span><span class="o">.</span><span class="n">description</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">#Shorts&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;tags&quot;</span><span class="p">:</span> <span class="n">status</span><span class="o">.</span><span class="n">tags</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;Shorts&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;categoryId&quot;</span><span class="p">:</span> <span class="s2">&quot;25&quot;</span><span class="p">,</span>          <span class="c1"># News &amp; Politics</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;privacyStatus&quot;</span><span class="p">:</span> <span class="s2">&quot;private&quot;</span><span class="p">},</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>OAuth2 Refresh Token 방식. <code class="docutils literal notranslate"><span class="pre">youtube_auth_setup.py</span></code> 스크립트로 토큰 발급.</p>
+</section>
+<section id="id5">
+<h2>환경 변수<a class="headerlink" href="#id5" title="Link to this heading"></a></h2>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">DATABASE_URL</span><span class="o">=</span><span class="s">postgresql://...</span><span class="w">        </span><span class="c1"># 위협 DB (없으면 mock)</span>
+<span class="na">ANTHROPIC_API_KEY</span><span class="o">=</span><span class="s">sk-ant-...</span><span class="w">         </span><span class="c1"># Claude Haiku (없으면 템플릿 폴백)</span>
+<span class="na">DISCORD_WEBHOOK_URL</span><span class="o">=</span><span class="s">https://...</span><span class="w">      </span><span class="c1"># 검수 요청 (없으면 생략)</span>
+<span class="na">YOUTUBE_CLIENT_ID</span><span class="o">=</span><span class="s">...</span>
+<span class="na">YOUTUBE_CLIENT_SECRET</span><span class="o">=</span><span class="s">...</span>
+<span class="na">YOUTUBE_REFRESH_TOKEN</span><span class="o">=</span><span class="s">...</span><span class="w">            </span><span class="c1"># youtube_auth_setup.py로 발급</span>
+</pre></div>
+</div>
+</section>
+<section id="id6">
+<h2>실행 및 테스트<a class="headerlink" href="#id6" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>card-news-pipeline
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+python<span class="w"> </span>run.py
+
+<span class="c1"># 테스트 (93 passed, 2026-06-21 기준)</span>
+pytest<span class="w"> </span>tests/<span class="w"> </span>-v
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="organization.html" class="btn btn-neutral float-left" title="조직 관리 시스템" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api_reference.html" class="btn btn-neutral float-right" title="API 레퍼런스" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, SAYbrand Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
