@@ -1291,6 +1291,7 @@ document.getElementById('wl-save-btn').addEventListener('click', async () => {
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error((await res.json()).detail || '저장 실패');
+    localStorage.removeItem('wl_config');
     showKwToast('화이트 라벨 설정이 저장되었습니다.');
   } catch (e) { showKwToast(e.message, true); }
 });
