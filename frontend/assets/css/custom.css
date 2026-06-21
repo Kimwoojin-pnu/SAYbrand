@@ -238,6 +238,26 @@ body { font-family: 'NanumSquare', 'Noto Sans KR', sans-serif; }
 [data-theme="dark"] body[data-page="settings"] .tab-btn { color: rgba(230,237,243,.40) !important; }
 [data-theme="dark"] body[data-page="settings"] .tab-btn.text-brand-500 { color: #4fa3f5 !important; border-bottom-color: #4fa3f5 !important; }
 
+/* ── AI 어시스턴트 패널 다크모드 ────────────────────────────────────── */
+[data-theme="dark"] #assistant-panel {
+  background: #1c2128 !important;
+  border-color: rgba(255,255,255,0.09) !important;
+}
+[data-theme="dark"] #assistant-panel > div:first-child {
+  border-bottom-color: rgba(255,255,255,0.08) !important;
+}
+[data-theme="dark"] #assistant-panel > div:last-child {
+  border-top-color: rgba(255,255,255,0.08) !important;
+}
+[data-theme="dark"] #assistant-messages > div {
+  color: #ffffff !important;
+}
+[data-theme="dark"] #assistant-input {
+  background: #21262d !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  color: #e6edf3 !important;
+}
+
 /* ── Brand profile form controls ─────────────────────────────────────── */
 .bp-input, .bp-select, .bp-textarea {
   font-family: 'NanumSquare', 'Noto Sans KR', sans-serif;
