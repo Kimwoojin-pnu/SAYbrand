@@ -67,6 +67,7 @@ async def _org_out(org: Organization, user_id: int, db: AsyncSession) -> OrgOut:
         white_label_brand_name=org.white_label_brand_name,
         white_label_color=org.white_label_color,
         white_label_logo_url=org.white_label_logo_url,
+        slack_webhook_url=org.slack_webhook_url,
     )
 
 

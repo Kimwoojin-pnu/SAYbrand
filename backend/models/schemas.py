@@ -202,6 +202,7 @@ class OrgOut(BaseModel):
     white_label_brand_name: Optional[str] = None
     white_label_color: Optional[str] = None
     white_label_logo_url: Optional[str] = None
+    slack_webhook_url: Optional[str] = None
 
     model_config = {"from_attributes": True}
 

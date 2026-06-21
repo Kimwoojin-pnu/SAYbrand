@@ -51,6 +51,12 @@ async def send_slack_threat_alert(webhook_url: str, threat: dict) -> bool:
             "text": {"type": "mrkdwn", "text": f"*AI 분석:*\n{threat['ai_analysis'][:300]}"},
         })
 
+    if threat.get("ai_response_suggestion"):
+        blocks.append({
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f"*대처 방안:*\n{threat['ai_response_suggestion'][:300]}"},
+        })
+
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             resp = await client.post(webhook_url, json={"blocks": blocks})

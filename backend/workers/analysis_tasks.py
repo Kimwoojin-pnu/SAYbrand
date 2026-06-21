@@ -54,17 +54,21 @@ def analyze_unanalyzed_critical_threats():
 
 
 async def _scan_and_analyze_critical():
-    from sqlalchemy import select
+    from sqlalchemy import select, or_
     from backend.db.database import AsyncSessionLocal
-    from backend.models.orm import Threat
+    from backend.models.orm import Threat, Organization
     from backend.services.analyzers.l3_deep import analyze as l3_analyze
+    from backend.services.slack_notifier import send_slack_threat_alert
 
     async with AsyncSessionLocal() as db:
         result = await db.execute(
             select(Threat)
             .where(
-                Threat.severity == "critical",
-                Threat.ai_analysis.is_(None),
+                Threat.severity.in_(["critical", "high"]),
+                or_(
+                    Threat.ai_analysis.is_(None),
+                    Threat.ai_analysis.like("[Mock]%"),
+                ),
                 Threat.status == "active",
             )
             .limit(_UNANALYZED_BATCH_SIZE)
@@ -72,7 +76,7 @@ async def _scan_and_analyze_critical():
         threats = result.scalars().all()
 
         if not threats:
-            logger.info("analyze_unanalyzed_critical_threats: 미분석 critical 위협 없음")
+            logger.info("analyze_unanalyzed_critical_threats: 미분석 위협 없음")
             return
 
         logger.info("analyze_unanalyzed_critical_threats: %d건 L3 분석 시작", len(threats))
@@ -86,6 +90,11 @@ async def _scan_and_analyze_critical():
                     db=db,
                     source_account=threat.source_account,
                 )
+                ai_text = analysis.get("ai_analysis", "")
+                if ai_text.startswith("[Mock]"):
+                    logger.info("  threat_id=%d L3 여전히 Mock — 건너뜀", threat.id)
+                    continue
+
                 _apply_analysis(threat, analysis)
                 logger.info(
                     "  threat_id=%d L3 완료 — is_false_positive=%s severity=%s",
@@ -93,6 +102,22 @@ async def _scan_and_analyze_critical():
                     analysis.get("is_false_positive"),
                     threat.severity,
                 )
+
+                if not analysis.get("is_false_positive") and threat.org_id:
+                    org_result = await db.execute(
+                        select(Organization).where(Organization.id == threat.org_id)
+                    )
+                    org = org_result.scalar_one_or_none()
+                    if org and org.slack_webhook_url:
+                        await send_slack_threat_alert(org.slack_webhook_url, {
+                            "severity": threat.severity,
+                            "platform": threat.platform,
+                            "source_account": threat.source_account,
+                            "content_preview": threat.content_preview,
+                            "threat_type": threat.threat_type,
+                            "ai_analysis": analysis.get("ai_analysis"),
+                            "ai_response_suggestion": analysis.get("ai_response_suggestion"),
+                        })
             except Exception as e:
                 logger.warning("  threat_id=%d L3 분석 실패: %s", threat.id, e)
 

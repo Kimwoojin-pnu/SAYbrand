@@ -362,27 +362,30 @@ async def _send_notifications(threat: Threat, user_id: int, db: AsyncSession) ->
         logger.warning("웹훅 알림 실패: %s", e)
 
     try:
-        mem_result = await db.execute(
-            select(OrganizationMember).where(
-                OrganizationMember.user_id == user_id,
-                OrganizationMember.status == "active",
-            ).limit(1)
-        )
-        member = mem_result.scalar_one_or_none()
-        if member:
-            org_result = await db.execute(
-                select(Organization).where(Organization.id == member.org_id)
+        ai = threat.ai_analysis or ""
+        if ai and not ai.startswith("[Mock]"):
+            mem_result = await db.execute(
+                select(OrganizationMember).where(
+                    OrganizationMember.user_id == user_id,
+                    OrganizationMember.status == "active",
+                ).limit(1)
             )
-            org = org_result.scalar_one_or_none()
-            if org and org.slack_webhook_url:
-                await send_slack_threat_alert(org.slack_webhook_url, {
-                    "severity": threat.severity,
-                    "platform": threat.platform,
-                    "source_account": threat.source_account,
-                    "content_preview": threat.content_preview,
-                    "threat_type": threat.threat_type,
-                    "ai_analysis": threat.ai_analysis,
-                })
+            member = mem_result.scalar_one_or_none()
+            if member:
+                org_result = await db.execute(
+                    select(Organization).where(Organization.id == member.org_id)
+                )
+                org = org_result.scalar_one_or_none()
+                if org and org.slack_webhook_url:
+                    await send_slack_threat_alert(org.slack_webhook_url, {
+                        "severity": threat.severity,
+                        "platform": threat.platform,
+                        "source_account": threat.source_account,
+                        "content_preview": threat.content_preview,
+                        "threat_type": threat.threat_type,
+                        "ai_analysis": threat.ai_analysis,
+                        "ai_response_suggestion": threat.ai_response_suggestion,
+                    })
     except Exception as e:
         logger.warning("Slack 알림 실패: %s", e)
 
