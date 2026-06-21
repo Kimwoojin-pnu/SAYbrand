@@ -186,6 +186,10 @@ async def update_org_settings(
         raise HTTPException(status_code=404, detail="Organization not found")
     if "slack_webhook_url" in data:
         org.slack_webhook_url = data["slack_webhook_url"] or None
+    white_label_keys = {"white_label_enabled", "white_label_brand_name", "white_label_color", "white_label_logo_url"}
+    if white_label_keys & data.keys():
+        if get_effective_tier(org) not in ("pro", "enterprise"):
+            raise HTTPException(status_code=403, detail="화이트 라벨 기능은 Pro 이상 플랜에서만 사용할 수 있습니다.")
     if "white_label_enabled" in data:
         org.white_label_enabled = bool(data["white_label_enabled"])
     if "white_label_brand_name" in data:

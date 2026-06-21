@@ -372,6 +372,13 @@
           </label>
         </div>
         <div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px;">
+          <div id="wl-lock-msg" style="display:none;align-items:center;gap:10px;padding:10px 14px;border-radius:7px;background:rgba(234,88,12,0.07);border:1px solid rgba(234,88,12,0.2);">
+            <span style="font-size:18px;">🔒</span>
+            <div>
+              <p style="font-size:12px;font-weight:700;color:#ea580c;margin:0;">Pro 플랜 전용 기능입니다</p>
+              <p style="font-size:11px;color:rgba(12,20,40,.5);margin:2px 0 0;">화이트 라벨을 사용하려면 <a href="/billing" style="color:#1a6ef8;text-decoration:none;font-weight:700;">플랜을 업그레이드</a>하세요.</p>
+            </div>
+          </div>
           <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
             <div style="flex:1;min-width:180px;">
               <label style="font-size:11px;font-weight:700;color:rgba(12,20,40,.5);display:block;margin-bottom:4px;">브랜드명</label>
@@ -1242,6 +1249,15 @@ async function loadWhiteLabelSettings() {
     if (!orgs.length) return;
     const org = orgs[0];
     window._wlOrgId = org.id;
+    const isPro = ['pro', 'enterprise'].includes(org.subscription_tier) && org.subscription_status === 'active';
+    if (!isPro) {
+      document.getElementById('wl-lock-msg').style.display = 'flex';
+      ['wl-enabled','wl-brand-name','wl-color-picker','wl-color-text','wl-logo-url','wl-save-btn'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.disabled = true; el.style.opacity = '0.4'; el.style.cursor = 'not-allowed'; }
+      });
+      return;
+    }
     document.getElementById('wl-enabled').checked = !!org.white_label_enabled;
     if (org.white_label_brand_name) document.getElementById('wl-brand-name').value = org.white_label_brand_name;
     if (org.white_label_color) {
