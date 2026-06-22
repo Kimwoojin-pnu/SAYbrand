@@ -864,7 +864,7 @@ async def generate_pdf_report(
                 neg_rows.append([
                     PLAT_KO.get(ns.get("platform", ""), _esc(ns.get("platform", ""))),
                     _esc(ns.get("emotion") or "—"),
-                    _clean(ns.get("content") or "", 120),
+                    Paragraph(_clean(ns.get("content") or "", 150), ST_TBL_C),
                 ])
             neg_tbl = Table(neg_rows, colWidths=[26 * mm, 22 * mm, 132 * mm])
             neg_tbl.setStyle(_tbl_style(C_AMBER))
