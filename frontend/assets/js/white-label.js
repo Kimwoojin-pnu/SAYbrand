@@ -148,7 +148,8 @@
       '.btn-primary:hover { background:' + dark + ' !important; color:' + textDark + ' !important; }',
 
       // ── 네비게이션 활성 ──
-      '.db-nav-active { border-left-color:' + color + ' !important; color:' + color + ' !important; }',
+      '.db-nav-active { background:rgba(' + r + ',' + g + ',' + b + ',0.12) !important; border-left-color:' + color + ' !important; color:' + color + ' !important; }',
+      '.db-nav-active svg { color:' + color + ' !important; }',
 
       // ── CSS 클래스 기반 (custom.css) ──
       '.toast-notification.info { border-left-color:' + color + ' !important; }',

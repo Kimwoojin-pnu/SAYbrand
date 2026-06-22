@@ -405,6 +405,7 @@
           </div>
           <div style="display:flex;gap:8px;align-items:center;">
             <button id="wl-save-btn" style="padding:8px 18px;border-radius:6px;background:#1a6ef8;border:none;color:#fff;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;">저장</button>
+            <button id="wl-reset-btn" style="padding:8px 14px;border-radius:6px;border:1px solid rgba(0,0,0,.12);background:transparent;font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;color:rgba(12,20,40,.6);cursor:pointer;">원본으로 되돌리기</button>
           </div>
         </div>
       </div>
@@ -1260,7 +1261,7 @@ async function loadWhiteLabelSettings() {
     const isPro = ['pro', 'enterprise'].includes(org.subscription_tier) && org.subscription_status === 'active';
     if (!isPro) {
       document.getElementById('wl-lock-msg').style.display = 'flex';
-      ['wl-enabled','wl-brand-name','wl-color-picker','wl-color-text','wl-sidebar-picker','wl-sidebar-text','wl-logo-url','wl-save-btn'].forEach(id => {
+      ['wl-enabled','wl-brand-name','wl-color-picker','wl-color-text','wl-sidebar-picker','wl-sidebar-text','wl-logo-url','wl-save-btn','wl-reset-btn'].forEach(id => {
         const el = document.getElementById(id);
         if (el) { el.disabled = true; el.style.opacity = '0.4'; el.style.cursor = 'not-allowed'; }
       });
@@ -1293,6 +1294,13 @@ document.getElementById('wl-sidebar-picker').addEventListener('input', e => {
 document.getElementById('wl-sidebar-text').addEventListener('input', e => {
   if (/^#[0-9a-fA-F]{6}$/.test(e.target.value))
     document.getElementById('wl-sidebar-picker').value = e.target.value;
+});
+
+document.getElementById('wl-reset-btn').addEventListener('click', () => {
+  document.getElementById('wl-color-picker').value = '#1a6ef8';
+  document.getElementById('wl-color-text').value = '#1a6ef8';
+  document.getElementById('wl-sidebar-picker').value = '#0c1428';
+  document.getElementById('wl-sidebar-text').value = '#0c1428';
 });
 
 document.getElementById('wl-save-btn').addEventListener('click', async () => {

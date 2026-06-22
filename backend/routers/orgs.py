@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.config import TIER_LIMITS
 from backend.db.database import get_db
 from backend.middleware.auth import get_current_user
-from backend.models.orm import InviteCode, Organization, OrganizationMember, User
+from backend.models.orm import Alert, InviteCode, Organization, OrganizationMember, User
 from backend.models.schemas import JoinRequest, OrgCreate, OrgOut, RoleUpdate
 from backend.services.org_service import (
     can_add_member,
@@ -301,6 +301,15 @@ async def join_org(
     if not result["success"]:
         status_code = 402 if result.get("upgrade_required") else 400
         raise HTTPException(status_code, detail=result["error"])
+    if result.get("status") == "active":
+        u_row = (await db.execute(select(User).where(User.id == user["id"]))).scalar_one_or_none()
+        name = (u_row.name or u_row.email) if u_row else "새 멤버"
+        db.add(Alert(
+            alert_type="member_join", org_id=result.get("org_id"),
+            user_id=user["id"], severity="low",
+            message=f"{name}님이 조직에 합류했습니다.", channel="dashboard",
+        ))
+        await db.commit()
     return result
 
 
@@ -374,6 +383,13 @@ async def approve_member(
                 raise HTTPException(402, detail=can_add["message"])
         member.status = "active"
         member.joined_at = datetime.utcnow()
+        u_row = (await db.execute(select(User).where(User.id == target_user_id))).scalar_one_or_none()
+        name = (u_row.name or u_row.email) if u_row else f"멤버 #{target_user_id}"
+        db.add(Alert(
+            alert_type="member_join", org_id=org_id, user_id=target_user_id,
+            severity="low",
+            message=f"{name}님의 가입이 승인되었습니다.", channel="dashboard",
+        ))
     else:
         await db.delete(member)
 
@@ -436,7 +452,15 @@ async def remove_member(
     if member.role == "owner":
         raise HTTPException(400, detail="Owner는 강퇴할 수 없습니다.")
 
+    u_row = (await db.execute(select(User).where(User.id == target_user_id))).scalar_one_or_none()
+    name = (u_row.name or u_row.email) if u_row else f"멤버 #{target_user_id}"
+    role_str = member.role
     await db.delete(member)
+    db.add(Alert(
+        alert_type="member_leave", org_id=org_id, user_id=target_user_id,
+        severity="low",
+        message=f"{name}님({role_str})이 조직에서 제거되었습니다.", channel="dashboard",
+    ))
     await db.commit()
     return {"success": True}
 
@@ -507,6 +531,13 @@ async def leave_org(
             detail="Owner는 조직을 탈퇴할 수 없습니다. 조직을 삭제하거나 Owner를 이전하세요.",
         )
 
+    u_row = (await db.execute(select(User).where(User.id == user["id"]))).scalar_one_or_none()
+    name = (u_row.name or u_row.email) if u_row else "멤버"
     await db.delete(member)
+    db.add(Alert(
+        alert_type="member_leave", org_id=org_id, user_id=user["id"],
+        severity="low",
+        message=f"{name}님이 조직에서 탈퇴했습니다.", channel="dashboard",
+    ))
     await db.commit()
     return {"success": True}

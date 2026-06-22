@@ -36,7 +36,9 @@ class ThreatListResponse(BaseModel):
 
 class AlertResponse(BaseModel):
     id: int
-    threat_id: int
+    threat_id: Optional[int] = None
+    org_id: Optional[int] = None
+    alert_type: str = "threat"
     severity: str
     message: str
     channel: str

@@ -58,7 +58,10 @@ class Alert(Base):
     __tablename__ = "alerts"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    threat_id: Mapped[int] = mapped_column(Integer, ForeignKey("threats.id"))
+    threat_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("threats.id"), nullable=True)
+    org_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("organizations.id"), nullable=True)
+    user_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("users.id"), nullable=True)
+    alert_type: Mapped[str] = mapped_column(String(50), default="threat")
     severity: Mapped[str] = mapped_column(String(20))
     message: Mapped[str] = mapped_column(Text)
     channel: Mapped[str] = mapped_column(String(50))

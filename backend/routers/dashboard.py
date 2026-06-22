@@ -72,16 +72,19 @@ def _mock_threats_list(page: int, page_size: int) -> ThreatListResponse:
 def _mock_alerts() -> list[dict]:
     now = datetime.now(timezone.utc)
     msgs = [
-        ("critical", "사칭 계정 탐지: @saybrand_official_kr (인스타그램)", 8),
-        ("critical", "CEO 사칭 계정 확산 경보 — 봇 확률 83%", 22),
-        ("high", "허위 원료 정보 유튜브 영상 조회수 48만 돌파", 45),
-        ("high", "고객 데이터 유출 허위 주장 스토리 8,200회 공유", 90),
-        ("high", "CFO 관련 루머 X(트위터) 빠른 확산 감지", 130),
+        ("critical", "사칭 계정 탐지: @saybrand_official_kr (인스타그램)", 8, "threat"),
+        ("critical", "CEO 사칭 계정 확산 경보 — 봇 확률 83%", 22, "threat"),
+        ("high", "허위 원료 정보 유튜브 영상 조회수 48만 돌파", 45, "threat"),
+        ("medium", "자동 스캔 완료 — critical 1건, high 2건, medium 3건 탐지", 90, "scan_result"),
+        ("low", "김철수님이 조직에 합류했습니다.", 130, "member_join"),
     ]
     return [
-        {"id": i + 1, "threat_id": 9001 + i, "severity": sev, "message": msg,
+        {"id": i + 1,
+         "threat_id": (9001 + i) if alert_type == "threat" else None,
+         "org_id": None, "alert_type": alert_type,
+         "severity": sev, "message": msg,
          "channel": "dashboard", "sent_at": now - timedelta(minutes=mins)}
-        for i, (sev, msg, mins) in enumerate(msgs)
+        for i, (sev, msg, mins, alert_type) in enumerate(msgs)
     ]
 
 
@@ -234,11 +237,18 @@ async def get_threats(
 async def get_alerts(
     request: Request,
     limit: int = Query(10, ge=1, le=50),
+    org: Organization | None = Depends(optional_current_org),
     db: AsyncSession = Depends(get_db),
 ):
-    if not request.session.get("user_id"):
+    user_id = request.session.get("user_id")
+    if not user_id:
         return _mock_alerts()
-    result = await db.execute(select(Alert).order_by(Alert.sent_at.desc()).limit(limit))
+    q = select(Alert).order_by(Alert.sent_at.desc())
+    if org is not None:
+        q = q.where(Alert.org_id == org.id)
+    else:
+        q = q.where(Alert.user_id == user_id)
+    result = await db.execute(q.limit(limit))
     return result.scalars().all()
 
 

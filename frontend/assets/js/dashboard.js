@@ -107,15 +107,20 @@ function renderStats(stats) {
 function renderAlerts(alerts) {
   const el = document.getElementById("alerts-feed");
   if (!alerts.length) { el.innerHTML = `<p style="color:rgba(12,20,40,.35);font-size:12px;text-align:center;padding:20px;">알림 없음</p>`; return; }
-  const dots = { critical: "#E24B4A", high: "#BA7517", medium: "#185FA5", low: "#1D9E75" };
-  el.innerHTML = alerts.map(a => `
+  const sevColors = { critical: "#E24B4A", high: "#BA7517", medium: "#185FA5", low: "#1D9E75" };
+  const typeIcons = { scan_result: "📊 ", member_join: "👤 ", member_leave: "👋 ", threat: "" };
+  el.innerHTML = alerts.map(a => {
+    const dot = sevColors[a.severity] || "#94a3b8";
+    const icon = typeIcons[a.alert_type] ?? "";
+    return `
     <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--db-border);">
-      <span style="margin-top:4px;flex-shrink:0;width:6px;height:6px;border-radius:50%;background:${dots[a.severity] || '#94a3b8'};"></span>
+      <span style="margin-top:4px;flex-shrink:0;width:6px;height:6px;border-radius:50%;background:${dot};"></span>
       <div style="flex:1;min-width:0;">
-        <p style="font-size:12px;color:var(--db-text-1);line-height:1.5;">${a.message}</p>
+        <p style="font-size:12px;color:var(--db-text-1);line-height:1.5;">${icon}${a.message}</p>
         <p style="font-size:10px;color:var(--db-text-3);margin-top:2px;font-family:'JetBrains Mono',monospace;">${timeAgo(a.sent_at)}</p>
       </div>
-    </div>`).join("");
+    </div>`;
+  }).join("");
 }
 
 // ── Chart dark-mode helpers ───────────────────────────────────────────────────

@@ -37,6 +37,7 @@ async def _collect_all_profiles_async():
                 raw_posts = await collect_for_profile(profile)
 
                 new_threats = 0
+                severity_counts: dict[str, int] = {"critical": 0, "high": 0, "medium": 0, "low": 0}
                 critical_ids: list[int] = []
                 for post in raw_posts:
                     threat = await run_pipeline(
@@ -48,10 +49,25 @@ async def _collect_all_profiles_async():
                     )
                     if threat:
                         new_threats += 1
+                        sev = threat.severity or "low"
+                        if sev in severity_counts:
+                            severity_counts[sev] += 1
                         if threat.severity == "critical":
                             critical_ids.append(threat.id)
 
                 if new_threats:
+                    await db.commit()
+                    from backend.models.orm import Alert
+                    parts = [f"{k} {v}건" for k, v in severity_counts.items() if v > 0]
+                    top_sev = next((k for k in ["critical", "high", "medium", "low"] if severity_counts[k] > 0), "low")
+                    db.add(Alert(
+                        alert_type="scan_result",
+                        org_id=profile_orm.org_id,
+                        user_id=profile_orm.user_id,
+                        severity=top_sev,
+                        message=f"자동 스캔 완료 — {', '.join(parts)} 탐지",
+                        channel="dashboard",
+                    ))
                     await db.commit()
                     for tid in critical_ids:
                         from backend.workers.alert_tasks import send_immediate_alert
