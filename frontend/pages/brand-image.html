@@ -144,21 +144,35 @@
 <script type="module">
 import { api } from "/assets/js/api.js";
 
-const PLATFORM_DATA = [
-  { name:'Instagram', abbr:'IG', color:'#e1306c', neg:68 },
-  { name:'X (트위터)', abbr:'X',  color:'#334155', neg:55 },
-  { name:'YouTube',   abbr:'YT', color:'#ff0000', neg:42 },
-  { name:'TikTok',    abbr:'TT', color:'#69c9d0', neg:38 },
-  { name:'Naver',     abbr:'NV', color:'#03c75a', neg:29 },
-];
+const PLATFORM_META = {
+  instagram: { name:'Instagram',   abbr:'IG', color:'#e1306c' },
+  x:         { name:'X (트위터)', abbr:'X',  color:'#334155' },
+  youtube:   { name:'YouTube',     abbr:'YT', color:'#ff0000' },
+  tiktok:    { name:'TikTok',      abbr:'TT', color:'#69c9d0' },
+  naver:     { name:'Naver',       abbr:'NV', color:'#03c75a' },
+};
 
-function isDark() { return document.documentElement.getAttribute('data-theme')==='dark'; }
+function renderHealth(stats, risk, platformStats, sentimentTrend) {
+  // ── 감성 비율: sentimentTrend 7일 합산 우선, 없으면 severity 추정 ──
+  const totalNeg = sentimentTrend.negative.reduce((a,b)=>a+b,0);
+  const totalPos = sentimentTrend.positive.reduce((a,b)=>a+b,0);
+  const totalNeu = sentimentTrend.neutral.reduce((a,b)=>a+b,0);
+  const sentTotal = totalNeg + totalPos + totalNeu;
 
-function renderHealth(stats, risk) {
-  const total = stats.total || 1;
-  const negPct = Math.round(((stats.critical*1.0 + stats.high*0.7 + stats.medium*0.3) / total) * 100);
-  const posPct = Math.max(0, 100 - negPct - 20);
-  const neutPct = Math.max(0, 100 - posPct - negPct);
+  let negPct, posPct, neutPct;
+  if (sentTotal > 0) {
+    negPct  = Math.round(totalNeg / sentTotal * 100);
+    posPct  = Math.round(totalPos / sentTotal * 100);
+    neutPct = 100 - negPct - posPct;
+  } else {
+    // L2 분석 데이터 없을 때 severity로 추정
+    const total = stats.total || 1;
+    negPct  = Math.min(100, Math.round(((stats.critical + stats.high*0.7 + stats.medium*0.3) / total) * 100));
+    posPct  = Math.max(0, Math.round((stats.low || 0) / total * 100));
+    neutPct = Math.max(0, 100 - negPct - posPct);
+  }
+
+  // ── 건강도 지수 ──
   const healthScore = Math.max(0, Math.round(100 - risk.overall));
   const scoreEl = document.getElementById('health-score');
   scoreEl.textContent = healthScore;
@@ -168,11 +182,10 @@ function renderHealth(stats, risk) {
   labelEl.style.color = color;
   labelEl.textContent = healthScore >= 70 ? '브랜드 건강' : healthScore >= 40 ? '주의 필요' : '위기 상황';
   document.getElementById('metric-positive').textContent = posPct + '%';
-  document.getElementById('metric-neutral').textContent = neutPct + '%';
+  document.getElementById('metric-neutral').textContent  = neutPct + '%';
   document.getElementById('metric-negative').textContent = negPct + '%';
 
-  // Sentiment donut
-  const dark = isDark();
+  // ── 감성 도넛 차트 ──
   const ctx = document.getElementById('sentimentChart');
   if (ctx && window.Chart) {
     new Chart(ctx, {
@@ -185,7 +198,7 @@ function renderHealth(stats, risk) {
         responsive:true, maintainAspectRatio:false, cutout:'72%',
         plugins: {
           legend: { display:false },
-          tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw}%` } }
+          tooltip: { callbacks: { label: c => ` ${c.label}: ${c.raw}%` } }
         }
       }
     });
@@ -194,24 +207,32 @@ function renderHealth(stats, risk) {
     legend.innerHTML = items.map(i=>`<div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;"><div style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:50%;background:${i.c};flex-shrink:0;"></span><span style="color:rgba(12,20,40,.65);">${i.label}</span></div><span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${i.c};">${i.val}%</span></div>`).join('');
   }
 
-  // Platform bars
+  // ── 플랫폼별 위협 비율 (실제 데이터) ──
   const pb = document.getElementById('platform-bars');
-  pb.innerHTML = PLATFORM_DATA.map(p=>`
-    <div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-        <div style="display:flex;align-items:center;gap:7px;">
-          <span style="width:20px;height:20px;border-radius:3px;background:${p.color}18;color:${p.color};font-size:8px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${p.abbr}</span>
-          <span style="font-size:12px;color:rgba(12,20,40,.70);">${p.name}</span>
+  const active = platformStats.filter(p => p.count > 0);
+  if (!active.length) {
+    pb.innerHTML = '<p style="font-size:12px;color:rgba(12,20,40,.35);text-align:center;padding:20px 0;">스캔 데이터가 없습니다</p>';
+  } else {
+    const maxPct = Math.max(...active.map(p=>p.pct), 1);
+    pb.innerHTML = active.map(p => {
+      const m = PLATFORM_META[p.platform] || { name:p.platform, abbr:p.platform.slice(0,2).toUpperCase(), color:'#64748b' };
+      return `<div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <div style="display:flex;align-items:center;gap:7px;">
+            <span style="width:20px;height:20px;border-radius:3px;background:${m.color}18;color:${m.color};font-size:8px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${m.abbr}</span>
+            <span style="font-size:12px;color:rgba(12,20,40,.70);">${m.name}</span>
+          </div>
+          <span style="font-size:11px;font-family:'JetBrains Mono',monospace;font-weight:700;color:#E24B4A;">${p.pct}%<span style="font-weight:400;color:rgba(12,20,40,.35);margin-left:4px;">(${p.count}건)</span></span>
         </div>
-        <span style="font-size:11px;font-family:'JetBrains Mono',monospace;font-weight:700;color:#E24B4A;">${p.neg}%</span>
-      </div>
-      <div style="height:5px;background:rgba(0,0,0,.06);border-radius:3px;overflow:hidden;">
-        <div style="height:100%;width:0%;border-radius:3px;background:linear-gradient(90deg,${p.color},#E24B4A);transition:width 1s ease;" data-w="${p.neg}"></div>
-      </div>
-    </div>`).join('');
-  requestAnimationFrame(()=>pb.querySelectorAll('[data-w]').forEach(b=>{b.style.width=b.getAttribute('data-w')+'%';}));
+        <div style="height:5px;background:rgba(0,0,0,.06);border-radius:3px;overflow:hidden;">
+          <div style="height:100%;width:0%;border-radius:3px;background:linear-gradient(90deg,${m.color},#E24B4A);transition:width 1s ease;" data-w="${Math.round(p.pct / maxPct * 100)}"></div>
+        </div>
+      </div>`;
+    }).join('');
+    requestAnimationFrame(()=>pb.querySelectorAll('[data-w]').forEach(b=>{b.style.width=b.getAttribute('data-w')+'%';}));
+  }
 
-  // Modules
+  // ── 모듈별 점수 ──
   const ma = risk.module_a, mb = risk.module_b, mc = risk.module_c;
   document.getElementById('module-a-score').textContent = Math.round(ma.score);
   document.getElementById('module-a-count').textContent = ma.threat_count + '건 탐지';
@@ -221,10 +242,12 @@ function renderHealth(stats, risk) {
   document.getElementById('module-c-count').textContent = mc.threat_count + '건 탐지';
 }
 
-document.addEventListener('DOMContentLoaded', async ()=>{
+document.addEventListener('DOMContentLoaded', async () => {
   try {
-    const [stats, risk] = await Promise.all([api.stats(), api.riskScore()]);
-    renderHealth(stats, risk);
+    const [stats, risk, platformStats, sentimentTrend] = await Promise.all([
+      api.stats(), api.riskScore(), api.platformStats(), api.sentimentTrend()
+    ]);
+    renderHealth(stats, risk, platformStats, sentimentTrend);
   } catch(e) { console.error(e); }
 });
 </script>
