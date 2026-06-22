@@ -66,6 +66,7 @@ async def _org_out(org: Organization, user_id: int, db: AsyncSession) -> OrgOut:
         white_label_enabled=org.white_label_enabled or False,
         white_label_brand_name=org.white_label_brand_name,
         white_label_color=org.white_label_color,
+        white_label_sidebar_color=org.white_label_sidebar_color,
         white_label_logo_url=org.white_label_logo_url,
         slack_webhook_url=org.slack_webhook_url,
     )
@@ -187,7 +188,7 @@ async def update_org_settings(
         raise HTTPException(status_code=404, detail="Organization not found")
     if "slack_webhook_url" in data:
         org.slack_webhook_url = data["slack_webhook_url"] or None
-    white_label_keys = {"white_label_enabled", "white_label_brand_name", "white_label_color", "white_label_logo_url"}
+    white_label_keys = {"white_label_enabled", "white_label_brand_name", "white_label_color", "white_label_sidebar_color", "white_label_logo_url"}
     if white_label_keys & data.keys():
         if get_effective_tier(org) not in ("pro", "enterprise"):
             raise HTTPException(status_code=403, detail="화이트 라벨 기능은 Pro 이상 플랜에서만 사용할 수 있습니다.")
@@ -197,6 +198,8 @@ async def update_org_settings(
         org.white_label_brand_name = data["white_label_brand_name"] or None
     if "white_label_color" in data:
         org.white_label_color = data["white_label_color"] or None
+    if "white_label_sidebar_color" in data:
+        org.white_label_sidebar_color = data["white_label_sidebar_color"] or None
     if "white_label_logo_url" in data:
         org.white_label_logo_url = data["white_label_logo_url"] or None
     await db.commit()

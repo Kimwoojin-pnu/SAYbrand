@@ -168,6 +168,7 @@ class Organization(Base):
     white_label_logo_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     white_label_brand_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
     white_label_color: Mapped[str | None] = mapped_column(String(7), nullable=True)
+    white_label_sidebar_color: Mapped[str | None] = mapped_column(String(7), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 

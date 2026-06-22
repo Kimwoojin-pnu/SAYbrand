@@ -49,8 +49,33 @@
     return L > 0.179 ? '#0c1428' : '#ffffff';
   }
 
+  // ── 사이드바 CSS 생성 ────────────────────────────────────────────────
+  function buildSidebarCss(sidebarColor) {
+    var sText = contrastColor(sidebarColor);
+    var isDark = sText === '#ffffff';
+    var sDark = shiftL(sidebarColor, -5);
+    var lines = [
+      'aside { background: ' + sidebarColor + ' !important; }',
+      'aside #org-menu { background: ' + sDark + ' !important; }',
+    ];
+    if (!isDark) {
+      // 밝은 배경이면 사이드바 내 흰색 텍스트를 어두운 색으로 교체
+      lines.push(
+        'aside [style*="color:#fff"],aside [style*="color:#ffffff"] { color: #0c1428 !important; }',
+        'aside [style*="rgba(255,255,255,0.4)"],aside [style*="rgba(255,255,255,.4)"] { color: rgba(12,20,40,0.5) !important; }',
+        'aside [style*="rgba(255,255,255,0.35)"] { color: rgba(12,20,40,0.45) !important; }',
+        'aside [style*="rgba(255,255,255,0.2)"] { color: rgba(12,20,40,0.3) !important; }',
+        'aside [style*="rgba(255,255,255,0.6)"] { color: rgba(12,20,40,0.7) !important; }',
+        'aside .db-nav-item { color: rgba(12,20,40,0.65) !important; }',
+        'aside .db-nav-active { color: #0c1428 !important; border-left-color: #0c1428 !important; }',
+        'aside [style*="background:rgba(255,255,255,0.06)"],aside [style*="background: rgba(255,255,255,0.06)"] { background: rgba(12,20,40,0.06) !important; }'
+      );
+    }
+    return lines.join('\n');
+  }
+
   // ── CSS 생성 ──────────────────────────────────────────────────────────
-  function buildCss(color) {
+  function buildCss(color, sidebarColor) {
     var rgb   = hexToRgb(color);
     var r = rgb[0], g = rgb[1], b = rgb[2];
     var dark    = shiftL(color, -10);
@@ -135,6 +160,7 @@
       'input:focus, select:focus { border-color:' + color + ' !important; }',
       '.step-dot.active { background:' + color + ' !important; }',
     ];
+    if (sidebarColor) lines.push(buildSidebarCss(sidebarColor));
     return lines.join('\n');
   }
 
@@ -142,12 +168,14 @@
   function applyConfig(cfg) {
     if (!cfg) return;
 
-    if (cfg.color) {
+    if (cfg.color || cfg.sidebar_color) {
       // CSS 주입
       var el = document.getElementById('wl-override');
       if (!el) { el = document.createElement('style'); el.id = 'wl-override'; document.head.appendChild(el); }
-      el.textContent = buildCss(cfg.color);
+      el.textContent = cfg.color ? buildCss(cfg.color, cfg.sidebar_color) : buildSidebarCss(cfg.sidebar_color);
+    }
 
+    if (cfg.color) {
       var textClr = contrastColor(cfg.color);
       var dark    = shiftL(cfg.color, -10);
       var textDark = contrastColor(dark);
@@ -219,7 +247,7 @@
     if (!orgs.length) { localStorage.removeItem(CACHE_KEY); return; }
     var org = orgs[0];
     if (!org.white_label_enabled) { localStorage.removeItem(CACHE_KEY); return; }
-    var data = { brand_name: org.white_label_brand_name, color: org.white_label_color, logo_url: org.white_label_logo_url };
+    var data = { brand_name: org.white_label_brand_name, color: org.white_label_color, sidebar_color: org.white_label_sidebar_color, logo_url: org.white_label_logo_url };
     localStorage.setItem(CACHE_KEY, JSON.stringify({ data: data, ts: Date.now() }));
     applyConfig(data);
   }).catch(function () {});
