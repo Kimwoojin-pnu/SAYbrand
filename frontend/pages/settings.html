@@ -963,6 +963,7 @@ async function loadTeam() {
     currentOrgId = org.id;
     myRole = org.my_role;
     window._pageRole = myRole;
+    loadKeywords();
 
     document.getElementById('team-org-name').textContent = org.name;
     const limit = org.member_limit === -1 ? '∞' : org.member_limit;
