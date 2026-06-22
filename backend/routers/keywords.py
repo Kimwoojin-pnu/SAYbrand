@@ -57,11 +57,20 @@ async def create_keyword(
     if not kw_text:
         raise HTTPException(status_code=400, detail="키워드를 입력해 주세요")
 
-    existing = await db.execute(
+    existing_result = await db.execute(
         select(Keyword).where(Keyword.user_id == user["id"], Keyword.keyword == kw_text)
     )
-    if existing.scalar_one_or_none():
-        raise HTTPException(status_code=409, detail="이미 등록된 키워드입니다")
+    existing_kw = existing_result.scalar_one_or_none()
+    if existing_kw:
+        if existing_kw.active:
+            raise HTTPException(status_code=409, detail="이미 등록된 키워드입니다")
+        # 소프트 삭제된 키워드 복원
+        existing_kw.active = True
+        existing_kw.platforms = body.platforms
+        existing_kw.org_id = org.id if org else None
+        await db.commit()
+        await db.refresh(existing_kw)
+        return existing_kw
 
     if org is not None:
         tier = get_effective_tier(org)

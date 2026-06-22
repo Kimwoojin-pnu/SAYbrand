@@ -90,16 +90,21 @@ async def _sync_keywords_from_profile(
     if not loaded:
         return
     all_platforms = ["instagram", "x", "youtube", "tiktok", "naver"]
-    existing_result = await db.execute(
-        select(Keyword.keyword).where(Keyword.user_id == user_id)
+    all_kw_result = await db.execute(
+        select(Keyword).where(Keyword.user_id == user_id)
     )
-    existing = {r[0] for r in existing_result.all()}
-    for kw in loaded.search_keywords:
-        if kw and kw not in existing:
+    existing_map: dict[str, Keyword] = {kw.keyword: kw for kw in all_kw_result.scalars().all()}
+    for kw_text in loaded.search_keywords:
+        if not kw_text:
+            continue
+        if kw_text in existing_map:
+            if not existing_map[kw_text].active:
+                existing_map[kw_text].active = True
+        else:
             db.add(Keyword(
                 user_id=user_id,
                 org_id=org_id,
-                keyword=kw,
+                keyword=kw_text,
                 platforms=all_platforms,
                 active=True,
             ))
@@ -229,12 +234,6 @@ async def delete_profile(
         await db.delete(acct)
     for exec_ in (await db.execute(select(CustomerExecutive).where(CustomerExecutive.profile_id == profile_id))).scalars().all():
         await db.delete(exec_)
-    # profile_id 기반 키워드 삭제
-    kw_result = await db.execute(
-        select(Keyword).where(Keyword.profile_id == profile_id)
-    )
-    for kw in kw_result.scalars().all():
-        await db.delete(kw)
     await db.delete(profile)
     await db.commit()
     profile_loader.invalidate(profile_id)

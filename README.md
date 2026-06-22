@@ -2,6 +2,8 @@
 
 브랜드 리스크를 실시간으로 감지·분석하는 AI 대시보드.
 
+**서비스 주소**: https://saybrand-kimwoojin-pnus-projects.vercel.app/
+
 ## 로컬 실행
 
 ```bash
