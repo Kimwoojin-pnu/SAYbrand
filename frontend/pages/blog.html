@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>블로그 | SAYbrand</title>
+  <meta name="description" content="브랜드 보호, SNS 위협 트렌드, AI 분석 인사이트를 공유합니다." />
+  <link rel="stylesheet" href="/assets/css/landing.css" />
+  <script>(function(){var t=localStorage.getItem('ld-theme')||'dark';document.documentElement.setAttribute('data-theme',t);}());</script>
+  <style>
+    .bl-hero{background:var(--ld-dark,#0c1428);padding:100px 0 72px;}
+    .bl-hero-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:12px;}
+    .bl-hero h1{color:#fff;font-size:2.4rem;font-weight:800;margin:0 0 14px;}
+    .bl-hero p{color:rgba(255,255,255,.5);font-size:.95rem;max-width:480px;line-height:1.7;}
+    .bl-section{padding:72px 0 100px;}
+    .bl-featured{display:grid;grid-template-columns:1.4fr 1fr;gap:32px;margin-bottom:56px;align-items:start;}
+    .bl-featured-img{width:100%;aspect-ratio:16/9;background:linear-gradient(135deg,#1d5fa8 0%,#0c1428 100%);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:48px;}
+    .bl-featured-tag{display:inline-block;padding:3px 10px;background:#e8f0fb;color:#1d5fa8;border-radius:20px;font-size:11px;font-weight:700;margin-bottom:10px;}
+    .bl-featured-title{font-size:1.5rem;font-weight:800;color:var(--ld-text,#0c1428);margin-bottom:12px;line-height:1.3;}
+    .bl-featured-desc{font-size:.9rem;line-height:1.7;color:var(--ld-text-2,rgba(12,20,40,.6));margin-bottom:16px;}
+    .bl-meta{font-size:.82rem;color:var(--ld-text-2);display:flex;gap:12px;align-items:center;}
+    .bl-meta-dot{width:3px;height:3px;border-radius:50%;background:var(--ld-text-2);}
+    .bl-read-more{color:#1d5fa8;font-size:.88rem;font-weight:600;text-decoration:none;}
+    .bl-read-more:hover{text-decoration:underline;}
+    .bl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
+    .bl-card{border:1px solid var(--ld-border,rgba(0,0,0,.08));border-radius:12px;overflow:hidden;}
+    .bl-card-img{width:100%;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;font-size:36px;}
+    .bl-card-body{padding:20px;}
+    .bl-card-tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;margin-bottom:8px;}
+    .bl-card-title{font-size:.95rem;font-weight:700;color:var(--ld-text,#0c1428);margin-bottom:8px;line-height:1.4;}
+    .bl-card-desc{font-size:.83rem;line-height:1.65;color:var(--ld-text-2,rgba(12,20,40,.6));margin-bottom:12px;}
+    .bl-newsletter{background:var(--ld-surface-50,#f8fafc);border:1px solid var(--ld-border,rgba(0,0,0,.08));border-radius:12px;padding:36px;text-align:center;margin-top:48px;}
+    .bl-newsletter h3{font-size:1.2rem;font-weight:800;margin-bottom:8px;color:var(--ld-text,#0c1428);}
+    .bl-newsletter p{font-size:.88rem;color:var(--ld-text-2);margin-bottom:20px;}
+    .bl-newsletter-form{display:flex;gap:8px;max-width:400px;margin:0 auto;}
+    .bl-newsletter-form input{flex:1;padding:10px 14px;border:1px solid var(--ld-border,rgba(0,0,0,.12));border-radius:6px;font-size:.88rem;font-family:inherit;background:var(--ld-surface,#fff);color:var(--ld-text,#0c1428);}
+    .bl-newsletter-form button{padding:10px 20px;background:#1d5fa8;color:#fff;border:none;border-radius:6px;font-size:.88rem;font-weight:600;cursor:pointer;white-space:nowrap;}
+    .bl-newsletter-form button:hover{background:#1558d4;}
+    [data-theme=dark] .bl-featured-title,.bl-card-title,.bl-newsletter h3{color:rgba(255,255,255,.9);}
+    [data-theme=dark] .bl-featured-desc,.bl-card-desc,.bl-newsletter p{color:rgba(255,255,255,.45);}
+    [data-theme=dark] .bl-card,.bl-newsletter{border-color:rgba(255,255,255,.07);background:rgba(255,255,255,.03);}
+    [data-theme=dark] .bl-newsletter-form input{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1);color:rgba(255,255,255,.8);}
+    [data-theme=dark] .bl-meta{color:rgba(255,255,255,.35);}
+    @media(max-width:768px){.bl-featured{grid-template-columns:1fr;}.bl-grid{grid-template-columns:1fr;}}
+  </style>
+</head>
+<body>
+
+<nav class="ld-nav" id="ld-nav">
+  <div class="ld-container">
+    <div class="ld-nav-inner">
+      <a href="/" class="ld-nav-logo">
+        <img src="/saybrand-logo2.png" alt="" class="ld-nav-logo-img" onerror="this.style.display='none'" />
+        <span class="ld-nav-logo-text">SAYbrand</span>
+      </a>
+      <ul class="ld-nav-links">
+        <li><a href="/#features">제품</a></li>
+        <li><a href="/#pipeline">솔루션</a></li>
+        <li><a href="/#pricing">요금</a></li>
+        <li><a href="/support">고객센터</a></li>
+      </ul>
+      <div class="ld-nav-actions">
+        <button class="ld-theme-toggle" id="theme-toggle" aria-label="다크모드 전환">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+        <a href="/login" class="ld-btn ld-btn--outlined ld-btn--sm">로그인</a>
+        <a href="/login" class="ld-btn ld-btn--dark ld-btn--sm">무료로 시작</a>
+      </div>
+      <button class="ld-nav-hamburger" id="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="ld-mobile-menu" id="mobile-menu">
+  <a href="/#features">제품</a>
+  <a href="/#pipeline">솔루션</a>
+  <a href="/#pricing">요금</a>
+  <a href="/support">고객센터</a>
+  <a href="/login" style="color:#1d5fa8;font-weight:700;border:none;">로그인 / 무료로 시작 →</a>
+</div>
+
+<section class="bl-hero">
+  <div class="ld-container">
+    <p class="bl-hero-label">Blog</p>
+    <h1>인사이트 &amp; 업데이트</h1>
+    <p>브랜드 보호 트렌드, AI 분석 기술, SAYbrand 제품 업데이트를 공유합니다.</p>
+  </div>
+</section>
+
+<main class="bl-section">
+  <div class="ld-container">
+
+    <!-- Featured Post -->
+    <div class="bl-featured">
+      <div class="bl-featured-img">🛡️</div>
+      <div>
+        <span class="bl-featured-tag">특집</span>
+        <h2 class="bl-featured-title">2026년 SNS 브랜드 위협 트렌드 — AI 사칭 계정이 3배 증가했다</h2>
+        <p class="bl-featured-desc">생성 AI의 확산으로 사칭 계정의 수준이 급격히 높아졌습니다. 프로필 사진부터 말투까지 원본과 구분하기 어려운 계정들이 늘어나는 지금, 브랜드는 어떻게 대응해야 할까요?</p>
+        <div class="bl-meta">
+          <span>SAYbrand 팀</span>
+          <span class="bl-meta-dot"></span>
+          <span>2026년 6월 15일</span>
+          <span class="bl-meta-dot"></span>
+          <span>8분 읽기</span>
+        </div>
+        <div style="margin-top:14px;"><a href="#" class="bl-read-more">전체 읽기 →</a></div>
+      </div>
+    </div>
+
+    <!-- Post Grid -->
+    <div class="bl-grid">
+      <div class="bl-card">
+        <div class="bl-card-img" style="background:linear-gradient(135deg,#dc2626 0%,#7f1d1d 100%);">⚡</div>
+        <div class="bl-card-body">
+          <span class="bl-card-tag" style="background:#fee2e2;color:#dc2626;">위협 인텔리전스</span>
+          <h3 class="bl-card-title">가짜뉴스의 확산 속도, 이제 진짜뉴스보다 6배 빠르다</h3>
+          <p class="bl-card-desc">MIT 연구팀의 분석에 따르면 허위 정보는 진짜 정보보다 훨씬 빠르게 확산됩니다. 브랜드에 미치는 영향과 조기 탐지 전략을 알아봅니다.</p>
+          <div class="bl-meta">
+            <span>2026년 5월 28일</span>
+            <span class="bl-meta-dot"></span>
+            <span>6분 읽기</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bl-card">
+        <div class="bl-card-img" style="background:linear-gradient(135deg,#1d5fa8 0%,#0c1428 100%);">🤖</div>
+        <div class="bl-card-body">
+          <span class="bl-card-tag" style="background:#e8f0fb;color:#1d5fa8;">기술</span>
+          <h3 class="bl-card-title">레이어드 AI로 비용 80% 줄인 브랜드 모니터링 아키텍처</h3>
+          <p class="bl-card-desc">모든 콘텐츠를 GPT-4로 분석하면 비용이 폭발합니다. SAYbrand가 L1→L2→L3 파이프라인으로 어떻게 비용을 제어하는지 설명합니다.</p>
+          <div class="bl-meta">
+            <span>2026년 5월 10일</span>
+            <span class="bl-meta-dot"></span>
+            <span>10분 읽기</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bl-card">
+        <div class="bl-card-img" style="background:linear-gradient(135deg,#16a34a 0%,#052e16 100%);">📊</div>
+        <div class="bl-card-body">
+          <span class="bl-card-tag" style="background:#d1f5e4;color:#156f3f;">가이드</span>
+          <h3 class="bl-card-title">브랜드 이미지 점수란? — AI가 평판을 수치화하는 방법</h3>
+          <p class="bl-card-desc">SAYbrand의 브랜드 이미지 점수(0~100)가 어떻게 계산되는지, 그리고 이 숫자로 무엇을 알 수 있는지 상세히 설명합니다.</p>
+          <div class="bl-meta">
+            <span>2026년 4월 22일</span>
+            <span class="bl-meta-dot"></span>
+            <span>5분 읽기</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bl-card">
+        <div class="bl-card-img" style="background:linear-gradient(135deg,#d97706 0%,#451a03 100%);">🔍</div>
+        <div class="bl-card-body">
+          <span class="bl-card-tag" style="background:#fef3cd;color:#856404;">케이스 스터디</span>
+          <h3 class="bl-card-title">사칭 계정 30개를 48시간 안에 탐지한 사례</h3>
+          <p class="bl-card-desc">한 식음료 브랜드의 인스타그램 사칭 계정 사태 — SAYbrand가 어떻게 조기 탐지하고 플랫폼 신고까지 도왔는지 공개합니다.</p>
+          <div class="bl-meta">
+            <span>2026년 4월 5일</span>
+            <span class="bl-meta-dot"></span>
+            <span>7분 읽기</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bl-card">
+        <div class="bl-card-img" style="background:linear-gradient(135deg,#7c3aed 0%,#1e1b4b 100%);">🧠</div>
+        <div class="bl-card-body">
+          <span class="bl-card-tag" style="background:#ede9fe;color:#7c3aed;">기술</span>
+          <h3 class="bl-card-title">KNU 한국어 감성 사전 — 14,854개 단어로 감성 분류하는 법</h3>
+          <p class="bl-card-desc">SAYbrand가 Gemini API의 폴백으로 사용하는 KNU 감성 사전의 구조와 활용 방식을 상세히 설명합니다.</p>
+          <div class="bl-meta">
+            <span>2026년 3월 18일</span>
+            <span class="bl-meta-dot"></span>
+            <span>9분 읽기</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bl-card">
+        <div class="bl-card-img" style="background:linear-gradient(135deg,#0891b2 0%,#0c1428 100%);">📱</div>
+        <div class="bl-card-body">
+          <span class="bl-card-tag" style="background:#cffafe;color:#0891b2;">가이드</span>
+          <h3 class="bl-card-title">플랫폼별 브랜드 위협 신고 방법 완벽 가이드</h3>
+          <p class="bl-card-desc">Instagram, YouTube, TikTok, X — 각 플랫폼의 사칭 계정 및 허위 콘텐츠 신고 절차를 스크린샷과 함께 정리했습니다.</p>
+          <div class="bl-meta">
+            <span>2026년 3월 1일</span>
+            <span class="bl-meta-dot"></span>
+            <span>12분 읽기</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Newsletter -->
+    <div class="bl-newsletter">
+      <h3>브랜드 보호 인사이트, 매주 받아보세요</h3>
+      <p>새 글, 위협 트렌드 리포트, 제품 업데이트를 이메일로 전달합니다. 구독 취소는 언제든 가능합니다.</p>
+      <div class="bl-newsletter-form">
+        <input type="email" placeholder="이메일 주소 입력" />
+        <button type="button" onclick="alert('구독해 주셔서 감사합니다!')">구독하기</button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer class="ld-footer" id="footer">
+  <div class="ld-container">
+    <div class="ld-footer-grid">
+      <div>
+        <div class="ld-footer-logo">
+          <img src="/saybrand-logo2.png" alt="" class="ld-footer-logo-img" onerror="this.style.display='none'" />
+          <span class="ld-footer-logo-text">SAYbrand</span>
+        </div>
+        <p class="ld-footer-mission">AI가 SNS 전 영역을 24시간 감시해<br>브랜드를 사칭·공격으로부터 지킵니다.</p>
+      </div>
+      <div>
+        <p class="ld-footer-col-title">제품</p>
+        <ul class="ld-footer-links">
+          <li><a href="/dashboard">대시보드</a></li>
+          <li><a href="/products#module-a">모듈 A — 사칭 탐지</a></li>
+          <li><a href="/products#module-b">모듈 B — 가짜뉴스</a></li>
+          <li><a href="/products#module-c">모듈 C — 감성 분류</a></li>
+          <li><a href="/products#threat-map">위협 인텔리전스 맵</a></li>
+          <li><a href="/products#pipeline">API 연동</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="ld-footer-col-title">회사</p>
+        <ul class="ld-footer-links">
+          <li><a href="/about">소개</a></li>
+          <li><a href="/careers">채용</a></li>
+          <li><a href="/blog">블로그</a></li>
+          <li><a href="/press">보도자료</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="ld-footer-col-title">지원</p>
+        <ul class="ld-footer-links">
+          <li><a href="/support">고객센터</a></li>
+          <li><a href="/security">보안 정책</a></li>
+          <li><a href="/privacy">개인정보처리방침</a></li>
+          <li><a href="/terms">서비스 이용약관</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="ld-footer-bottom">
+      <p class="ld-footer-copy">© 2026 SAYbrand. All rights reserved.</p>
+      <div class="ld-footer-legal">
+        <a href="/terms">이용약관</a>
+        <a href="/privacy">개인정보처리방침</a>
+        <a href="/cookies">쿠키 정책</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var nav=document.getElementById('ld-nav');
+  window.addEventListener('scroll',function(){if(nav)nav.classList.toggle('scrolled',window.scrollY>20);});
+  var hb=document.getElementById('hamburger'),mm=document.getElementById('mobile-menu');
+  if(hb&&mm)hb.addEventListener('click',function(){mm.classList.toggle('open');});
+  var tg=document.getElementById('theme-toggle');
+  if(tg)tg.addEventListener('click',function(){
+    var c=document.documentElement.getAttribute('data-theme');
+    var n=c==='dark'?'light':'dark';
+    document.documentElement.setAttribute('data-theme',n);
+    localStorage.setItem('ld-theme',n);
+  });
+}());
+</script>
+</body>
+</html>

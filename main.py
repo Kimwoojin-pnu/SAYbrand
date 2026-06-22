@@ -188,3 +188,43 @@ async def support_page(request: Request):
     if not request.session.get("user_id"):
         return RedirectResponse("/login")
     return FileResponse("frontend/pages/support.html")
+
+
+@app.get("/about")
+async def about_page():
+    return FileResponse("frontend/pages/about.html")
+
+
+@app.get("/careers")
+async def careers_page():
+    return FileResponse("frontend/pages/careers.html")
+
+
+@app.get("/blog")
+async def blog_page():
+    return FileResponse("frontend/pages/blog.html")
+
+
+@app.get("/press")
+async def press_page():
+    return FileResponse("frontend/pages/press.html")
+
+
+@app.get("/terms")
+async def terms_page():
+    return FileResponse("frontend/pages/terms.html")
+
+
+@app.get("/privacy")
+async def privacy_page():
+    return FileResponse("frontend/pages/privacy.html")
+
+
+@app.get("/cookies")
+async def cookies_page():
+    return FileResponse("frontend/pages/cookies.html")
+
+
+@app.get("/security")
+async def security_page():
+    return FileResponse("frontend/pages/security.html")

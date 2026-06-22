@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>보안 정책 | SAYbrand</title>
+  <meta name="description" content="SAYbrand의 데이터 보안 정책 및 보안 체계를 안내합니다." />
+  <link rel="stylesheet" href="/assets/css/landing.css" />
+  <script>(function(){var t=localStorage.getItem('ld-theme')||'dark';document.documentElement.setAttribute('data-theme',t);}());</script>
+  <style>
+    .pr-hero{background:var(--ld-dark,#0c1428);padding:100px 0 56px;}
+    .pr-hero-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:10px;}
+    .pr-hero h1{color:#fff;font-size:2rem;font-weight:800;margin:0 0 12px;}
+    .pr-hero p{color:rgba(255,255,255,.5);font-size:.92rem;}
+    .pr-content{max-width:800px;margin:0 auto;padding:64px 0 100px;}
+    .pr-h2{font-size:1.1rem;font-weight:700;color:var(--ld-brand,#1d5fa8);margin:36px 0 10px;padding-top:28px;border-top:1px solid var(--ld-border,rgba(0,0,0,.08));}
+    .pr-h2:first-child{margin-top:0;padding-top:0;border-top:none;}
+    .pr-p{font-size:.92rem;line-height:1.85;color:var(--ld-text-2,rgba(12,20,40,.65));margin-bottom:10px;}
+    .pr-ul{padding-left:20px;margin-bottom:14px;}
+    .pr-li{font-size:.92rem;line-height:1.8;color:var(--ld-text-2,rgba(12,20,40,.65));margin-bottom:6px;}
+    .sec-card{display:grid;grid-template-columns:48px 1fr;gap:16px;padding:20px;border:1px solid var(--ld-border,rgba(0,0,0,.08));border-radius:8px;margin-bottom:12px;align-items:start;}
+    .sec-icon{width:48px;height:48px;background:#e8f0fb;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#1d5fa8;font-size:22px;flex-shrink:0;}
+    .sec-card-title{font-weight:700;font-size:.95rem;margin-bottom:4px;color:var(--ld-text,#0c1428);}
+    .sec-card-desc{font-size:.88rem;line-height:1.7;color:var(--ld-text-2,rgba(12,20,40,.65));}
+    .vuln-box{background:#fff5f5;border:1px solid #fecaca;border-left:3px solid #ef4444;border-radius:6px;padding:16px 20px;margin-top:12px;}
+    .vuln-box p{font-size:.9rem;color:#7f1d1d;margin-bottom:6px;}
+    [data-theme=dark] .pr-h2{border-top-color:rgba(255,255,255,.07);}
+    [data-theme=dark] .pr-p,[data-theme=dark] .pr-li{color:rgba(255,255,255,.5);}
+    [data-theme=dark] .sec-card{border-color:rgba(255,255,255,.07);}
+    [data-theme=dark] .sec-card-title{color:rgba(255,255,255,.85);}
+    [data-theme=dark] .sec-card-desc{color:rgba(255,255,255,.5);}
+    [data-theme=dark] .sec-icon{background:rgba(29,95,168,.2);}
+    [data-theme=dark] .vuln-box{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.25);}
+    [data-theme=dark] .vuln-box p{color:#fca5a5;}
+  </style>
+</head>
+<body>
+
+<nav class="ld-nav" id="ld-nav">
+  <div class="ld-container">
+    <div class="ld-nav-inner">
+      <a href="/" class="ld-nav-logo">
+        <img src="/saybrand-logo2.png" alt="" class="ld-nav-logo-img" onerror="this.style.display='none'" />
+        <span class="ld-nav-logo-text">SAYbrand</span>
+      </a>
+      <ul class="ld-nav-links">
+        <li><a href="/#features">제품</a></li>
+        <li><a href="/#pipeline">솔루션</a></li>
+        <li><a href="/#pricing">요금</a></li>
+        <li><a href="/support">고객센터</a></li>
+      </ul>
+      <div class="ld-nav-actions">
+        <button class="ld-theme-toggle" id="theme-toggle" aria-label="다크모드 전환">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+        <a href="/login" class="ld-btn ld-btn--outlined ld-btn--sm">로그인</a>
+        <a href="/login" class="ld-btn ld-btn--dark ld-btn--sm">무료로 시작</a>
+      </div>
+      <button class="ld-nav-hamburger" id="hamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+<div class="ld-mobile-menu" id="mobile-menu">
+  <a href="/#features">제품</a>
+  <a href="/#pipeline">솔루션</a>
+  <a href="/#pricing">요금</a>
+  <a href="/support">고객센터</a>
+  <a href="/login" style="color:#1d5fa8;font-weight:700;border:none;">로그인 / 무료로 시작 →</a>
+</div>
+
+<section class="pr-hero">
+  <div class="ld-container">
+    <p class="pr-hero-label">Trust &amp; Safety</p>
+    <h1>보안 정책</h1>
+    <p>SAYbrand가 고객 데이터를 보호하는 방법을 설명합니다.</p>
+  </div>
+</section>
+
+<main>
+  <div class="ld-container">
+    <div class="pr-content">
+
+      <h2 class="pr-h2">데이터 암호화</h2>
+
+      <div class="sec-card">
+        <div class="sec-icon">🔒</div>
+        <div>
+          <p class="sec-card-title">전송 구간 암호화</p>
+          <p class="sec-card-desc">모든 데이터는 TLS 1.2 이상으로 암호화되어 전송됩니다. HTTP 연결은 자동으로 HTTPS로 리다이렉트됩니다.</p>
+        </div>
+      </div>
+
+      <div class="sec-card">
+        <div class="sec-icon">🗄️</div>
+        <div>
+          <p class="sec-card-title">저장 데이터 보호</p>
+          <p class="sec-card-desc">데이터베이스는 AES-256 암호화가 적용된 클라우드 환경에 저장됩니다. 비밀번호는 bcrypt 해시로만 저장되며 원문은 보관하지 않습니다.</p>
+        </div>
+      </div>
+
+      <div class="sec-card">
+        <div class="sec-icon">🔑</div>
+        <div>
+          <p class="sec-card-title">API 키 보안</p>
+          <p class="sec-card-desc">외부 API 키(Gemini, Claude, Naver 등)는 환경변수로 관리되며 코드베이스에 포함되지 않습니다. 키는 정기적으로 교체됩니다.</p>
+        </div>
+      </div>
+
+      <h2 class="pr-h2">접근 제어</h2>
+
+      <div class="sec-card">
+        <div class="sec-icon">👤</div>
+        <div>
+          <p class="sec-card-title">역할 기반 접근 제어 (RBAC)</p>
+          <p class="sec-card-desc">조직 내 역할(Admin / Member / Viewer)에 따라 데이터 접근 권한이 분리됩니다. Viewer는 읽기 전용, Member는 제한적 쓰기, Admin은 전체 관리가 가능합니다.</p>
+        </div>
+      </div>
+
+      <div class="sec-card">
+        <div class="sec-icon">🛡️</div>
+        <div>
+          <p class="sec-card-title">세션 관리</p>
+          <p class="sec-card-desc">세션은 서버 사이드에서 관리되며 브라우저 종료 시 만료됩니다. 비정상 접근 패턴이 감지될 경우 세션이 자동 무효화됩니다.</p>
+        </div>
+      </div>
+
+      <div class="sec-card">
+        <div class="sec-icon">⏱️</div>
+        <div>
+          <p class="sec-card-title">속도 제한 (Rate Limiting)</p>
+          <p class="sec-card-desc">API 엔드포인트에 요청 횟수 제한이 적용되어 무차별 대입 공격 및 과부하를 방지합니다.</p>
+        </div>
+      </div>
+
+      <h2 class="pr-h2">인프라 보안</h2>
+
+      <div class="sec-card">
+        <div class="sec-icon">☁️</div>
+        <div>
+          <p class="sec-card-title">클라우드 인프라</p>
+          <p class="sec-card-desc">서비스는 Vercel(엣지 네트워크), Railway(데이터베이스), Redis Cloud(캐시)를 사용합니다. 각 서비스는 SOC 2 Type II 또는 ISO 27001 인증을 보유하고 있습니다.</p>
+        </div>
+      </div>
+
+      <div class="sec-card">
+        <div class="sec-icon">🌐</div>
+        <div>
+          <p class="sec-card-title">데이터 격리</p>
+          <p class="sec-card-desc">조직(Organization)별 데이터는 DB 레벨에서 org_id로 격리됩니다. 타 조직의 데이터에 접근할 수 없도록 모든 쿼리에 조직 필터가 적용됩니다.</p>
+        </div>
+      </div>
+
+      <h2 class="pr-h2">보안 모니터링 및 대응</h2>
+      <p class="pr-p">회사는 다음과 같은 보안 모니터링 체계를 운영합니다.</p>
+      <ul class="pr-ul">
+        <li class="pr-li">서버 에러 및 이상 트래픽 실시간 모니터링</li>
+        <li class="pr-li">보안 사고 발생 시 72시간 이내 영향을 받은 이용자에게 통지</li>
+        <li class="pr-li">정기 의존성 패키지 취약점 점검 및 업데이트</li>
+        <li class="pr-li">코드 변경 사항에 대한 보안 리뷰</li>
+      </ul>
+
+      <h2 class="pr-h2">보안 취약점 신고</h2>
+      <p class="pr-p">SAYbrand 서비스에서 보안 취약점을 발견하셨나요? 책임감 있는 취약점 공개(Responsible Disclosure)를 환영합니다.</p>
+      <div class="vuln-box">
+        <p><strong>신고 방법:</strong> security@saybrand.ai 로 이메일 신고</p>
+        <p><strong>포함 내용:</strong> 취약점 설명, 재현 방법, 예상 영향 범위</p>
+        <p><strong>처리 기간:</strong> 접수 후 48시간 이내 확인, 심각도에 따라 우선 처리</p>
+        <p style="margin-bottom:0"><strong>참고:</strong> 악의적 이용 또는 서비스 방해 행위는 법적 조치 대상이 될 수 있습니다.</p>
+      </div>
+
+      <h2 class="pr-h2">보안 정책 업데이트</h2>
+      <p class="pr-p">이 보안 정책은 서비스 변경 또는 보안 체계 개선에 따라 업데이트될 수 있습니다. 중요한 변경 사항은 서비스 내 공지 또는 이메일로 안내드립니다.</p>
+      <p class="pr-p">보안 관련 문의: <a href="/support" style="color:var(--ld-brand,#1d5fa8);">고객센터</a> 또는 security@saybrand.ai</p>
+    </div>
+  </div>
+</main>
+
+<footer class="ld-footer" id="footer">
+  <div class="ld-container">
+    <div class="ld-footer-grid">
+      <div>
+        <div class="ld-footer-logo">
+          <img src="/saybrand-logo2.png" alt="" class="ld-footer-logo-img" onerror="this.style.display='none'" />
+          <span class="ld-footer-logo-text">SAYbrand</span>
+        </div>
+        <p class="ld-footer-mission">AI가 SNS 전 영역을 24시간 감시해<br>브랜드를 사칭·공격으로부터 지킵니다.</p>
+      </div>
+      <div>
+        <p class="ld-footer-col-title">제품</p>
+        <ul class="ld-footer-links">
+          <li><a href="/dashboard">대시보드</a></li>
+          <li><a href="/products#module-a">모듈 A — 사칭 탐지</a></li>
+          <li><a href="/products#module-b">모듈 B — 가짜뉴스</a></li>
+          <li><a href="/products#module-c">모듈 C — 감성 분류</a></li>
+          <li><a href="/products#threat-map">위협 인텔리전스 맵</a></li>
+          <li><a href="/products#pipeline">API 연동</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="ld-footer-col-title">회사</p>
+        <ul class="ld-footer-links">
+          <li><a href="/about">소개</a></li>
+          <li><a href="/careers">채용</a></li>
+          <li><a href="/blog">블로그</a></li>
+          <li><a href="/press">보도자료</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="ld-footer-col-title">지원</p>
+        <ul class="ld-footer-links">
+          <li><a href="/support">고객센터</a></li>
+          <li><a href="/security">보안 정책</a></li>
+          <li><a href="/privacy">개인정보처리방침</a></li>
+          <li><a href="/terms">서비스 이용약관</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="ld-footer-bottom">
+      <p class="ld-footer-copy">© 2026 SAYbrand. All rights reserved.</p>
+      <div class="ld-footer-legal">
+        <a href="/terms">이용약관</a>
+        <a href="/privacy">개인정보처리방침</a>
+        <a href="/cookies">쿠키 정책</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var nav=document.getElementById('ld-nav');
+  window.addEventListener('scroll',function(){if(nav)nav.classList.toggle('scrolled',window.scrollY>20);});
+  var hb=document.getElementById('hamburger'),mm=document.getElementById('mobile-menu');
+  if(hb&&mm)hb.addEventListener('click',function(){mm.classList.toggle('open');});
+  var tg=document.getElementById('theme-toggle');
+  if(tg)tg.addEventListener('click',function(){
+    var c=document.documentElement.getAttribute('data-theme');
+    var n=c==='dark'?'light':'dark';
+    document.documentElement.setAttribute('data-theme',n);
+    localStorage.setItem('ld-theme',n);
+  });
+}());
+</script>
+</body>
+</html>
