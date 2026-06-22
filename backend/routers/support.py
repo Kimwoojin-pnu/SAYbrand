@@ -5,7 +5,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.config import settings
@@ -25,6 +25,7 @@ class SupportPostCreate(BaseModel):
     title: str
     content: str
     category: str = "general"
+    is_secret: bool = False
 
 
 class SupportReplyCreate(BaseModel):
@@ -37,6 +38,7 @@ class SupportPostListItem(BaseModel):
     user_name: str
     status: str
     category: str = "general"
+    is_secret: bool = False
     created_at: datetime
 
     class Config:
@@ -50,6 +52,7 @@ class SupportPostDetail(BaseModel):
     user_name: str
     status: str
     category: str = "general"
+    is_secret: bool = False
     admin_reply: str | None
     admin_reply_by: str | None
     answered_at: datetime | None
@@ -69,11 +72,27 @@ async def list_posts(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
 ):
+    is_admin = _is_admin(user.get("email", ""))
     stmt = select(SupportPost).order_by(SupportPost.created_at.desc())
-    if not _is_admin(user.get("email", "")):
+    if not is_admin:
         stmt = stmt.where(SupportPost.category != "sales")
     result = await db.execute(stmt)
-    return result.scalars().all()
+    posts = result.scalars().all()
+
+    items = []
+    for p in posts:
+        # 비밀글이면서 본인/관리자가 아닌 경우 → 제목·작성자 가림
+        hidden = p.is_secret and not is_admin and p.user_id != user["id"]
+        items.append(SupportPostListItem(
+            id=p.id,
+            title="비밀글입니다" if hidden else p.title,
+            user_name="익명" if hidden else p.user_name,
+            status=p.status,
+            category=p.category,
+            is_secret=p.is_secret,
+            created_at=p.created_at,
+        ))
+    return items
 
 
 @router.post("", response_model=SupportPostDetail, status_code=201)
@@ -94,6 +113,7 @@ async def create_post(
         title=title,
         content=content,
         category=category,
+        is_secret=body.is_secret,
         status="pending",
     )
     db.add(post)
@@ -112,8 +132,17 @@ async def get_post(
     post = result.scalar_one_or_none()
     if not post:
         raise HTTPException(status_code=404, detail="게시글을 찾을 수 없습니다")
-    if post.category == "sales" and not _is_admin(user.get("email", "")):
+
+    is_admin = _is_admin(user.get("email", ""))
+
+    # 영업 문의는 관리자만
+    if post.category == "sales" and not is_admin:
         raise HTTPException(status_code=404, detail="게시글을 찾을 수 없습니다")
+
+    # 비밀글은 작성자 본인 또는 관리자만
+    if post.is_secret and not is_admin and post.user_id != user["id"]:
+        raise HTTPException(status_code=403, detail="비밀글입니다. 작성자 본인 또는 관리자만 확인할 수 있습니다.")
+
     return post
 
 

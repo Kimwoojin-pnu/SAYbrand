@@ -299,6 +299,7 @@ class SupportPost(Base):
     title: Mapped[str] = mapped_column(String(200))
     content: Mapped[str] = mapped_column(Text)
     category: Mapped[str] = mapped_column(String(50), default="general")  # general|sales
+    is_secret: Mapped[bool] = mapped_column(Boolean, default=False)
     status: Mapped[str] = mapped_column(String(20), default="pending")  # pending|answered
     admin_reply: Mapped[str | None] = mapped_column(Text, nullable=True)
     admin_reply_by: Mapped[str | None] = mapped_column(String(200), nullable=True)
