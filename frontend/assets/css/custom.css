@@ -397,6 +397,12 @@ body { font-family: 'NanumSquare', 'Noto Sans KR', sans-serif; }
    모바일 반응형 — 대시보드 공통
    ══════════════════════════════════════════════════════════════════════ */
 
+/* 전체 가로 넘침 방지 */
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 /* 햄버거 버튼 */
 .db-hamburger {
   background: none;
@@ -577,6 +583,31 @@ body { font-family: 'NanumSquare', 'Noto Sans KR', sans-serif; }
     margin: 16px !important;
     padding: 24px 20px !important;
   }
+
+  /* 대시보드 헤더 — 보조 요소 숨김/축소 */
+  .db-realtime-label { display: none !important; }
+  .db-refresh-btn    { display: none !important; }
+
+  /* 대시보드 헤더 액션 영역 줄바꿈 */
+  .db-topheader > div:last-child {
+    flex-wrap: wrap;
+    gap: 6px !important;
+  }
+
+  /* 브랜드 프로필 그리드 → 1열 */
+  .db-bp-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* 입력 폼 내 고정폭 input 해제 */
+  #bp-alias-input, #bp-social-handle, #bp-exec-name, #bp-exec-role {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  #bp-alias-form, #bp-social-form, #bp-exec-form {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
 }
 
 /* ── 매우 좁은 화면 ≤480px ──────────────────────────────────────── */
@@ -584,4 +615,10 @@ body { font-family: 'NanumSquare', 'Noto Sans KR', sans-serif; }
   .db-kpi-number { font-size: 28px !important; }
   .db-card { padding: 12px 14px !important; }
   .db-mobile-topbar { padding: 0 12px; }
+
+  /* 브랜드 프로필 유형/업종 → 1열 */
+  .db-bp-grid > div:first-child [style*="grid-template-columns:1fr 1fr"],
+  .db-bp-grid > div:first-child [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
 }

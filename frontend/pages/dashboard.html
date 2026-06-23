@@ -148,7 +148,7 @@
         <p style="font-size:10px;color:var(--db-text-3);margin-top:1px;">최종 업데이트: <span id="last-updated" style="font-family:'JetBrains Mono',monospace;">로딩 중...</span></p>
       </div>
       <div style="display:flex;align-items:center;gap:10px;">
-        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(12,20,40,0.40);">
+        <span class="db-realtime-label" style="display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(12,20,40,0.40);">
           <span style="width:6px;height:6px;border-radius:50%;background:#1D9E75;display:inline-block;animation:pulse 1.5s infinite;"></span>
           실시간 모니터링
         </span>
@@ -161,7 +161,7 @@
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>스캔 실행
         </button>
-        <button onclick="location.reload()" style="display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:6px;background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.08);color:rgba(12,20,40,0.55);font-size:12px;font-family:'NanumSquare',sans-serif;cursor:pointer;">
+        <button class="db-refresh-btn" onclick="location.reload()" style="display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:6px;background:rgba(0,0,0,0.04);border:1px solid rgba(0,0,0,0.08);color:rgba(12,20,40,0.55);font-size:12px;font-family:'NanumSquare',sans-serif;cursor:pointer;">
           <svg style="width:12px;height:12px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
             <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
@@ -430,7 +430,7 @@
 
         <!-- Body -->
         <div style="padding:18px;">
-          <div style="display:grid;grid-template-columns:260px 1fr;gap:20px;align-items:start;">
+          <div class="db-bp-grid" style="display:grid;grid-template-columns:260px 1fr;gap:20px;align-items:start;">
 
             <!-- Left: basic info -->
             <div>
