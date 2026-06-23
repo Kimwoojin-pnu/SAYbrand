@@ -5,6 +5,7 @@
 
 /* ── Base ──────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
 
 body {
   font-family: var(--font-body);
@@ -480,25 +481,26 @@ html, body {
     transform: translateX(0);
   }
 
-  /* 레이아웃 래퍼 */
+  /* 레이아웃 래퍼 — 상단바 높이만큼 아래서 시작 */
   #db-layout {
-    height: 100vh !important;
+    margin-top: 52px !important;
+    height: calc(100vh - 52px) !important;
     overflow: hidden !important;
   }
 
   /* 메인 영역 */
   .db-main {
-    padding-top: 52px !important;
-    height: 100vh !important;
+    padding-top: 0 !important;
+    height: 100% !important;
     overflow-y: auto !important;
     overflow-x: hidden;
     width: 100% !important;
     flex: 1 !important;
   }
 
-  /* 상단 헤더: 고정 모바일 바 아래에 sticky */
+  /* 상단 헤더: 스크롤 컨테이너(db-main) 맨 위에 sticky */
   .db-topheader {
-    top: 52px !important;
+    top: 0 !important;
     padding: 10px 16px !important;
     height: auto !important;
     min-height: 48px;
