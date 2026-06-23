@@ -120,3 +120,21 @@ async def require_non_viewer(
     role = await get_org_member_role(org.id, user_id, db)
     if role == "viewer":
         raise HTTPException(403, detail="보고용 계정은 이 기능을 사용할 수 없습니다.")
+
+
+async def require_admin_or_owner(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    """Admin/Owner만 허용. Viewer·Member 차단."""
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return
+
+    org = await optional_current_org(request, db)
+    if org is None:
+        return
+
+    role = await get_org_member_role(org.id, user_id, db)
+    if role in ("viewer", "member"):
+        raise HTTPException(403, detail="관리자 이상만 이 기능을 사용할 수 있습니다.")

@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.db.database import get_db
 from backend.middleware.auth import get_current_user
-from backend.middleware.org_context import optional_current_org, require_non_viewer
+from backend.middleware.org_context import optional_current_org, require_non_viewer, require_admin_or_owner
 from backend.models.orm import (
     Organization,
     CustomerAlias,
@@ -221,7 +221,7 @@ async def delete_profile(
     profile_id: int,
     current_user: dict = Depends(get_current_user),
     org: Organization | None = Depends(optional_current_org),
-    _: None = Depends(require_non_viewer),
+    _: None = Depends(require_admin_or_owner),
     db: AsyncSession = Depends(get_db),
 ):
     profile = await _get_profile_or_404(
@@ -265,7 +265,7 @@ async def delete_alias(
     alias_id: int,
     current_user: dict = Depends(get_current_user),
     org: Organization | None = Depends(optional_current_org),
-    _: None = Depends(require_non_viewer),
+    _: None = Depends(require_admin_or_owner),
     db: AsyncSession = Depends(get_db),
 ):
     await _get_profile_or_404(profile_id, current_user["id"], db, org_id=org.id if org else None)
@@ -307,7 +307,7 @@ async def delete_social_account(
     account_id: int,
     current_user: dict = Depends(get_current_user),
     org: Organization | None = Depends(optional_current_org),
-    _: None = Depends(require_non_viewer),
+    _: None = Depends(require_admin_or_owner),
     db: AsyncSession = Depends(get_db),
 ):
     await _get_profile_or_404(profile_id, current_user["id"], db, org_id=org.id if org else None)
@@ -351,7 +351,7 @@ async def delete_executive(
     exec_id: int,
     current_user: dict = Depends(get_current_user),
     org: Organization | None = Depends(optional_current_org),
-    _: None = Depends(require_non_viewer),
+    _: None = Depends(require_admin_or_owner),
     db: AsyncSession = Depends(get_db),
 ):
     await _get_profile_or_404(profile_id, current_user["id"], db, org_id=org.id if org else None)
