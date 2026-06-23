@@ -26,6 +26,8 @@ async def lifespan(app: FastAPI):
         if "postgresql" in db_url or "postgres" in db_url:
             from sqlalchemy import text
             _migrations = [
+                "ALTER TABLE threats ADD COLUMN IF NOT EXISTS content_hash VARCHAR(64)",
+                "CREATE INDEX IF NOT EXISTS ix_threats_content_hash ON threats (content_hash)",
                 """CREATE TABLE IF NOT EXISTS support_posts (
                     id SERIAL PRIMARY KEY,
                     user_id INTEGER NOT NULL REFERENCES users(id),
@@ -52,6 +54,7 @@ app.add_middleware(SessionMiddleware, secret_key=settings.session_secret_key)
 app.add_middleware(BaseHTTPMiddleware, dispatch=rate_limit_middleware)
 
 app.mount("/assets", StaticFiles(directory="frontend/assets"), name="assets")
+app.mount("/docs", StaticFiles(directory="docs/sphinx/_build/html", html=True), name="sphinx-docs")
 
 app.include_router(auth.router)
 app.include_router(billing.router)

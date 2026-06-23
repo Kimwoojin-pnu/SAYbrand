@@ -79,25 +79,45 @@ async def run_pipeline(
 
     # ── dismissed URL 체크 — 경미 처리된 콘텐츠 재스캔 차단 ────────────
     import hashlib as _hashlib
-    _content_hash = _hashlib.sha256((post.get("content", "")).encode()).hexdigest()[:32]
+    # 500자 기준 해시 — dismissed_urls.content_hash 및 threats.content_hash와 일치
+    _content_hash = _hashlib.sha256((post.get("content", "")[:500]).encode()).hexdigest()[:32]
     _url = post.get("post_url") or post.get("source_url") or ""
     _url_clause = (DismissedUrl.source_url == _url) if _url else False
-    _dismissed_q = select(DismissedUrl.id).where(
+    # org_id 기준도 함께 체크 (org 스캔 시 멤버별 user_id가 달라도 차단)
+    _dismissed_user_q = select(DismissedUrl.id).where(
         DismissedUrl.user_id == user_id,
         (DismissedUrl.content_hash == _content_hash) | _url_clause,
     ).limit(1)
-    if (await db.execute(_dismissed_q)).scalar():
+    _dismissed_org_q = None
+    if org_id:
+        _dismissed_org_q = select(DismissedUrl.id).where(
+            DismissedUrl.org_id == org_id,
+            (DismissedUrl.content_hash == _content_hash) | _url_clause,
+        ).limit(1)
+    if (await db.execute(_dismissed_user_q)).scalar() or (
+        _dismissed_org_q and (await db.execute(_dismissed_org_q)).scalar()
+    ):
         print(f"[DISMISSED] 건너뜀 (경미 처리됨): {_url or _content_hash}")
         return None
 
-    # ── 중복 URL 체크 — 동일 URL 재삽입 방지 ─────────────────────────
+    # ── 중복 URL/해시 체크 — 이미 존재하는 위협 재삽입 방지 ──────────
     if _url:
-        _dup_q = select(Threat.id).where(
+        _dup_url_q = select(Threat.id).where(
             Threat.source_url == _url,
             Threat.user_id == user_id,
         ).limit(1)
-        if (await db.execute(_dup_q)).scalar():
+        if (await db.execute(_dup_url_q)).scalar():
             print(f"[DEDUP] 이미 존재하는 URL 건너뜀: {_url}")
+            return None
+
+    # source_url 없는 경우 content_hash로 resolved 위협도 중복 차단
+    if not _url:
+        _dup_hash_q = select(Threat.id).where(
+            Threat.content_hash == _content_hash,
+            Threat.user_id == user_id,
+        ).limit(1)
+        if (await db.execute(_dup_hash_q)).scalar():
+            print(f"[DEDUP] 동일 내용 해시 이미 존재, 건너뜀: {_content_hash}")
             return None
 
     # ── 프로파일 로드 ─────────────────────────────────────────────────
@@ -302,6 +322,7 @@ async def run_pipeline(
         source_account=post.get("source_account", ""),
         source_url=post.get("post_url", ""),
         content_preview=post["content"][:500],
+        content_hash=_content_hash,
         confidence=confidence,
         risk_score=risk_score_raw,
         ai_analysis=ai_analysis,

@@ -302,7 +302,8 @@ async def resolve_threat(
 
     if body.resolution_type == "false_positive":
         # 경미 처리: DB 삭제 + dismissed_urls 등록 + 활동 로그
-        content_hash = hashlib.sha256((threat.content_preview or "").encode()).hexdigest()[:32]
+        # threat.content_hash 우선 사용 (pipeline과 동일 500자 기준)
+        content_hash = threat.content_hash or hashlib.sha256((threat.content_preview or "")[:500].encode()).hexdigest()[:32]
         db.add(DismissedUrl(
             user_id=user["id"], org_id=org_id,
             source_url=threat.source_url or None,
@@ -352,6 +353,66 @@ async def resolve_threat(
         threat.updated_at = now
         await db.commit()
         return {"id": threat_id, "status": "resolved", "resolution_type": body.resolution_type}
+
+
+class BulkActionRequest(BaseModel):
+    threat_ids: list[int]
+    action: str  # "reviewing" | "dismiss"
+
+
+@router.patch("/threats/bulk")
+async def bulk_threat_action(
+    body: BulkActionRequest,
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(get_current_user),
+    org: Organization | None = Depends(optional_current_org),
+):
+    import hashlib
+
+    if not body.threat_ids:
+        raise HTTPException(status_code=400, detail="threat_ids가 비어 있습니다")
+    if body.action not in ("reviewing", "dismiss"):
+        raise HTTPException(status_code=400, detail="action은 reviewing 또는 dismiss만 허용됩니다")
+    if len(body.threat_ids) > 100:
+        raise HTTPException(status_code=400, detail="한 번에 최대 100건까지 처리 가능합니다")
+
+    result = await db.execute(
+        select(Threat).where(Threat.id.in_(body.threat_ids))
+    )
+    threats = result.scalars().all()
+
+    now = datetime.utcnow()
+    org_id = org.id if org else None
+    processed = []
+    skipped = []
+
+    if body.action == "reviewing":
+        for t in threats:
+            if t.status == "resolved":
+                skipped.append(t.id)
+                continue
+            t.status = "reviewing"
+            t.updated_at = now
+            processed.append(t.id)
+        await db.commit()
+
+    elif body.action == "dismiss":
+        for t in threats:
+            _org_id = org_id or t.org_id
+            _content_hash = t.content_hash or hashlib.sha256(
+                (t.content_preview or "")[:500].encode()
+            ).hexdigest()[:32]
+            db.add(DismissedUrl(
+                user_id=user["id"],
+                org_id=_org_id,
+                source_url=t.source_url or None,
+                content_hash=_content_hash,
+            ))
+            await db.delete(t)
+            processed.append(t.id)
+        await db.commit()
+
+    return {"processed": processed, "skipped": skipped, "action": body.action}
 
 
 @router.post("/threats/{threat_id}/reanalyze")

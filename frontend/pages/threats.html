@@ -106,6 +106,7 @@
           <table style="width:100%;font-size:12px;border-collapse:collapse;">
             <thead>
               <tr style="background:rgba(0,0,0,.02);border-bottom:1px solid rgba(0,0,0,.06);">
+                <th style="padding:9px 10px 9px 14px;width:36px;"><input type="checkbox" id="chk-all" style="cursor:pointer;accent-color:#1a6ef8;" title="전체 선택"></th>
                 <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">심각도</th>
                 <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">유형</th>
                 <th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:300;letter-spacing:.08em;text-transform:uppercase;color:rgba(12,20,40,.40);">플랫폼</th>
@@ -117,7 +118,7 @@
               </tr>
             </thead>
             <tbody id="threat-tbody">
-              <tr><td colspan="8" style="padding:40px;text-align:center;color:rgba(12,20,40,.38);">로딩 중...</td></tr>
+              <tr><td colspan="9" style="padding:40px;text-align:center;color:rgba(12,20,40,.38);">로딩 중...</td></tr>
             </tbody>
           </table>
         </div>
@@ -131,6 +132,14 @@
       </div>
     </div>
   </main>
+</div>
+
+<!-- 일괄처리 액션 바 -->
+<div id="bulk-action-bar" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:50;background:#0c1428;color:#fff;border-radius:12px;padding:12px 20px;display:none;align-items:center;gap:14px;box-shadow:0 8px 32px rgba(12,20,40,0.32);min-width:420px;max-width:90vw;">
+  <span id="bulk-count-label" style="font-size:12px;font-weight:700;font-family:'NanumSquare',sans-serif;white-space:nowrap;flex:1;">0건 선택됨</span>
+  <button onclick="bulkAction('reviewing')" style="padding:7px 16px;border-radius:7px;border:none;background:rgba(24,95,165,0.25);color:#6db3ff;font-size:11px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;white-space:nowrap;">검토중으로 변경</button>
+  <button onclick="bulkAction('dismiss')" style="padding:7px 16px;border-radius:7px;border:none;background:rgba(100,116,139,0.22);color:#cbd5e1;font-size:11px;font-weight:700;font-family:'NanumSquare',sans-serif;cursor:pointer;white-space:nowrap;">경미처리</button>
+  <button onclick="clearBulkSelection()" style="padding:6px 8px;border-radius:6px;border:none;background:transparent;color:rgba(255,255,255,.45);font-size:11px;cursor:pointer;">✕ 취소</button>
 </div>
 
 <!-- Detail Panel -->
@@ -213,7 +222,7 @@
 <script type="module">
 import { api } from "/assets/js/api.js";
 import { timeAgo, severityBadge, statusBadge, moduleBadge, platformIcon, scoreColor } from "/assets/js/utils.js";
-const state = { threats:[], total:0, page:1, pageSize:15, filterSeverity:'', filterStatus:'', sortBy:'date', selected:null };
+const state = { threats:[], total:0, page:1, pageSize:15, filterSeverity:'', filterStatus:'', sortBy:'date', selected:null, checkedIds: new Set() };
 const TYPE_MAP = { logo_spoof:'로고 사칭', account_impersonation:'계정 사칭', organized_rumor:'조직적 루머', viral_rumor:'바이럴 루머', executive_exposure:'임직원 노출', bot_attack:'봇 공격', reputation_attack:'평판 공격', negative_review_cluster:'부정 리뷰 클러스터', internal_info_leak:'내부 정보 유출', watermark_removal:'워터마크 제거', negative_comment:'부정 댓글', casual_mention:'일반 언급', competitor_mention:'경쟁사 언급', similar_logo:'유사 로고' };
 function showToast(msg, type='success') {
   const wrap=document.getElementById('toast-wrap'); if(!wrap)return;
@@ -223,12 +232,54 @@ function showToast(msg, type='success') {
   wrap.appendChild(el); requestAnimationFrame(()=>requestAnimationFrame(()=>{el.style.transform='translateX(0)';}));
   setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .4s';setTimeout(()=>el.remove(),400);},3500);
 }
+function updateBulkBar() {
+  const bar = document.getElementById('bulk-action-bar');
+  const n = state.checkedIds.size;
+  if (n === 0) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+  document.getElementById('bulk-count-label').textContent = `${n}건 선택됨`;
+  const allIds = state.threats.map(t => t.id);
+  document.getElementById('chk-all').checked = allIds.length > 0 && allIds.every(id => state.checkedIds.has(id));
+}
+window.clearBulkSelection = function() {
+  state.checkedIds.clear();
+  document.querySelectorAll('.row-chk').forEach(c => c.checked = false);
+  document.getElementById('chk-all').checked = false;
+  updateBulkBar();
+};
+window.bulkAction = async function(action) {
+  const ids = [...state.checkedIds];
+  if (!ids.length) return;
+  if (action === 'dismiss' && !confirm(`선택한 ${ids.length}건을 경미처리 하시겠습니까? 해당 콘텐츠는 목록에서 삭제되고 재스캔이 차단됩니다.`)) return;
+  const bar = document.getElementById('bulk-action-bar');
+  bar.style.opacity = '0.6';
+  bar.style.pointerEvents = 'none';
+  try {
+    const res = await fetch('/api/dashboard/threats/bulk', {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({threat_ids: ids, action})
+    });
+    if (!res.ok) { const e = await res.json(); throw new Error(e.detail || res.status); }
+    const data = await res.json();
+    clearBulkSelection();
+    await loadThreats();
+    const label = action === 'reviewing' ? '검토중으로 변경' : '경미처리';
+    showToast(`${label} 완료 — ${data.processed.length}건 처리됨`);
+  } catch(e) {
+    showToast(`처리 실패: ${e.message}`, 'error');
+  } finally {
+    bar.style.opacity = '1';
+    bar.style.pointerEvents = 'auto';
+  }
+};
 function renderThreats(data) {
   state.threats=data.items; state.total=data.total;
   const tbody=document.getElementById('threat-tbody');
-  if(!data.items.length){tbody.innerHTML=`<tr><td colspan="8" style="padding:40px;text-align:center;color:rgba(12,20,40,.38);">위협 없음</td></tr>`;return;}
+  if(!data.items.length){tbody.innerHTML=`<tr><td colspan="9" style="padding:40px;text-align:center;color:rgba(12,20,40,.38);">위협 없음</td></tr>`;updateBulkBar();return;}
   tbody.innerHTML=data.items.map(t=>`
     <tr style="cursor:pointer;transition:background .1s;border-bottom:1px solid var(--db-border);" onmouseover="this.style.background='var(--db-hover,rgba(0,0,0,.03))'" onmouseout="this.style.background='transparent'" onclick="window._openThreat(${t.id})">
+      <td style="padding:10px 10px 10px 14px;" onclick="event.stopPropagation()"><input type="checkbox" class="row-chk" data-id="${t.id}" style="cursor:pointer;accent-color:#1a6ef8;" ${state.checkedIds.has(t.id)?'checked':''}></td>
       <td style="padding:10px 14px;">${severityBadge(t.severity)}</td>
       <td style="padding:10px 14px;"><div style="display:flex;align-items:center;gap:6px;">${moduleBadge(t.module)}<span style="font-size:11px;color:#0c1428;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${TYPE_MAP[t.threat_type]||t.threat_type}</span></div></td>
       <td style="padding:10px 14px;"><div style="display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(12,20,40,.60);">${platformIcon(t.platform)}<span style="text-transform:capitalize;">${t.platform}</span></div></td>
@@ -238,10 +289,19 @@ function renderThreats(data) {
       <td style="padding:10px 14px;font-size:11px;color:rgba(12,20,40,.38);font-family:'JetBrains Mono',monospace;white-space:nowrap;">${timeAgo(t.detected_at)}</td>
       <td style="padding:10px 14px;">${statusBadge(t.status)}</td>
     </tr>`).join('');
+  // 체크박스 이벤트 바인딩
+  document.querySelectorAll('.row-chk').forEach(chk => {
+    chk.addEventListener('change', () => {
+      const id = parseInt(chk.dataset.id);
+      if (chk.checked) state.checkedIds.add(id); else state.checkedIds.delete(id);
+      updateBulkBar();
+    });
+  });
   const tp=Math.max(1,Math.ceil(data.total/state.pageSize));
   document.getElementById('page-info').textContent=`${data.page} / ${tp} 페이지 (총 ${data.total}건)`;
   document.getElementById('btn-prev').disabled=data.page<=1;
   document.getElementById('btn-next').disabled=data.page>=tp;
+  updateBulkBar();
 }
 async function loadThreats() {
   const data=await api.threats({severity:state.filterSeverity||null,status:state.filterStatus||null,sort_by:state.sortBy,page:state.page,page_size:state.pageSize});
@@ -308,6 +368,13 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('status-active').addEventListener('click',()=>handleStatus('active'));
   document.getElementById('status-reviewing').addEventListener('click',()=>handleStatus('reviewing'));
   document.getElementById('status-resolved').addEventListener('click', openResolveModal);
+  document.getElementById('chk-all').addEventListener('change', function() {
+    const ids = state.threats.map(t => t.id);
+    if (this.checked) ids.forEach(id => state.checkedIds.add(id));
+    else ids.forEach(id => state.checkedIds.delete(id));
+    document.querySelectorAll('.row-chk').forEach(c => { c.checked = this.checked; });
+    updateBulkBar();
+  });
 });
 
 /* ── Resolve Modal ─────────────────────────────────────────────── */
@@ -324,8 +391,10 @@ function openResolveModal() {
   document.getElementById('archive-form').style.display = 'none';
   document.getElementById('action-taken-input').value = '';
   document.getElementById('resolution-note-input').value = '';
-  document.getElementById('btn-confirm-resolve').disabled = true;
-  document.getElementById('btn-confirm-resolve').style.opacity = '0.5';
+  const _btn = document.getElementById('btn-confirm-resolve');
+  _btn.disabled = true;
+  _btn.style.opacity = '0.5';
+  _btn.textContent = '처리하기';
   document.getElementById('resolve-modal').style.display = 'flex';
 }
 window.closeResolveModal = function() { document.getElementById('resolve-modal').style.display = 'none'; };

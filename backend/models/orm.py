@@ -48,6 +48,7 @@ class Threat(Base):
     resolution_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
     resolution_method: Mapped[str | None] = mapped_column(String(200), nullable=True)
     resolution_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    content_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     post_published_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     engagements_per_hour: Mapped[float] = mapped_column(Float, default=0.0)
     detected_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
