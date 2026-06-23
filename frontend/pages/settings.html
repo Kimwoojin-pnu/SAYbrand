@@ -14,11 +14,16 @@
   <script>tailwind.config={theme:{extend:{colors:{brand:{500:'#1a6ef8',600:'#1558cc'}}}}}</script>
 </head>
 <body data-page="settings" style="font-family:'NanumSquare','Noto Sans KR',sans-serif;background:var(--db-bg);color:var(--db-text-1);">
+<div class="db-mobile-topbar" id="db-mobile-topbar">
+  <button class="db-hamburger" onclick="toggleSidebar()" aria-label="메뉴"><span></span><span></span><span></span></button>
+  <span class="db-mobile-topbar-title">SAYbrand</span>
+</div>
+<div id="db-overlay" onclick="closeSidebar()"></div>
 
-<div style="display:flex;height:100vh;overflow:hidden;">
+<div id="db-layout" style="display:flex;height:100vh;overflow:hidden;">
 
   <!-- ── Sidebar ─────────────────────────────────────────────────────── -->
-  <aside style="background:#0c1428;width:200px;flex-shrink:0;display:flex;flex-direction:column;">
+  <aside id="db-sidebar" style="background:#0c1428;width:200px;flex-shrink:0;display:flex;flex-direction:column;">
 
     <!-- Logo -->
     <a href="/" target="_blank" style="display:flex;align-items:center;gap:10px;padding:18px 16px;border-bottom:1px solid rgba(255,255,255,0.08);text-decoration:none;">
@@ -123,7 +128,7 @@
       <div id="profile-editor" class="hidden bg-white rounded-xl border border-slate-200 shadow-sm">
 
         <!-- Tab nav -->
-        <div class="flex border-b border-slate-200 px-5 pt-4">
+        <div class="db-tab-nav flex border-b border-slate-200 px-5 pt-4">
           <button class="tab-btn pb-3 px-3 text-sm font-medium border-b-2 border-brand-500 text-brand-500 transition-colors" data-tab="basic">기본 정보</button>
           <button class="tab-btn pb-3 px-3 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-colors" data-tab="aliases">이름 변형</button>
           <button class="tab-btn pb-3 px-3 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-700 transition-colors" data-tab="accounts">공식 계정</button>
@@ -1598,5 +1603,6 @@ document.getElementById('activity-log-modal').addEventListener('click', function
 });
 </script>
 <script src="/assets/js/white-label.js" defer></script>
+<script src="/assets/js/mobile-nav.js"></script>
 </body>
 </html>

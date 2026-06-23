@@ -16,10 +16,19 @@
 </head>
 <body style="font-family:'NanumSquare','Noto Sans KR',sans-serif;background:var(--db-bg);color:var(--db-text-1);">
 
-<div style="display:flex;height:100vh;overflow:hidden;">
+<!-- 모바일 상단 바 -->
+<div class="db-mobile-topbar" id="db-mobile-topbar">
+  <button class="db-hamburger" onclick="toggleSidebar()" aria-label="메뉴">
+    <span></span><span></span><span></span>
+  </button>
+  <span class="db-mobile-topbar-title">SAYbrand</span>
+</div>
+<div id="db-overlay" onclick="closeSidebar()"></div>
+
+<div id="db-layout" style="display:flex;height:100vh;overflow:hidden;">
 
   <!-- ── Sidebar ─────────────────────────────────────────────────────── -->
-  <aside style="background:#0c1428;width:200px;flex-shrink:0;display:flex;flex-direction:column;">
+  <aside id="db-sidebar" style="background:#0c1428;width:200px;flex-shrink:0;display:flex;flex-direction:column;">
 
     <!-- Logo -->
     <a href="/" target="_blank" style="display:flex;align-items:center;gap:10px;padding:18px 16px;border-bottom:1px solid rgba(255,255,255,0.08);text-decoration:none;">
@@ -170,7 +179,7 @@
     <div style="padding:20px;display:flex;flex-direction:column;gap:16px;">
 
       <!-- KPI Cards -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
+      <div class="db-kpi-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
         <div class="db-card">
           <p class="db-kpi-label">CRITICAL</p>
           <p id="stat-critical" class="db-kpi-number" style="color:#E24B4A;">—</p>
@@ -194,7 +203,7 @@
       </div>
 
       <!-- Trend Chart + Platform Stats -->
-      <div style="display:grid;grid-template-columns:1fr 340px;gap:14px;">
+      <div class="db-two-col-grid" style="display:grid;grid-template-columns:1fr 340px;gap:14px;">
 
         <!-- Trend Chart -->
         <div class="db-card">
@@ -231,7 +240,7 @@
           </div>
           <div id="threat-map-platform-filters" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
         </div>
-        <div style="display:grid;grid-template-columns:200px 1fr;gap:20px;align-items:start;">
+        <div class="db-two-col-grid" style="display:grid;grid-template-columns:200px 1fr;gap:20px;align-items:start;">
           <!-- 플랫폼 노드 -->
           <div id="threat-map-platforms" style="display:flex;flex-direction:column;gap:8px;"></div>
           <!-- 위협 유형 태그 클라우드 -->
@@ -243,7 +252,7 @@
       </div>
 
       <!-- Sentiment Trend + Share of Voice -->
-      <div style="display:grid;grid-template-columns:1fr 300px;gap:14px;">
+      <div class="db-two-col-grid" style="display:grid;grid-template-columns:1fr 300px;gap:14px;">
         <div class="db-card">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
             <h3 style="font-weight:700;font-size:13px;letter-spacing:-.01em;">감성 트렌드 <span style="font-size:10px;font-weight:400;color:rgba(12,20,40,.4);">7일</span></h3>
@@ -261,7 +270,7 @@
       </div>
 
       <!-- Risk Gauge + Alerts -->
-      <div style="display:grid;grid-template-columns:280px 1fr;gap:14px;">
+      <div class="db-two-col-grid" style="display:grid;grid-template-columns:280px 1fr;gap:14px;">
 
         <!-- Gauge -->
         <div class="db-card" style="padding:18px 20px;">
@@ -377,7 +386,7 @@
             </div>
           </div>
         </div>
-        <div style="overflow-x:auto;">
+        <div class="db-table-scroll" style="overflow-x:auto;">
           <table style="width:100%;font-size:12px;border-collapse:collapse;">
             <thead>
               <tr style="background:rgba(0,0,0,.02);border-bottom:1px solid rgba(0,0,0,.06);">
@@ -941,5 +950,6 @@ fetch('/api/dashboard/version').then(r=>r.json()).then(d=>{
 }).catch(()=>{});
 </script>
 <script src="/assets/js/white-label.js" defer></script>
+<script src="/assets/js/mobile-nav.js"></script>
 </body>
 </html>

@@ -392,3 +392,196 @@ body { font-family: 'NanumSquare', 'Noto Sans KR', sans-serif; }
 /* rgba(0,0,0,.04) 구분선 */
 [data-theme="dark"] [style*="border-bottom:1px solid rgba(0,0,0,.04)"],
 [data-theme="dark"] [style*="border-bottom:1px solid rgba(0,0,0,0.04)"] { border-bottom-color: rgba(255,255,255,0.04) !important; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   모바일 반응형 — 대시보드 공통
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* 햄버거 버튼 */
+.db-hamburger {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.db-hamburger span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: #fff;
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+
+/* 모바일 상단 바 — 데스크탑에선 숨김 */
+.db-mobile-topbar {
+  display: none;
+}
+
+/* 오버레이 — 기본 숨김 */
+#db-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 999;
+}
+#db-overlay.open { display: block; }
+
+/* ── 모바일 브레이크포인트 ≤768px ─────────────────────────────────── */
+@media (max-width: 768px) {
+
+  /* 모바일 상단 바 표시 */
+  .db-mobile-topbar {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 52px;
+    background: #0c1428;
+    z-index: 1000;
+    align-items: center;
+    padding: 0 16px;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+  }
+  .db-mobile-topbar-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.02em;
+  }
+
+  /* 사이드바 → 고정 드로어 */
+  #db-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    height: 100vh !important;
+    width: 220px !important;
+    z-index: 1001;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    flex-shrink: 0 !important;
+  }
+  #db-sidebar.open {
+    transform: translateX(0);
+  }
+
+  /* 레이아웃 래퍼 */
+  #db-layout {
+    height: 100vh !important;
+    overflow: hidden !important;
+  }
+
+  /* 메인 영역 */
+  .db-main {
+    padding-top: 52px !important;
+    height: 100vh !important;
+    overflow-y: auto !important;
+    overflow-x: hidden;
+    width: 100% !important;
+    flex: 1 !important;
+  }
+
+  /* 상단 헤더: 고정 모바일 바 아래에 sticky */
+  .db-topheader {
+    top: 52px !important;
+    padding: 10px 16px !important;
+    height: auto !important;
+    min-height: 48px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .db-topheader h1 { font-size: 14px !important; }
+
+  /* 페이지 콘텐츠 패딩 */
+  .db-main > div[style*="padding:20px"] {
+    padding: 12px !important;
+  }
+
+  /* KPI 4열 → 2열 */
+  .db-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .db-kpi-number { font-size: 32px !important; }
+
+  /* 2열 그리드 → 1열 */
+  .db-two-col-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* 테이블 가로 스크롤 */
+  .db-table-scroll {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  .db-table-scroll table {
+    min-width: 600px;
+  }
+
+  /* 필터 버튼 영역 줄바꿈 허용 */
+  .db-filters {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  /* 구분선 숨김 */
+  .db-filter-divider {
+    display: none !important;
+  }
+
+  /* 위협 chip 숨김 */
+  #stats-chips { display: none !important; }
+
+  /* 리포트 상단 버튼 wrap */
+  .db-topheader > div:last-child {
+    flex-wrap: wrap;
+    gap: 6px !important;
+  }
+
+  /* 카드 패딩 축소 */
+  .db-card { padding: 14px 16px !important; }
+
+  /* 모달 — 모바일 전체화면 */
+  .db-modal-fullscreen {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    height: 100vh !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    overflow-y: auto !important;
+  }
+
+  /* settings 탭 — 가로 스크롤 */
+  .db-tab-nav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+    scrollbar-width: none;
+  }
+  .db-tab-nav::-webkit-scrollbar { display: none; }
+
+  /* 그리드 col-2 (Tailwind) → 1열 */
+  .grid-cols-2 { grid-template-columns: 1fr !important; }
+
+  /* 로그인 페이지 패딩 */
+  .login-card {
+    margin: 16px !important;
+    padding: 24px 20px !important;
+  }
+}
+
+/* ── 매우 좁은 화면 ≤480px ──────────────────────────────────────── */
+@media (max-width: 480px) {
+  .db-kpi-number { font-size: 28px !important; }
+  .db-card { padding: 12px 14px !important; }
+  .db-mobile-topbar { padding: 0 12px; }
+}

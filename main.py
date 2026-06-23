@@ -157,6 +157,13 @@ async def reports_page(request: Request):
     return FileResponse("frontend/pages/reports.html")
 
 
+@app.get("/history")
+async def history_page(request: Request):
+    if not request.session.get("user_id"):
+        return RedirectResponse("/login")
+    return FileResponse("frontend/pages/history.html")
+
+
 @app.get("/onboarding")
 async def onboarding_page(request: Request):
     if not request.session.get("user_id"):

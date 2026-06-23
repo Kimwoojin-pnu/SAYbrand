@@ -1210,7 +1210,7 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   .ld-section--sm { padding: 48px 0; }
 
   .ld-nav-links  { display: none; }
-  .ld-nav-actions > .ld-btn:first-child { display: none; }
+  .ld-nav-actions .ld-btn { display: none; }
   .ld-nav-hamburger { display: flex; }
 
   .ld-h1 { font-size: 32px; }
