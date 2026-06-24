@@ -48,7 +48,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="SAYbrand", lifespan=lifespan)
+app = FastAPI(title="SAYbrand", lifespan=lifespan, docs_url="/swagger", redoc_url="/redoc")
 
 app.add_middleware(SessionMiddleware, secret_key=settings.session_secret_key)
 app.add_middleware(BaseHTTPMiddleware, dispatch=rate_limit_middleware)
