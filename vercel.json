@@ -2,6 +2,10 @@
   "version": 2,
   "builds": [
     {
+      "src": "docs/sphinx/_build/html/**",
+      "use": "@vercel/static"
+    },
+    {
       "src": "app.py",
       "use": "@vercel/python",
       "config": {
@@ -11,6 +15,10 @@
     }
   ],
   "routes": [
+    {
+      "src": "/docs(.*)",
+      "dest": "/docs/sphinx/_build/html$1"
+    },
     {
       "src": "/(.*)",
       "dest": "app.py"
